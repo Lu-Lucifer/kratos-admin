@@ -28,7 +28,8 @@
     "apiAuditLog": "API Audit Log",
     "operationAuditLog": "Operation Audit Log",
     "dataAccessAuditLog": "Data Access Audit Log",
-    "permissionAuditLog": "Permission Audit Log"
+    "permissionAuditLog": "Permission Audit Log",
+    "policyEvaluationLog": "Policy Evaluation Log"
   },
   "system": {
     "moduleName": "System Management",

@@ -1,6 +1,6 @@
 <template>
   <div class="app-container h-full flex flex-1 flex-col">
-    <ProPage ref="pageRef" :config="pageConfig">
+    <ProPage ref="pageRef" :config="pageConfig" @operate="handleOperate">
       <!-- 是否成功 -->
       <template #success="scope: any">
         <ElTag size="small" effect="dark" round :color="successToColor(scope.row.success)">
@@ -18,6 +18,9 @@
         {{ scope.row.deviceInfo?.osName }} {{ scope.row.deviceInfo?.browserName }}
       </template>
     </ProPage>
+
+    <!-- 详情抽屉 -->
+    <ApiAuditLogDetailDrawer ref="drawerRef" />
   </div>
 </template>
 
@@ -28,6 +31,7 @@ import dayjs from "dayjs";
 
 import ProPage from "@/components/Pro/ProPage/index.vue";
 import type { ProPageConfig } from "@/components/Pro/ProPage/types";
+import ApiAuditLogDetailDrawer from "./detail-drawer.vue";
 
 import {
   methodList,
@@ -41,6 +45,13 @@ import { PaginationQuery } from "@/core/transport/rest";
 import { $t } from "@/core/i18n";
 
 const pageRef = ref();
+const drawerRef = ref();
+
+function handleOperate(data: { name: string; row: any }) {
+  if (data.name === "detail") {
+    drawerRef.value?.open({ row: data.row });
+  }
+}
 
 const pageConfig = computed<ProPageConfig>(() => ({
   skeleton: true,
@@ -197,6 +208,14 @@ const pageConfig = computed<ProPageConfig>(() => ({
         slotName: "geoLocation",
       },
       { prop: "ipAddress", label: $t("pages.api_audit_log.ipAddress"), width: 140, align: "right" },
+      {
+        prop: "action",
+        label: $t("common.table.action"),
+        fixed: "right",
+        width: 90,
+        cellType: "tool",
+        buttons: [{ name: "detail", label: $t("common.button.detail"), icon: "lucide:eye" }],
+      },
     ],
   },
 }));

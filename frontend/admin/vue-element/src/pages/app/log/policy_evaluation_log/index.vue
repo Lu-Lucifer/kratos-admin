@@ -1,33 +1,16 @@
 <template>
   <div class="app-container h-full flex flex-1 flex-col">
     <ProPage ref="pageRef" :config="pageConfig" @operate="handleOperate">
-      <!-- 是否成功 -->
-      <template #success="scope: any">
-        <ElTag size="small" effect="dark" round :color="successToColor(scope.row.success)">
-          {{ successToNameWithStatusCode(scope.row.success, scope.row.statusCode) }}
+      <!-- 评估结果 -->
+      <template #result="scope: any">
+        <ElTag size="small" effect="dark" round :color="successToColor(scope.row.result)">
+          {{ successToName(scope.row.result) }}
         </ElTag>
-      </template>
-
-      <!-- 操作类型 -->
-      <template #action="scope: any">
-        <ElTag
-          size="small"
-          effect="dark"
-          round
-          :color="operationAuditLogActionToColor(scope.row.action)"
-        >
-          {{ operationAuditLogActionToName(scope.row.action) }}
-        </ElTag>
-      </template>
-
-      <!-- 地理位置 -->
-      <template #geoLocation="scope: any">
-        {{ scope.row.geoLocation?.province }} {{ scope.row.geoLocation?.city }}
       </template>
     </ProPage>
 
     <!-- 详情抽屉 -->
-    <OperationAuditLogDetailDrawer ref="drawerRef" />
+    <PolicyEvaluationLogDetailDrawer ref="drawerRef" />
   </div>
 </template>
 
@@ -38,16 +21,14 @@ import dayjs from "dayjs";
 
 import ProPage from "@/components/Pro/ProPage/index.vue";
 import type { ProPageConfig } from "@/components/Pro/ProPage/types";
-import OperationAuditLogDetailDrawer from "./detail-drawer.vue";
+import PolicyEvaluationLogDetailDrawer from "./detail-drawer.vue";
 
 import {
-  operationAuditLogActionList,
-  operationAuditLogActionToColor,
-  operationAuditLogActionToName,
+  methodList,
   successStatusList,
   successToColor,
-  successToNameWithStatusCode,
-  fetchListOperationAuditLogs,
+  successToName,
+  fetchListPolicyEvaluationLogs,
 } from "@/api/composables";
 import { PaginationQuery } from "@/core/transport/rest";
 import { $t } from "@/core/i18n";
@@ -67,40 +48,40 @@ const pageConfig = computed<ProPageConfig>(() => ({
     grid: true,
     fields: [
       {
-        type: "input",
-        label: $t("pages.operation_audit_log.username"),
-        field: "username",
-        attrs: { placeholder: $t("common.placeholder.input"), clearable: true },
-      },
-      {
-        type: "input",
-        label: $t("pages.operation_audit_log.resourceType"),
-        field: "resourceType",
-        attrs: { placeholder: $t("common.placeholder.input"), clearable: true },
-      },
-      {
         type: "select",
-        label: $t("pages.operation_audit_log.action"),
-        field: "action",
+        label: $t("pages.policy_evaluation_log.requestMethod"),
+        field: "requestMethod",
         attrs: { placeholder: $t("common.placeholder.select"), clearable: true, filterable: true },
-        options: operationAuditLogActionList.value,
+        options: methodList,
       },
       {
         type: "input",
-        label: $t("pages.operation_audit_log.ipAddress"),
-        field: "ipAddress",
+        label: $t("pages.policy_evaluation_log.requestPath"),
+        field: "requestPath",
         attrs: { placeholder: $t("common.placeholder.input"), clearable: true },
       },
       {
         type: "select",
-        label: $t("pages.operation_audit_log.success"),
-        field: "success",
+        label: $t("pages.policy_evaluation_log.result"),
+        field: "result",
         attrs: { placeholder: $t("common.placeholder.select"), clearable: true, filterable: true },
         options: successStatusList.value,
       },
       {
+        type: "input",
+        label: $t("pages.policy_evaluation_log.userId"),
+        field: "userId",
+        attrs: { placeholder: $t("common.placeholder.input"), clearable: true },
+      },
+      {
+        type: "input",
+        label: $t("pages.policy_evaluation_log.ipAddress"),
+        field: "ipAddress",
+        attrs: { placeholder: $t("common.placeholder.input"), clearable: true },
+      },
+      {
         type: "date-picker",
-        label: $t("pages.operation_audit_log.createdAt"),
+        label: $t("pages.policy_evaluation_log.createdAt"),
         field: "createdAt",
         attrs: {
           type: "datetimerange",
@@ -158,15 +139,15 @@ const pageConfig = computed<ProPageConfig>(() => ({
         endTime = dayjs(createdAt[1]).format("YYYY-MM-DD HH:mm:ss");
       }
 
-      const result = await fetchListOperationAuditLogs(
+      const result = await fetchListPolicyEvaluationLogs(
         new PaginationQuery({
           paging: { page: page || 1, pageSize: pageSize || 10 },
           formValues: {
-            username: queryParams.username,
-            resourceType: queryParams.resourceType,
-            action: queryParams.action,
+            requestMethod: queryParams.requestMethod,
+            requestPath: queryParams.requestPath,
+            result: queryParams.result,
+            userId: queryParams.userId,
             ipAddress: queryParams.ipAddress,
-            success: queryParams.success,
             created_at__gte: startTime,
             created_at__lte: endTime,
           },
@@ -182,36 +163,44 @@ const pageConfig = computed<ProPageConfig>(() => ({
     columns: [
       {
         prop: "createdAt",
-        label: $t("pages.operation_audit_log.createdAt"),
+        label: $t("pages.policy_evaluation_log.createdAt"),
         minWidth: 160,
         cellType: "date",
         dateFormat: "YYYY-MM-DD HH:mm:ss",
       },
       {
-        prop: "success",
-        label: $t("pages.operation_audit_log.success"),
-        width: 120,
-        slotName: "success",
+        prop: "result",
+        label: $t("pages.policy_evaluation_log.result"),
+        width: 110,
+        slotName: "result",
+      },
+      { prop: "requestMethod", label: $t("pages.policy_evaluation_log.requestMethod"), width: 120 },
+      {
+        prop: "requestPath",
+        label: $t("pages.policy_evaluation_log.requestPath"),
+        minWidth: 200,
       },
       {
-        prop: "action",
-        label: $t("pages.operation_audit_log.action"),
+        prop: "userId",
+        label: $t("pages.policy_evaluation_log.userId"),
         width: 120,
-        slotName: "action",
+        align: "right",
       },
-      { prop: "resourceType", label: $t("pages.operation_audit_log.resourceType"), minWidth: 150 },
-      { prop: "resourceId", label: $t("pages.operation_audit_log.resourceId"), minWidth: 150 },
-      { prop: "requestId", label: $t("pages.operation_audit_log.requestId"), minWidth: 180 },
-      { prop: "username", label: $t("pages.operation_audit_log.username"), minWidth: 120 },
       {
-        prop: "geoLocation",
-        label: $t("pages.operation_audit_log.geoLocation"),
-        minWidth: 150,
-        slotName: "geoLocation",
+        prop: "permissionId",
+        label: $t("pages.policy_evaluation_log.permissionId"),
+        width: 120,
+        align: "right",
+      },
+      {
+        prop: "policyId",
+        label: $t("pages.policy_evaluation_log.policyId"),
+        width: 120,
+        align: "right",
       },
       {
         prop: "ipAddress",
-        label: $t("pages.operation_audit_log.ipAddress"),
+        label: $t("pages.policy_evaluation_log.ipAddress"),
         width: 140,
         align: "right",
       },

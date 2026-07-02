@@ -28,7 +28,8 @@
     "apiAuditLog": "API日志",
     "operationAuditLog": "操作日志",
     "dataAccessAuditLog": "数据日志",
-    "permissionAuditLog": "权限日志"
+    "permissionAuditLog": "权限日志",
+    "policyEvaluationLog": "策略评估日志"
   },
   "system": {
     "moduleName": "系统管理",

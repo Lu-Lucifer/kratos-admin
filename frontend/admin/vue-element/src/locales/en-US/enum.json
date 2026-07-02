@@ -203,5 +203,19 @@
     "SECRET": "Secret",
     "MALE": "Male",
     "FEMALE": "Female"
+  },
+  "sensitiveLevel": {
+    "PUBLIC": "Public",
+    "INTERNAL": "Internal",
+    "CONFIDENTIAL": "Confidential",
+    "SECRET": "Secret"
+  },
+  "loginMethod": {
+    "PASSWORD": "Password",
+    "SMS_CODE": "SMS Code",
+    "QR_CODE": "QR Code",
+    "OIDC_SOCIAL": "OIDC/Social",
+    "FIDO2": "FIDO2",
+    "BIOMETRIC": "Biometric"
   }
 }
