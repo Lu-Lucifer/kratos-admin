@@ -8,7 +8,6 @@ import (
 	"fmt"
 	auditpb "go-wind-admin/api/gen/go/audit/service/v1"
 	permissionpb "go-wind-admin/api/gen/go/permission/service/v1"
-	resourcepb "go-wind-admin/api/gen/go/permission/service/v1"
 	taskpb "go-wind-admin/api/gen/go/task/service/v1"
 	"go-wind-admin/app/admin/service/internal/data/ent/api"
 	"go-wind-admin/app/admin/service/internal/data/ent/apiauditlog"
@@ -27470,7 +27469,7 @@ type MenuMutation struct {
 	alias           *string
 	name            *string
 	component       *string
-	meta            **resourcepb.MenuMeta
+	meta            **permissionpb.MenuMeta
 	clearedFields   map[string]struct{}
 	parent          *uint32
 	clearedparent   bool
@@ -28372,12 +28371,12 @@ func (m *MenuMutation) ResetComponent() {
 }
 
 // SetMeta sets the "meta" field.
-func (m *MenuMutation) SetMeta(rm *resourcepb.MenuMeta) {
-	m.meta = &rm
+func (m *MenuMutation) SetMeta(pm *permissionpb.MenuMeta) {
+	m.meta = &pm
 }
 
 // Meta returns the value of the "meta" field in the mutation.
-func (m *MenuMutation) Meta() (r *resourcepb.MenuMeta, exists bool) {
+func (m *MenuMutation) Meta() (r *permissionpb.MenuMeta, exists bool) {
 	v := m.meta
 	if v == nil {
 		return
@@ -28388,7 +28387,7 @@ func (m *MenuMutation) Meta() (r *resourcepb.MenuMeta, exists bool) {
 // OldMeta returns the old "meta" field's value of the Menu entity.
 // If the Menu object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MenuMutation) OldMeta(ctx context.Context) (v *resourcepb.MenuMeta, err error) {
+func (m *MenuMutation) OldMeta(ctx context.Context) (v *permissionpb.MenuMeta, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMeta is only allowed on UpdateOne operations")
 	}
@@ -28780,7 +28779,7 @@ func (m *MenuMutation) SetField(name string, value ent.Value) error {
 		m.SetComponent(v)
 		return nil
 	case menu.FieldMeta:
-		v, ok := value.(*resourcepb.MenuMeta)
+		v, ok := value.(*permissionpb.MenuMeta)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
