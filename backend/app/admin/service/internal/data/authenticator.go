@@ -2,6 +2,11 @@ package data
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -12,6 +17,7 @@ import (
 	authnEngine "github.com/tx7do/kratos-authn/engine"
 	authnJwt "github.com/tx7do/kratos-authn/engine/jwt"
 
+	conf "github.com/tx7do/kratos-bootstrap/api/gen/go/conf/v1"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 
 	authenticationV1 "go-wind-admin/api/gen/go/authentication/service/v1"
@@ -20,10 +26,10 @@ import (
 )
 
 const (
-	// DefaultAccessTokenExpires  默认访问令牌过期时间
+	// DefaultAccessTokenExpires  默认访问令牌过期时间（配置未指定时使用）
 	DefaultAccessTokenExpires = time.Minute * 15
 
-	// DefaultRefreshTokenExpires 默认刷新令牌过期时间
+	// DefaultRefreshTokenExpires 默认刷新令牌过期时间（配置未指定时使用）
 	DefaultRefreshTokenExpires = time.Hour * 24 * 7
 )
 
@@ -31,6 +37,9 @@ type Authenticator struct {
 	log *log.Helper
 
 	AdminAuthenticator authnEngine.Authenticator
+
+	// jwtCfg 保留 JWT 配置，用于读取令牌过期时间。
+	jwtCfg *conf.Authentication_Jwt
 
 	userTokenCache *UserTokenCache
 }
@@ -44,21 +53,129 @@ func NewAuthenticator(
 		return nil
 	}
 
+	jwtCfg := cfg.Authn.GetJwt()
+
 	a := Authenticator{
 		log:            ctx.NewLoggerHelper("authenticator/data/authentication-service"),
+		jwtCfg:         jwtCfg,
 		userTokenCache: userTokenCache,
 	}
 
-	a.AdminAuthenticator, _ = authnJwt.NewAuthenticator(
-		authnJwt.WithKey([]byte(cfg.Authn.GetJwt().GetKey())),
-		authnJwt.WithSigningMethod(cfg.Authn.GetJwt().GetMethod()),
-	)
+	adminAuth, err := newAdminAuthenticator(jwtCfg)
+	if err != nil {
+		// 启动期密钥/算法配置错误属于不可恢复故障，直接 panic 以暴露问题。
+		panic(fmt.Sprintf("init admin authenticator failed: %v", err))
+	}
+	a.AdminAuthenticator = adminAuth
 
 	return &a
 }
 
-// GetAccessTokenExpires 获取访问令牌过期时间
+// newAdminAuthenticator 根据配置构造 JWT 认证器，同时支持对称与非对称签名算法。
+//   - 对称算法（HS256/HS384/HS512）：key 为共享秘钥。
+//   - 非对称算法（RS256/RS384/RS512、PS256/PS384/PS512、ES256/...、EdDSA）：
+//     private_key 用于签发，public_key 用于校验。若仅配置了 private_key（如本服务
+//     既签发又校验的单体场景），则回退为从私钥派生公钥。
+func newAdminAuthenticator(jwtCfg *conf.Authentication_Jwt) (authnEngine.Authenticator, error) {
+	if jwtCfg == nil {
+		return nil, fmt.Errorf("jwt config is nil")
+	}
+
+	method := jwtCfg.GetMethod()
+	if method == "" {
+		// 与底层库默认行为一致。
+		method = "HS256"
+	}
+
+	opts := []authnJwt.Option{
+		authnJwt.WithSigningMethod(method),
+	}
+
+	if isAsymmetricMethod(method) {
+		// 非对称算法：优先使用独立配置的 private_key / public_key。
+		switch {
+		case jwtCfg.GetPrivateKey() != "" && jwtCfg.GetPublicKey() != "":
+			opts = append(opts,
+				authnJwt.WithPrivateKeyFromPEM([]byte(jwtCfg.GetPrivateKey())),
+				authnJwt.WithPublicKeyFromPEM([]byte(jwtCfg.GetPublicKey())),
+			)
+		case jwtCfg.GetPrivateKey() != "":
+			// 仅配置私钥：从私钥派生公钥（本服务既签发又校验的场景）。
+			privPEM := []byte(jwtCfg.GetPrivateKey())
+			publicKey, err := publicKeyFromPrivateKeyPEM(privPEM)
+			if err != nil {
+				return nil, fmt.Errorf("derive public key from private key: %w", err)
+			}
+			opts = append(opts,
+				authnJwt.WithPrivateKeyFromPEM(privPEM),
+				authnJwt.WithVerificationKey(publicKey),
+			)
+		case jwtCfg.GetPublicKey() != "":
+			// 仅配置公钥：只能用于校验，无法签发。
+			opts = append(opts, authnJwt.WithPublicKeyFromPEM([]byte(jwtCfg.GetPublicKey())))
+		default:
+			return nil, fmt.Errorf("asymmetric method %q requires private_key and/or public_key in config", method)
+		}
+	} else {
+		// 对称算法：key 即 HMAC 共享秘钥，签发与校验共用。
+		opts = append(opts, authnJwt.WithKey([]byte(jwtCfg.GetKey())))
+	}
+
+	return authnJwt.NewAuthenticator(opts...)
+}
+
+// isAsymmetricMethod 判断给定的签名算法是否为非对称（基于公钥/私钥对）算法。
+func isAsymmetricMethod(method string) bool {
+	switch strings.ToUpper(method) {
+	case "RS256", "RS384", "RS512", // RSA
+		"PS256", "PS384", "PS512", // RSA-PSS
+		"ES256", "ES384", "ES512", // ECDSA
+		"EDDSA": // Ed25519
+		return true
+	default:
+		return false
+	}
+}
+
+// publicKeyFromPrivateKeyPEM 从 PEM 编码的 RSA 私钥中派生出公钥。
+// 适用于仅配置了私钥、本服务既签发又校验令牌的场景。
+func publicKeyFromPrivateKeyPEM(pemBytes []byte) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		return nil, fmt.Errorf("failed to decode PEM block from private key")
+	}
+
+	var privKey *rsa.PrivateKey
+	switch block.Type {
+	case "RSA PRIVATE KEY": // PKCS#1
+		parsed, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("parse PKCS#1 private key: %w", err)
+		}
+		privKey = parsed
+	case "PRIVATE KEY": // PKCS#8
+		parsed, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("parse PKCS#8 private key: %w", err)
+		}
+		rsaKey, ok := parsed.(*rsa.PrivateKey)
+		if !ok {
+			return nil, fmt.Errorf("PKCS#8 key is not an RSA private key")
+		}
+		privKey = rsaKey
+	default:
+		return nil, fmt.Errorf("unsupported PEM block type %q (expected RSA PRIVATE KEY or PRIVATE KEY)", block.Type)
+	}
+
+	return &privKey.PublicKey, nil
+}
+
+// GetAccessTokenExpires 获取访问令牌过期时间。
+// 优先使用配置中的 access_token_expires，未配置时回退到默认值。
 func (a *Authenticator) GetAccessTokenExpires(clientType authenticationV1.ClientType) time.Duration {
+	if a.jwtCfg != nil && a.jwtCfg.GetAccessTokenExpires() != nil {
+		return a.jwtCfg.GetAccessTokenExpires().AsDuration()
+	}
 	switch clientType {
 	case authenticationV1.ClientType_admin:
 		return DefaultAccessTokenExpires
@@ -67,8 +184,12 @@ func (a *Authenticator) GetAccessTokenExpires(clientType authenticationV1.Client
 	}
 }
 
-// GetRefreshTokenExpires 获取刷新令牌过期时间
+// GetRefreshTokenExpires 获取刷新令牌过期时间。
+// 优先使用配置中的 refresh_token_expires，未配置时回退到默认值。
 func (a *Authenticator) GetRefreshTokenExpires(clientType authenticationV1.ClientType) time.Duration {
+	if a.jwtCfg != nil && a.jwtCfg.GetRefreshTokenExpires() != nil {
+		return a.jwtCfg.GetRefreshTokenExpires().AsDuration()
+	}
 	switch clientType {
 	case authenticationV1.ClientType_admin:
 		return DefaultRefreshTokenExpires

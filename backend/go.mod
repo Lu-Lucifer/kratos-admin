@@ -39,30 +39,30 @@ require (
 	github.com/tx7do/go-utils/jwtutil v0.0.3
 	github.com/tx7do/go-utils/mapper v0.0.3
 	github.com/tx7do/go-utils/password v0.0.2
-	github.com/tx7do/go-wind-toolkit/protoc-gen-go-redact v0.0.0-20260621120016-637dde6cd5d7
-	github.com/tx7do/kratos-authn v1.1.10
-	github.com/tx7do/kratos-authn/engine/jwt v1.1.10
+	github.com/tx7do/go-wind-toolkit/protoc-gen-go-redact v0.0.0-20260621140333-c4bf78d8d062
+	github.com/tx7do/kratos-authn v1.1.11
+	github.com/tx7do/kratos-authn/engine/jwt v1.1.11
 	github.com/tx7do/kratos-authz v1.1.8
 	github.com/tx7do/kratos-authz/engine/casbin v1.1.12
 	github.com/tx7do/kratos-authz/engine/opa v1.1.15
 	github.com/tx7do/kratos-authz/middleware v1.1.13
-	github.com/tx7do/kratos-bootstrap/api v0.0.39
+	github.com/tx7do/kratos-bootstrap/api v0.0.43
 	github.com/tx7do/kratos-bootstrap/bootstrap v0.1.16
 	github.com/tx7do/kratos-bootstrap/cache/redis v0.1.1
 	github.com/tx7do/kratos-bootstrap/database/ent v0.1.5
 	github.com/tx7do/kratos-bootstrap/database/gorm v0.1.5
-	github.com/tx7do/kratos-bootstrap/oss/minio v0.1.1
+	github.com/tx7do/kratos-bootstrap/oss/minio v0.1.2
 	github.com/tx7do/kratos-bootstrap/rpc v0.1.1
 	github.com/tx7do/kratos-bootstrap/transport/asynq v0.0.6
 	github.com/tx7do/kratos-bootstrap/transport/sse v0.0.4
 	github.com/tx7do/kratos-swagger-ui v0.0.1
-	github.com/tx7do/kratos-transport/transport/asynq v1.3.12
-	github.com/tx7do/kratos-transport/transport/sse v1.3.4
+	github.com/tx7do/kratos-transport/transport/asynq v1.3.13
+	github.com/tx7do/kratos-transport/transport/sse v1.3.8
 	github.com/yuin/gopher-lua v1.1.2
 	go.opentelemetry.io/otel/trace v1.43.0
 	google.golang.org/genproto v0.0.0-20260519071638-aa98bba5eb94
 	google.golang.org/genproto/googleapis/api v0.0.0-20260519071638-aa98bba5eb94
-	google.golang.org/grpc v1.81.1
+	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.11
 	gorm.io/datatypes v1.2.7
 )
@@ -236,10 +236,10 @@ require (
 	github.com/tx7do/kratos-bootstrap/logger v0.1.2 // indirect
 	github.com/tx7do/kratos-bootstrap/registry v0.2.2 // indirect
 	github.com/tx7do/kratos-bootstrap/tracer v0.1.3 // indirect
-	github.com/tx7do/kratos-transport/broker v1.3.2 // indirect
-	github.com/tx7do/kratos-transport/tracing v1.1.1 // indirect
-	github.com/tx7do/kratos-transport/transport v1.3.3 // indirect
-	github.com/tx7do/kratos-transport/transport/keepalive v1.3.4 // indirect
+	github.com/tx7do/kratos-transport/broker v1.3.3 // indirect
+	github.com/tx7do/kratos-transport/tracing v1.1.2 // indirect
+	github.com/tx7do/kratos-transport/transport v1.3.4 // indirect
+	github.com/tx7do/kratos-transport/transport/keepalive v1.3.5 // indirect
 	github.com/vadv/gopher-lua-libs v0.8.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
 	github.com/vearutop/statigz v1.5.0 // indirect
