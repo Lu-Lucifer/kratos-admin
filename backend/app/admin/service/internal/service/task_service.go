@@ -12,13 +12,11 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/hibiken/asynq"
 	paginationV1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
-	entCrud "github.com/tx7do/go-crud/entgo"
 	"github.com/tx7do/go-utils/trans"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"go-wind-admin/app/admin/service/internal/data"
-	"go-wind-admin/app/admin/service/internal/data/ent"
 
 	adminV1 "go-wind-admin/api/gen/go/admin/service/v1"
 	taskV1 "go-wind-admin/api/gen/go/task/service/v1"
@@ -52,25 +50,25 @@ type TaskService struct {
 
 	taskScheduler TaskScheduler
 
-	userRepo  data.UserRepo
-	taskRepo  *data.TaskRepo
-	entClient *entCrud.EntClient[*ent.Client]
-	mc        *oss.MinIOClient
+	userRepo   data.UserRepo
+	taskRepo   *data.TaskRepo
+	backupRepo *data.BackupRepo
+	mc         *oss.MinIOClient
 }
 
 func NewTaskService(
 	ctx *bootstrap.Context,
 	taskRepo *data.TaskRepo,
 	userRepo data.UserRepo,
-	entClient *entCrud.EntClient[*ent.Client],
+	backupRepo *data.BackupRepo,
 	mc *oss.MinIOClient,
 ) *TaskService {
 	svc := &TaskService{
-		log:       ctx.NewLoggerHelper("task/service/admin-service"),
-		taskRepo:  taskRepo,
-		userRepo:  userRepo,
-		entClient: entClient,
-		mc:        mc,
+		log:        ctx.NewLoggerHelper("task/service/admin-service"),
+		taskRepo:   taskRepo,
+		userRepo:   userRepo,
+		backupRepo: backupRepo,
+		mc:         mc,
 	}
 
 	return svc
@@ -426,7 +424,7 @@ func (s *TaskService) startTask(t *taskV1.Task) error {
 //
 // H8：实现真正的备份——导出核心业务表为 JSON，gzip 压缩后上传到 OSS 的 backups 桶。
 // 纯 Go 实现，跨数据库驱动（MySQL/PostgreSQL/SQLite）。
-// 当前覆盖核心身份/权限/组织表；审计日志等大体量表暂不纳入（可按需扩展 backupCoreTables）。
+// 当前覆盖核心身份/权限/组织表；审计日志等大体量表暂不纳入（可按需扩展 BackupRepo.ExportCoreTables）。
 func (s *TaskService) AsyncBackup(taskType string, taskData *task.BackupTaskData) error {
 	s.log.Infof("AsyncBackup [%s] [%+v] [%s]", taskType, taskData, taskData.Name)
 
@@ -439,16 +437,12 @@ func (s *TaskService) AsyncBackup(taskType string, taskData *task.BackupTaskData
 		backupName = fmt.Sprintf("backup-%s", time.Now().UTC().Format("20060102-150405"))
 	}
 
-	if s.entClient == nil || s.mc == nil {
-		return fmt.Errorf("backup dependencies not configured (entClient or minio is nil)")
+	if s.backupRepo == nil || !s.backupRepo.IsConfigured() || s.mc == nil {
+		return fmt.Errorf("backup dependencies not configured (backupRepo or minio is nil)")
 	}
 
-	// 1. 导出核心表
-	tables, err := s.backupCoreTables(ctx)
-	if err != nil {
-		s.log.Errorf("backup: query tables failed: %s", err.Error())
-		return fmt.Errorf("query tables for backup failed: %w", err)
-	}
+	// 1. 导出核心表（ent 访问收敛在 data 层的 BackupRepo 内）
+	tables := s.backupRepo.ExportCoreTables(ctx)
 
 	// 2. 序列化为 JSON
 	jsonBytes, err := json.MarshalIndent(map[string]any{
@@ -486,44 +480,6 @@ func (s *TaskService) AsyncBackup(taskType string, taskData *task.BackupTaskData
 
 	s.log.Infof("backup: completed successfully, object=%s", objectName)
 	return nil
-}
-
-// backupCoreTables 导出核心业务表的全量记录。
-// 仅导出身份/权限/组织相关配置表（数据量可控、恢复价值高）；审计日志等大体量表不纳入。
-// 遇到单表查询错误时记录告警并跳过，确保部分表故障不阻断整体备份。
-func (s *TaskService) backupCoreTables(ctx context.Context) (map[string]any, error) {
-	client := s.entClient.Client()
-	result := make(map[string]any)
-
-	// 逐表导出：每张表 Query All 后，实体自带 json tag 可直接序列化
-	type tableExport struct {
-		name  string
-		query func() (any, error)
-	}
-
-	exports := []tableExport{
-		{"tenants", func() (any, error) { return client.Tenant.Query().All(ctx) }},
-		{"users", func() (any, error) { return client.User.Query().All(ctx) }},
-		{"roles", func() (any, error) { return client.Role.Query().All(ctx) }},
-		{"permissions", func() (any, error) { return client.Permission.Query().All(ctx) }},
-		{"memberships", func() (any, error) { return client.Membership.Query().All(ctx) }},
-		{"org_units", func() (any, error) { return client.OrgUnit.Query().All(ctx) }},
-		{"positions", func() (any, error) { return client.Position.Query().All(ctx) }},
-		{"menus", func() (any, error) { return client.Menu.Query().All(ctx) }},
-	}
-
-	for _, t := range exports {
-		rows, err := t.query()
-		if err != nil {
-			// 单表失败不阻断整体备份，记录告警后继续
-			s.log.Warnf("backup: export table %q failed (skipped): %s", t.name, err.Error())
-			result[t.name] = map[string]any{"_error": err.Error()}
-			continue
-		}
-		result[t.name] = rows
-	}
-
-	return result, nil
 }
 
 // tableNamesOf 返回 map 的键列表（用于备份元信息）。
