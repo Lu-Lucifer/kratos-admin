@@ -450,12 +450,15 @@ func (r *MembershipRepo) GetMembershipID(ctx context.Context, userID uint32) (me
 	return r.queryMembershipID(ctx, tx, userID)
 }
 
-// GetMembershipByUserTenant 获取用户在租户下的 Membership 记录
-func (r *MembershipRepo) GetMembershipByUserTenant(ctx context.Context, userID uint32) (*identityV1.Membership, error) {
+// GetMembershipByUserTenant 获取用户在指定租户下的 Membership 记录
+// 注意：tenantID 必须参与过滤，否则用户在多租户下的 membership 会导致 .Only() 报错，
+// 且可能返回错误租户的记录（鉴权按错误租户进行）。
+func (r *MembershipRepo) GetMembershipByUserTenant(ctx context.Context, userID, tenantID uint32) (*identityV1.Membership, error) {
 	now := time.Now()
 	builder := r.entClient.Client().Membership.Query()
 	builder.Where(
 		membership.UserIDEQ(userID),
+		membership.TenantIDEQ(tenantID),
 		membership.Or(
 			membership.EndAtIsNil(),
 			membership.EndAtGT(now),

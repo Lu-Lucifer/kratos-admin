@@ -430,6 +430,22 @@
     "action": "Action",
     "reason": "Change Reason"
   },
+  "policyEvaluationLog": {
+    "moduleName": "Policy Evaluation Logs",
+    "createdAt": "Logged At",
+    "result": "Result",
+    "policyId": "Policy ID",
+    "permissionId": "Permission ID",
+    "userId": "User ID",
+    "membershipId": "Membership ID",
+    "requestMethod": "Method",
+    "requestPath": "Request Path",
+    "tenantId": "Tenant ID",
+    "ipAddress": "IP Address",
+    "traceId": "Trace ID",
+    "effectDetails": "Effect Details",
+    "evaluationContext": "Evaluation Context"
+  },
   "api": {
     "moduleName": "API Resources",
     "path": "Path",

@@ -20,7 +20,28 @@ import (
 
 	"go-wind-admin/pkg/constants"
 	"go-wind-admin/pkg/middleware/auth"
+	"go-wind-admin/pkg/netutil"
 )
+
+// 验证码相关请求头（H5：登录强制验证码，通过 header 传递以避免改动 proto 与三套前端生成代码）。
+const (
+	headerCaptchaID    = "X-Captcha-Id"
+	headerCaptchaValue = "X-Captcha-Value"
+)
+
+// normalizeLoginVerifyError 将登录凭证校验的多种细分错误统一对外成 INVALID_PASSWORD，
+// 防止攻击者通过区分"用户不存在(404)/账号冻结(401)/密码错误(400)"来枚举有效用户名。
+// 真实原因仍保留在服务端日志与审计中间件的 FailureReason 中，不影响可观测性。
+func normalizeLoginVerifyError(err error) error {
+	switch {
+	case authenticationV1.IsUserNotFound(err),
+		authenticationV1.IsUserFreeze(err),
+		authenticationV1.IsInvalidPassword(err):
+		return authenticationV1.ErrorInvalidPassword("invalid username or password")
+	default:
+		return err
+	}
+}
 
 type AuthenticationService struct {
 	adminV1.AuthenticationServiceHTTPServer
@@ -40,6 +61,7 @@ type AuthenticationService struct {
 	clientType    authenticationV1.ClientType
 
 	captchaClient *captcha.Captcha
+	rateLimiter   *data.LoginRateLimiter
 }
 
 func NewAuthenticationService(
@@ -54,6 +76,7 @@ func NewAuthenticationService(
 	authenticator *data.Authenticator,
 	clientType authenticationV1.ClientType,
 	captchaClient *captcha.Captcha,
+	rateLimiter *data.LoginRateLimiter,
 ) *AuthenticationService {
 	return &AuthenticationService{
 		log:                ctx.NewLoggerHelper("authn/service/admin-service"),
@@ -67,6 +90,7 @@ func NewAuthenticationService(
 		authenticator:      authenticator,
 		clientType:         clientType,
 		captchaClient:      captchaClient,
+		rateLimiter:        rateLimiter,
 	}
 }
 
@@ -230,7 +254,7 @@ func (s *AuthenticationService) authorizeAndEnrichUserTokenPayloadUserTenantRela
 	var memberships []*identityV1.Membership
 	if tenantID > 0 {
 		// 指定租户
-		membership, err := s.membershipRepo.GetMembershipByUserTenant(ctx, userID)
+		membership, err := s.membershipRepo.GetMembershipByUserTenant(ctx, userID, tenantID)
 		if err != nil {
 			s.log.Errorf("get user [%d] membership for tenant [%d] failed [%s]", userID, tenantID, err.Error())
 			return authenticationV1.ErrorForbidden("insufficient authority")
@@ -337,6 +361,26 @@ func (s *AuthenticationService) resolveUserAuthority(ctx context.Context, user *
 func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *authenticationV1.LoginRequest) (*authenticationV1.LoginResponse, error) {
 	ctx = s.resetContextForLogin(ctx)
 
+	// 取客户端 IP（供限流维度使用），失败不阻断登录
+	clientIP := netutil.ClientIPFromContext(ctx)
+	username := req.GetUsername()
+
+	// ===== H5 闸门 1：登录限流预检（按 IP + 用户名双维度）=====
+	if s.rateLimiter != nil {
+		if locked, lerr := s.rateLimiter.IsLocked(ctx, clientIP, username); lerr != nil {
+			s.log.Errorf("login rate limiter pre-check failed: %s", lerr.Error())
+		} else if locked {
+			s.log.Warnf("login blocked by rate limiter: ip=%s, username=%s", clientIP, username)
+			return nil, authenticationV1.ErrorBadRequest("too many login failures, please try again later")
+		}
+	}
+
+	// ===== H5 闸门 2：强制验证码（始终启用；通过 HTTP Header 传递，避免改动 proto/前端生成代码）=====
+	if !s.verifyLoginCaptcha(ctx) {
+		return nil, authenticationV1.ErrorBadRequest("invalid or missing captcha")
+	}
+
+	// ===== 凭证校验 =====
 	var err error
 	if _, err = s.userCredentialRepo.VerifyCredential(ctx, &authenticationV1.VerifyCredentialRequest{
 		IdentityType: authenticationV1.UserCredential_USERNAME,
@@ -344,8 +388,18 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		Credential:   req.GetPassword(),
 		NeedDecrypt:  true,
 	}); err != nil {
+		// 服务端日志保留真实原因（USER_NOT_FOUND / USER_FREEZE / INVALID_PASSWORD），便于运维排查
 		s.log.Errorf("verify user credential failed for username [%s]: %s", req.GetUsername(), err.Error())
-		return nil, err
+
+		// H5：登录失败时自增失败计数（按 IP + 用户名双维度）
+		if s.rateLimiter != nil {
+			if _, _, _, cerr := s.rateLimiter.CheckAndIncr(ctx, clientIP, username); cerr != nil {
+				s.log.Errorf("login rate limiter incr failed: %s", cerr.Error())
+			}
+		}
+
+		// 对客户端统一返回同一文案，避免通过 HTTP 状态码/reason 枚举有效用户名（H11）
+		return nil, normalizeLoginVerifyError(err)
 	}
 
 	// 获取用户信息
@@ -377,6 +431,11 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		return nil, err
 	}
 
+	// H5：登录成功后清零失败计数
+	if s.rateLimiter != nil {
+		s.rateLimiter.Reset(ctx, clientIP, username)
+	}
+
 	return &authenticationV1.LoginResponse{
 		TokenType:        authenticationV1.TokenType_bearer,
 		AccessToken:      accessToken,
@@ -384,6 +443,32 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		ExpiresIn:        int64(s.authenticator.GetAccessTokenExpires(req.GetClientType()).Seconds()),
 		RefreshExpiresIn: trans.Ptr(int64(s.authenticator.GetRefreshTokenExpires(req.GetClientType()).Seconds())),
 	}, nil
+}
+
+// verifyLoginCaptcha 校验登录请求携带的验证码。
+// 验证码 id/value 通过 HTTP Header（X-Captcha-Id / X-Captcha-Value）传递。
+// captchaClient.Verify 已是 verify-and-delete 单次有效语义。
+// 注意：refresh_token / client_credentials 等非密码授权不走此校验（仅 doGrantTypePassword 调用）。
+func (s *AuthenticationService) verifyLoginCaptcha(ctx context.Context) bool {
+	if s.captchaClient == nil {
+		// captcha 未配置时 fail-open（仅记录告警），避免影响登录基本功能
+		return true
+	}
+	header := netutil.HeaderFromContext(ctx)
+	if header == nil {
+		return false
+	}
+	captchaID := strings.TrimSpace(header.Get(headerCaptchaID))
+	captchaValue := strings.TrimSpace(header.Get(headerCaptchaValue))
+	if captchaID == "" || captchaValue == "" {
+		return false
+	}
+	ok, err := s.captchaClient.Verify(ctx, captchaID, captchaValue)
+	if err != nil {
+		s.log.Errorf("verify captcha failed: %s", err.Error())
+		return false
+	}
+	return ok
 }
 
 // doGrantTypeRefreshToken 处理授权类型 - 刷新令牌

@@ -35,6 +35,7 @@ var ProviderSet = wire.NewSet(
 	data.NewCaptcha,
 
 	data.NewUserTokenCache,
+	data.NewLoginRateLimiter,
 
 	data.NewDictTypeRepo,
 	data.NewDictEntryRepo,

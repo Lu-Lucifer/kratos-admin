@@ -67,6 +67,16 @@ export const logRoutes: AppRouteObject[] = [
           // permission: 'sys:platform_admin', // 平台管理员权限（开发阶段暂时注释）
         },
       },
+      {
+        name: 'policy-evaluation-log',
+        path: 'policy-evaluation-logs', // 相对路径，最终为 /log/policy-evaluation-logs
+        element: createLazyRoute(() => import('@/pages/app/log/policy-evaluation-log')),
+        meta: {
+          title: 'routes:policy-evaluation-log',
+          icon: 'lucide:gavel', // Iconify 格式
+          // permission: 'sys:platform_admin', // 平台管理员权限（开发阶段暂时注释）
+        },
+      },
     ],
   },
 ];

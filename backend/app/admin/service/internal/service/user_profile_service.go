@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/tx7do/go-utils/trans"
@@ -16,6 +17,7 @@ import (
 	identityV1 "go-wind-admin/api/gen/go/identity/service/v1"
 
 	"go-wind-admin/pkg/middleware/auth"
+	"go-wind-admin/pkg/oss"
 )
 
 type UserProfileService struct {
@@ -24,6 +26,7 @@ type UserProfileService struct {
 	userRepo           data.UserRepo
 	roleRepo           *data.RoleRepo
 	userCredentialRepo *data.UserCredentialRepo
+	mc                 *oss.MinIOClient
 
 	log *log.Helper
 }
@@ -33,12 +36,14 @@ func NewUserProfileService(
 	userRepo data.UserRepo,
 	roleRepo *data.RoleRepo,
 	userCredentialRepo *data.UserCredentialRepo,
+	mc *oss.MinIOClient,
 ) *UserProfileService {
 	return &UserProfileService{
 		log:                ctx.NewLoggerHelper("user-profile/service/admin-service"),
 		userRepo:           userRepo,
 		roleRepo:           roleRepo,
 		userCredentialRepo: userCredentialRepo,
+		mc:                 mc,
 	}
 }
 
@@ -138,6 +143,31 @@ func (s *UserProfileService) UploadAvatar(ctx context.Context, req *identityV1.U
 	var avatarURL string
 	switch req.GetSource().(type) {
 	case *identityV1.UploadAvatarRequest_ImageBase64:
+		// 解码 base64 图片数据
+		imageBytes, derr := base64.StdEncoding.DecodeString(req.GetImageBase64())
+		if derr != nil {
+			s.log.Errorf("decode avatar base64 failed [%s]", derr.Error())
+			return nil, authenticationV1.ErrorBadRequest("invalid avatar base64 data")
+		}
+		if len(imageBytes) == 0 {
+			return nil, authenticationV1.ErrorBadRequest("empty avatar data")
+		}
+		// 校验图片大小（复用上传限制，头像不应超过该上限）
+		if int64(len(imageBytes)) > oss.MaxUploadSize {
+			return nil, authenticationV1.ErrorBadRequest("avatar exceeds max size")
+		}
+		// 嗅探真实图片类型并校验白名单
+		realMime, _ := oss.DetectFileType(imageBytes)
+		if !oss.IsAllowedMimeType(realMime) || len(realMime) < 6 || realMime[:6] != "image/" {
+			return nil, authenticationV1.ErrorBadRequest("only image files are allowed for avatar")
+		}
+		// 上传到 OSS（mc 自动嗅探 MIME/桶/对象名，头像统一进 images 桶）
+		_, _, downloadUrl, uerr := s.mc.UploadFile(ctx, "", "", realMime, imageBytes)
+		if uerr != nil {
+			s.log.Errorf("upload avatar to oss failed [%s]", uerr.Error())
+			return nil, authenticationV1.ErrorInternalServerError("upload avatar failed")
+		}
+		avatarURL = downloadUrl
 	case *identityV1.UploadAvatarRequest_ImageUrl:
 		avatarURL = req.GetImageUrl()
 	default:

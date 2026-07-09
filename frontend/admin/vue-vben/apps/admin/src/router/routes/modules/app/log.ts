@@ -74,6 +74,18 @@ const log: RouteRecordRaw[] = [
         component: () =>
           import('#/views/app/log/permission_audit_log/index.vue'),
       },
+
+      {
+        path: 'policy-evaluation-logs',
+        name: 'PolicyEvaluationLog',
+        meta: {
+          icon: 'lucide:gavel',
+          title: $t('menu.log.policyEvaluationLog'),
+          authority: ['sys:platform_admin'],
+        },
+        component: () =>
+          import('#/views/app/log/policy_evaluation_log/index.vue'),
+      },
     ],
   },
 ];

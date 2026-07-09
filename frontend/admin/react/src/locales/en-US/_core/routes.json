@@ -15,6 +15,7 @@
   "operation-audit-log": "Operation Audit Log",
   "data-access-audit-log": "Data Access Audit Log",
   "permission-audit-log": "Permission Audit Log",
+  "policy-evaluation-log": "Policy Evaluation Log",
   "opm": "Organization & Personnel",
   "org-units": "Organization Structure",
   "positions": "Position Management",

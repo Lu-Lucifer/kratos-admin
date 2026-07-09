@@ -430,6 +430,22 @@
     "action": "动作",
     "reason": "变更原因"
   },
+  "policyEvaluationLog": {
+    "moduleName": "策略评估日志",
+    "createdAt": "日志时间",
+    "result": "结果",
+    "policyId": "策略ID",
+    "permissionId": "权限ID",
+    "userId": "用户ID",
+    "membershipId": "成员关系ID",
+    "requestMethod": "请求方法",
+    "requestPath": "请求路径",
+    "tenantId": "租户ID",
+    "ipAddress": "IP地址",
+    "traceId": "追踪ID",
+    "effectDetails": "效果详情",
+    "evaluationContext": "评估上下文"
+  },
   "api": {
     "moduleName": "API资源",
     "path": "路径",

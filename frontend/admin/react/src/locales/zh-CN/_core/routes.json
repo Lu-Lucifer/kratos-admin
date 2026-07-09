@@ -15,6 +15,7 @@
   "operation-audit-log": "操作审计日志",
   "data-access-audit-log": "数据访问审计日志",
   "permission-audit-log": "权限审计日志",
+  "policy-evaluation-log": "策略评估日志",
   "opm": "组织人员管理",
   "org-units": "组织架构",
   "positions": "职位管理",

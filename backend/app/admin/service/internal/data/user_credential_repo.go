@@ -357,6 +357,17 @@ func (r *UserCredentialRepo) GetByIdentifier(ctx context.Context, req *authentic
 	return r.mapper.ToDTO(entity), nil
 }
 
+// dummyPasswordHash 是一个合法的 bcrypt 哈希，用于在用户不存在时执行一次假校验，
+// 让"用户不存在"与"密码错误"两条路径耗时一致，抹掉用户名枚举的计时侧信道。
+// 明文不可逆，仅作为恒定耗时的目标。
+const dummyPasswordHash = "$2a$10$1sbpKmhQDpXLHnDnEQ1nLe3oOnYyP2bUJyqHcX2T0Fq1qfyoXOrPm"
+
+// performDummyVerify 执行一次假的密码校验，用于抹平计时差异。
+// 返回值始终为 false，且从不抛错。
+func (r *UserCredentialRepo) performDummyVerify(plainCredential string) {
+	_, _ = r.passwordCrypto.Verify(plainCredential, dummyPasswordHash)
+}
+
 func (r *UserCredentialRepo) VerifyCredential(ctx context.Context, req *authenticationV1.VerifyCredentialRequest) (*authenticationV1.VerifyCredentialResponse, error) {
 	if req.GetNeedDecrypt() {
 		// 解密密码
@@ -383,6 +394,8 @@ func (r *UserCredentialRepo) VerifyCredential(ctx context.Context, req *authenti
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
+			// 恒定时间防护：用户不存在时也跑一次 bcrypt 校验，避免被计时攻击枚举用户名
+			r.performDummyVerify(req.GetCredential())
 			return nil, authenticationV1.ErrorUserNotFound("user not found")
 		}
 

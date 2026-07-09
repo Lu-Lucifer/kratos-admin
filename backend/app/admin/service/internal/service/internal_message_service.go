@@ -29,6 +29,14 @@ type InternalMessagePublisher interface {
 	Publish(ctx context.Context, streamId sse.StreamID, event *sse.Event)
 }
 
+// noopInternalMessagePublisher 是 InternalMessagePublisher 的空操作实现。
+// 当 SSE 服务未配置时（NewSseServer 返回 nil，不会调用 RegisterInternalMessagePublisher），
+// 用它作为默认值，避免 sendNotification 解引用 nil 接口导致 panic。
+// 此时站内信仍会落库，只是不通过 SSE 实时推送。
+type noopInternalMessagePublisher struct{}
+
+func (noopInternalMessagePublisher) Publish(_ context.Context, _ sse.StreamID, _ *sse.Event) {}
+
 type InternalMessageService struct {
 	adminV1.InternalMessageServiceHTTPServer
 
@@ -61,6 +69,8 @@ func NewInternalMessageService(
 		userRepo:                     userRepo,
 		authenticator:                authenticator,
 		clientType:                   clientType,
+		// 默认空操作发布者：SSE 未配置时不 panic；配置后由 RegisterInternalMessagePublisher 覆盖
+		internalMessagePublisher: noopInternalMessagePublisher{},
 	}
 }
 

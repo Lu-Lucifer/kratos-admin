@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"go-wind-admin/app/admin/service/internal/data"
 	"io"
+	"net"
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/minio/minio-go/v7"
@@ -21,6 +24,7 @@ import (
 	storageV1 "go-wind-admin/api/gen/go/storage/service/v1"
 
 	"go-wind-admin/pkg/middleware/auth"
+	"go-wind-admin/pkg/netutil"
 	"go-wind-admin/pkg/oss"
 )
 
@@ -141,6 +145,25 @@ func (s *FileTransferService) directUploadFile(ctx context.Context, req *storage
 		return nil, storageV1.ErrorUploadFailed("unknown source file name")
 	}
 
+	// H3: 文件大小校验，防 DoS / 超大文件滥用
+	if int64(len(req.GetFile())) > oss.MaxUploadSize {
+		return nil, storageV1.ErrorFileTooLarge("file size %d exceeds max upload size %d", len(req.GetFile()), oss.MaxUploadSize)
+	}
+
+	// H3: 通过文件内容嗅探真实 MIME，避免信任客户端可伪造的 mime 字段
+	// （防止把 text/html / 可执行文件伪装成 image/* 放进可被下载/渲染的 bucket）
+	realMime, _ := oss.DetectFileType(req.GetFile())
+	if !oss.IsAllowedMimeType(realMime) {
+		return nil, storageV1.ErrorUnsupportedMediaType("file type %q is not allowed", realMime)
+	}
+	// 用真实嗅探出的类型覆盖客户端声明，防止 bucket 路由被绕过
+	req.Mime = trans.Ptr(realMime)
+
+	// H3: 校验客户端可控的 FileDirectory，拒绝 .. 等路径穿越/命名空间注入
+	if !oss.IsFileDirectorySafe(req.GetStorageObject().GetFileDirectory()) {
+		return nil, storageV1.ErrorBadRequest("invalid file directory")
+	}
+
 	// 获取操作人信息
 	operator, err := auth.FromContext(ctx)
 	if err != nil {
@@ -180,6 +203,11 @@ func (s *FileTransferService) directUploadFile(ctx context.Context, req *storage
 		req.GetFile(),
 		req.GetSourceFileName(),
 		info, downloadUrl); err != nil {
+		// H3: 元数据落库失败时记录告警。对象已入 OSS 但无 DB 记录（孤儿对象），
+		// 这里不掩盖错误，让上层感知以便后续清理。
+		s.log.Errorf("upload succeeded but failed to record file metadata (orphan object %q in bucket %q): %v",
+			info.Key, info.Bucket, err)
+		return nil, err
 	}
 
 	return &storageV1.UploadFileResponse{
@@ -208,6 +236,16 @@ func (s *FileTransferService) presignedUploadFile(ctx context.Context, req *stor
 
 	if req.GetSourceFileName() == "" {
 		return nil, storageV1.ErrorUploadFailed("unknown source file name")
+	}
+
+	// H3: 校验声明的 contentType 在白名单内（presign 阶段拿不到真实字节，只能校验声明值）
+	if !oss.IsAllowedMimeType(contentType) {
+		return nil, storageV1.ErrorUnsupportedMediaType("declared content type %q is not allowed", contentType)
+	}
+
+	// H3: 校验客户端可控的 FileDirectory
+	if !oss.IsFileDirectorySafe(req.GetStorageObject().GetFileDirectory()) {
+		return nil, storageV1.ErrorBadRequest("invalid file directory")
 	}
 
 	if req.StorageObject.BucketName == nil {
@@ -269,33 +307,91 @@ func (s *FileTransferService) UploadFile(ctx context.Context, req *storageV1.Upl
 	}
 }
 
-// downloadFileFromURL 从指定的 URL 下载文件内容
+// downloadFileFromURL 从指定的 URL 下载文件内容。
+// H2: 内置 SSRF 防护——scheme 白名单、解析后逐 IP 校验阻断内网、
+// 自定义 DialContext 钉死 IP 防 DNS rebinding、CheckRedirect 二次校验、
+// 限制响应体大小、超时。
 func (s *FileTransferService) downloadFileFromURL(ctx context.Context, downloadUrl string) (*storageV1.DownloadFileResponse, error) {
 	if downloadUrl == "" {
 		return nil, storageV1.ErrorDownloadFailed("empty download url")
 	}
 
-	// 如果需要支持断点续传，可在此构造请求并设置 Range 头
+	// 1. 静态校验 URL（scheme/host/userinfo）
+	u, err := netutil.ValidateURL(downloadUrl)
+	if err != nil {
+		return nil, storageV1.ErrorDownloadFailed("invalid download url: %s", err.Error())
+	}
+
+	// 2. 解析主机名并校验所有解析到的 IP 不在内网
+	ips, err := netutil.LookupAndCheckHost(ctx, u.Hostname())
+	if err != nil {
+		return nil, storageV1.ErrorForbidden("blocked download host: %s", err.Error())
+	}
+	// 选第一个合法 IP 作为拨号目标（pin IP，防 DNS rebinding）
+	pinnedIP := ips[0].String()
+
+	// 3. 构造自定义 http.Client：钉死 IP、限制重定向、超时
+	pinnedPort := u.Port()
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	transport := &http.Transport{
+		DialContext: func(dialCtx context.Context, network, addr string) (net.Conn, error) {
+			// 忽略 addr 中的解析结果，强制使用前面已校验过的 pinnedIP
+			host := pinnedIP
+			if pinnedPort != "" {
+				host = net.JoinHostPort(pinnedIP, pinnedPort)
+			} else {
+				// 补默认端口
+				if strings.ToLower(u.Scheme) == "https" {
+					host = net.JoinHostPort(pinnedIP, "443")
+				} else {
+					host = net.JoinHostPort(pinnedIP, "80")
+				}
+			}
+			return dialer.DialContext(dialCtx, network, host)
+		},
+		// 关闭 keepalive，避免长连接复用跨越不同 URL 的拨号上下文
+		DisableKeepAlives: true,
+	}
+	httpClient := &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// 每次重定向都重新校验目标 URL 与主机
+			if len(via) >= 5 {
+				return http.ErrUseLastResponse
+			}
+			if _, rerr := netutil.ValidateURL(req.URL.String()); rerr != nil {
+				return fmt.Errorf("redirect to invalid url: %w", rerr)
+			}
+			if _, rerr := netutil.LookupAndCheckHost(req.Context(), req.URL.Hostname()); rerr != nil {
+				return fmt.Errorf("redirect to blocked host: %w", rerr)
+			}
+			return nil
+		},
+	}
+
 	httpReq, err := http.NewRequestWithContext(ctx, "GET", downloadUrl, nil)
 	if err != nil {
-		return nil, storageV1.ErrorDownloadFailed(err.Error())
+		return nil, storageV1.ErrorDownloadFailed("%s", err.Error())
 	}
-	// 示例：如果你要设置 Range（可选）
-	// httpReq.Header.Set("Range", "bytes=100-")
 
-	resp, err := http.DefaultClient.Do(httpReq)
+	resp, err := httpClient.Do(httpReq)
 	if err != nil {
-		return nil, storageV1.ErrorDownloadFailed(err.Error())
+		return nil, storageV1.ErrorDownloadFailed("%s", err.Error())
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-		return nil, storageV1.ErrorDownloadFailed("unexpected status: " + resp.Status)
+		return nil, storageV1.ErrorDownloadFailed("%s", "unexpected status: "+resp.Status)
 	}
 
-	fileData, err := io.ReadAll(resp.Body)
+	// 4. 限制响应体大小，防 DoS
+	fileData, err := io.ReadAll(io.LimitReader(resp.Body, oss.MaxDownloadSize+1))
 	if err != nil {
-		return nil, storageV1.ErrorDownloadFailed(err.Error())
+		return nil, storageV1.ErrorDownloadFailed("read body failed: %s", err.Error())
+	}
+	if int64(len(fileData)) > oss.MaxDownloadSize {
+		return nil, storageV1.ErrorDownloadFailed("remote file exceeds max download size %d", oss.MaxDownloadSize)
 	}
 
 	return &storageV1.DownloadFileResponse{
