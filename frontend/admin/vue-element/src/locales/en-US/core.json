@@ -42,6 +42,7 @@
     "username": "Username",
     "password": "Password",
     "captchaCode": "Captcha",
+    "captchaRefresh": "Click to refresh captcha",
     "capsLock": "Caps Lock is On",
     "rememberMe": "Remember Me",
     "forgetPassword": "Forgot Password?",

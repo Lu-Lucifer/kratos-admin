@@ -13,6 +13,7 @@ import {
 } from '@/api';
 import { startRefreshTimer, stopRefreshTimer, disconnectSSEServer } from '@/hooks/useTokenRefresh';
 import { queryClient } from '@/core/query-client';
+import { setCaptchaHeaders } from '@/core/transport/rest';
 
 /**
  * 令牌载荷
@@ -44,7 +45,11 @@ export interface AuthState {
   error: string | null;
 
   // 动作
-  login: (params: authenticationservicev1_LoginRequest, onSuccess?: () => void) => Promise<void>;
+  login: (
+    params: authenticationservicev1_LoginRequest,
+    onSuccess?: () => void,
+    captcha?: { id: string; value: string },
+  ) => Promise<void>;
   register: (params: { username: string; password: string }) => Promise<void>;
   logout: (redirect?: boolean) => Promise<void>;
   refreshToken: () => Promise<string>;
@@ -75,11 +80,14 @@ export const useAuthStore = create<AuthState>()(
       error: null,
 
       // 登录
-      login: async (params, onSuccess) => {
+      login: async (params, onSuccess, captcha) => {
         set({ loginLoading: true, error: null });
 
         try {
-          // 1. 调用登录接口
+          // 1. 调用登录接口（若有验证码，先设置一次性 Header，由 transport 消费）
+          if (captcha) {
+            setCaptchaHeaders(captcha.id, captcha.value);
+          }
           const response = await loginMutation.execute({
             ...params,
             password: encryptPassword(params.password || ''),

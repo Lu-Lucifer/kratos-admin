@@ -38,6 +38,29 @@
         </el-form-item>
       </el-tooltip>
 
+      <!-- 验证码 -->
+      <el-form-item prop="captchaCode">
+        <div class="captcha-row">
+          <el-input
+            v-model.trim="loginFormData.captchaCode"
+            :placeholder="t('core.login.captchaCode')"
+            @keyup.enter="handleLoginSubmit"
+          >
+            <template #prefix>
+              <el-icon><Key /></el-icon>
+            </template>
+          </el-input>
+          <div
+            class="captcha-image"
+            :title="t('core.login.captchaRefresh')"
+            @click="refreshCaptcha"
+          >
+            <img v-if="captchaImage" :src="captchaImage" alt="captcha" />
+            <span v-else class="captcha-image__placeholder">{{ t("core.login.captchaRefresh") }}</span>
+          </div>
+        </div>
+      </el-form-item>
+
       <div class="flex-x-between w-full">
         <el-checkbox v-model="loginFormData.rememberMe">
           {{ t("core.login.rememberMe") }}
@@ -76,10 +99,14 @@ const loginFormRef = ref<FormInstance>();
 const loading = ref(false);
 // 是否大写锁定
 const isCapsLock = ref(false);
+// 验证码状态
+const captchaId = ref("");
+const captchaImage = ref("");
 // 记住我
 const loginFormData = ref<any>({
   username: "admin",
   password: "123456",
+  captchaCode: "",
 });
 
 const loginRules = computed(() => {
@@ -103,7 +130,29 @@ const loginRules = computed(() => {
         trigger: "blur",
       },
     ],
+    captchaCode: [
+      {
+        required: true,
+        trigger: "blur",
+        message: t("core.login.message.captchaCode.required"),
+      },
+    ],
   };
+});
+
+// 获取验证码
+async function refreshCaptcha() {
+  try {
+    const resp = await authStore.getCaptcha();
+    captchaId.value = resp?.captchaId ?? "";
+    captchaImage.value = resp?.imageBase64 ?? "";
+  } catch {
+    // 验证码获取失败不阻断页面
+  }
+}
+
+onMounted(() => {
+  refreshCaptcha();
 });
 
 /**
@@ -119,14 +168,21 @@ async function handleLoginSubmit() {
 
   loading.value = true;
   try {
-    // 2. 执行登录
-    await authStore.login(loginFormData.value, async () => {
-      // 登录成功，跳转到目标页面
-      const redirectPath = (route.query.redirect as string) || "/";
-      await router.push(decodeURIComponent(redirectPath));
-    });
+    // 2. 执行登录（把验证码 id 和用户输入一并传入）
+    await authStore.login(
+      {
+        ...loginFormData.value,
+        captchaId: captchaId.value,
+      },
+      async () => {
+        // 登录成功，跳转到目标页面
+        const redirectPath = (route.query.redirect as string) || "/";
+        await router.push(decodeURIComponent(redirectPath));
+      }
+    );
   } catch {
-    // 登录失败处理
+    // 登录失败刷新验证码
+    refreshCaptcha();
   } finally {
     loading.value = false;
   }
@@ -161,6 +217,38 @@ function toOtherForm(type: "register" | "resetPwd") {
 
   html:not(.dark) & {
     color: #1a1d28;
+  }
+}
+
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.captcha-image {
+  flex-shrink: 0;
+  width: 120px;
+  height: 40px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color);
+  background: var(--el-fill-color-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__placeholder {
+    color: var(--el-text-color-placeholder);
+    font-size: 12px;
   }
 }
 </style>

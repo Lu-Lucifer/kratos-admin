@@ -81,8 +81,11 @@ export function useAuth() {
       return authStore.getState().loginLoading;
     },
     /** 登录 */
-    login: (params: authenticationservicev1_LoginRequest, onSuccess?: () => void) =>
-      authStore.getState().login(params, onSuccess),
+    login: (
+      params: authenticationservicev1_LoginRequest,
+      onSuccess?: () => void,
+      captcha?: { id: string; value: string },
+    ) => authStore.getState().login(params, onSuccess, captcha),
     /** 登出（主动，调后端接口） */
     logout: (redirect?: boolean) => authStore.getState().logout(redirect),
     /** 强制登出（被动，不调后端接口，用于 token 失效场景） */

@@ -29,6 +29,10 @@ const (
 	headerCaptchaValue = "X-Captcha-Value"
 )
 
+// CaptchaEnabled 控制登录是否强制校验验证码。
+// 开发/无 Redis 等环境可改为 false 跳过验证码校验，避免登录被 400 invalid or missing captcha 阻断。
+const CaptchaEnabled = true
+
 // normalizeLoginVerifyError 将登录凭证校验的多种细分错误统一对外成 INVALID_PASSWORD，
 // 防止攻击者通过区分"用户不存在(404)/账号冻结(401)/密码错误(400)"来枚举有效用户名。
 // 真实原因仍保留在服务端日志与审计中间件的 FailureReason 中，不影响可观测性。
@@ -450,6 +454,10 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 // captchaClient.Verify 已是 verify-and-delete 单次有效语义。
 // 注意：refresh_token / client_credentials 等非密码授权不走此校验（仅 doGrantTypePassword 调用）。
 func (s *AuthenticationService) verifyLoginCaptcha(ctx context.Context) bool {
+	if !CaptchaEnabled {
+		// 验证码开关关闭，跳过校验
+		return true
+	}
 	if s.captchaClient == nil {
 		// captcha 未配置时 fail-open（仅记录告警），避免影响登录基本功能
 		return true
@@ -638,18 +646,22 @@ func (s *AuthenticationService) WhoAmI(ctx context.Context, _ *emptypb.Empty) (*
 	}, nil
 }
 
-func (s *AuthenticationService) GenerateCaptcha(_ context.Context, _ *emptypb.Empty) (*authenticationV1.GenerateCaptchaResponse, error) {
-	captchaId, captchaValue, _, err := s.captchaClient.Generate()
+func (s *AuthenticationService) GenerateCaptcha(ctx context.Context, _ *emptypb.Empty) (*authenticationV1.GenerateCaptchaResponse, error) {
+	captchaId, captchaImage, answer, err := s.captchaClient.Generate()
 	if err != nil {
 		s.log.Errorf("generate captcha failed: %s", err.Error())
 		return nil, authenticationV1.ErrorInternalServerError("generate captcha failed")
 	}
 
-	//s.log.Debugf("generated captcha: id=%s, value=%s", captchaId, captchaValue)
+	// Generate() 只生成验证码但不落盘，必须手动 Save 到 Redis，否则 Verify 时查不到。
+	if err = s.captchaClient.Save(ctx, captchaId, answer); err != nil {
+		s.log.Errorf("save captcha failed: %s", err.Error())
+		return nil, authenticationV1.ErrorInternalServerError("save captcha failed")
+	}
 
 	return &authenticationV1.GenerateCaptchaResponse{
 		CaptchaId:   captchaId,
-		ImageBase64: captchaValue,
+		ImageBase64: captchaImage,
 	}, nil
 }
 

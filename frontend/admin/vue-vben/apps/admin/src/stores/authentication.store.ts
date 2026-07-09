@@ -14,6 +14,7 @@ import { fetchMyPermissionCode, fetchUserProfile, loginMutation, logoutMutation,
 import { $t } from '#/locales';
 import { queryClient } from '#/plugins/vue-query';
 import { router } from '#/router';
+import { setCaptchaHeaders } from '#/transport/rest';
 import { globalSSEClient } from '#/transport/sse';
 
 type RefreshTokenFunc = () => Promise<string> | string;
@@ -78,6 +79,11 @@ export const useAuthStore = defineStore('auth', () => {
     let userInfo: null | UserInfo = null;
     try {
       loginLoading.value = true;
+
+      // 若表单携带验证码，先设置一次性 Header（由 transport.unary 消费）
+      if (params.captchaId && params.captchaValue) {
+        setCaptchaHeaders(params.captchaId, params.captchaValue);
+      }
 
       const resp = await loginMutation.execute({
         username: params.username,

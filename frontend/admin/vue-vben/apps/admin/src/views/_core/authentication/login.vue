@@ -1,16 +1,84 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import type { VbenFormSchema } from '@vben/common-ui';
 
-import { computed } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 
 import { AuthenticationLogin, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
 import { useAuthStore } from '#/stores';
+import { fetchGenerateCaptcha } from '#/api/composables';
 
 defineOptions({ name: 'Login' });
 
 const authStore = useAuthStore();
+
+// 验证码状态
+const captchaId = ref('');
+const captchaImage = ref('');
+const captchaLoading = ref(false);
+
+async function refreshCaptcha() {
+  captchaLoading.value = true;
+  try {
+    const resp = await fetchGenerateCaptcha();
+    captchaId.value = resp.captchaId ?? '';
+    captchaImage.value = resp.imageBase64 ?? '';
+  } catch {
+    // 验证码获取失败不阻断页面
+  } finally {
+    captchaLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  refreshCaptcha();
+});
+
+// 验证码图片渲染函数（响应式读取 captchaImage / captchaLoading）
+// 作为函数式组件传入 suffix，由 VbenRenderContent 通过 h() 渲染
+const renderCaptchaImage = () =>
+  h(
+    'div',
+    {
+      title: $t('authentication.captchaRefresh'),
+      onClick: () => {
+        if (!captchaLoading.value) refreshCaptcha();
+      },
+      style: {
+        height: '36px',
+        width: '110px',
+        flexShrink: '0',
+        cursor: 'pointer',
+        borderRadius: '6px',
+        overflow: 'hidden',
+        border: '1px solid #d9d9d9',
+        background: '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+    },
+    captchaImage.value
+      ? [
+          h('img', {
+            src: captchaImage.value,
+            alt: 'captcha',
+            style: {
+              height: '100%',
+              width: '100%',
+              objectFit: 'cover',
+            },
+          }),
+        ]
+      : [
+          h(
+            'span',
+            { style: { color: '#999', fontSize: '12px' } },
+            captchaLoading.value ? '...' : $t('authentication.captchaRefresh'),
+          ),
+        ],
+  );
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
@@ -20,7 +88,7 @@ const formSchema = computed((): VbenFormSchema[] => {
         placeholder: $t('authentication.usernameTip'),
       },
       dependencies: {
-        trigger(values, form) {
+        trigger(values) {
           if (values.selectAccount) {
           }
         },
@@ -39,8 +107,32 @@ const formSchema = computed((): VbenFormSchema[] => {
       label: $t('authentication.password'),
       rules: z.string().min(1, { message: $t('authentication.passwordTip') }),
     },
+    {
+      component: 'VbenInput',
+      componentProps: {
+        placeholder: $t('authentication.captchaTip'),
+        autocomplete: 'off',
+        class: 'w-auto flex-1 min-w-0',
+      },
+      fieldName: 'captchaValue',
+      label: $t('authentication.captcha'),
+      rules: z.string().min(1, { message: $t('authentication.captchaTip') }),
+      suffix: renderCaptchaImage,
+    },
   ];
 });
+
+// 包装 authLogin：提交时把 captchaId 一并传入
+async function handleSubmit(values: Record<string, any>) {
+  const result = await authStore.authLogin({
+    ...values,
+    captchaId: captchaId.value,
+  });
+  // 登录失败时刷新验证码
+  if (!result?.userInfo) {
+    refreshCaptcha();
+  }
+}
 </script>
 
 <template>
@@ -52,6 +144,6 @@ const formSchema = computed((): VbenFormSchema[] => {
     :show-qrcode-login="false"
     :show-register="true"
     :show-third-party-login="false"
-    @submit="authStore.authLogin"
+    @submit="handleSubmit"
   />
 </template>

@@ -20,6 +20,7 @@ import {
   getMe,
 } from "@/api/composables";
 import { i18n } from "@/core/i18n";
+import { setCaptchaHeaders } from "@/core/transport/rest";
 import {
   startRefreshTimer,
   stopRefreshTimer,
@@ -114,6 +115,11 @@ async function login(
   let userInfo: null | UserInfo = null;
   try {
     loginLoading.value = true;
+
+    // 若表单携带验证码，先设置一次性 Header（由 transport.unary 消费）
+    if (params.captchaId && params.captchaCode) {
+      setCaptchaHeaders(params.captchaId, params.captchaCode);
+    }
 
     const resp = await authLogin({
       username: params.username,
