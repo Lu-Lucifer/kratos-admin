@@ -165,16 +165,18 @@ func (s *ApiService) syncWithOpenAPI(ctx context.Context) error {
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(assets.OpenApiData)
 	if err != nil {
-		s.log.Fatalf("加载 OpenAPI 文档失败: %v", err)
+		// 此前用 log.Fatal（os.Exit 直接终止进程），其后的 return 是死代码。
+		// 启动期同步失败应返回错误由上层决定，而非杀掉整个进程。
+		s.log.Errorf("加载 OpenAPI 文档失败: %v", err)
 		return adminV1.ErrorInternalServerError("load OpenAPI document failed")
 	}
 
 	if doc == nil {
-		s.log.Fatal("OpenAPI 文档为空")
+		s.log.Error("OpenAPI 文档为空")
 		return adminV1.ErrorInternalServerError("OpenAPI document is nil")
 	}
 	if doc.Paths == nil {
-		s.log.Fatal("OpenAPI 文档的路径为空")
+		s.log.Error("OpenAPI 文档的路径为空")
 		return adminV1.ErrorInternalServerError("OpenAPI document paths is nil")
 	}
 

@@ -275,7 +275,7 @@ func (r *ApiRepo) Update(ctx context.Context, req *permissionV1.UpdateApiRequest
 		}
 	}
 
-	builder := r.entClient.Client().Debug().Api.Update()
+	builder := r.entClient.Client().Api.Update()
 	err := r.repository.UpdateX(ctx, builder, req.Data, req.GetUpdateMask(),
 		func(dto *permissionV1.Api) {
 			builder.
@@ -302,7 +302,7 @@ func (r *ApiRepo) Delete(ctx context.Context, req *permissionV1.DeleteApiRequest
 		return permissionV1.ErrorBadRequest("invalid parameter")
 	}
 
-	builder := r.entClient.Client().Debug().Api.Delete()
+	builder := r.entClient.Client().Api.Delete()
 
 	_, err := r.repository.Delete(ctx, builder, func(s *sql.Selector) {
 		s.Where(sql.EQ(api.FieldID, req.GetId()))
