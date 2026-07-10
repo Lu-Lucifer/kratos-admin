@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -25,8 +27,15 @@ import (
 	"go-wind-admin/pkg/middleware/auth"
 )
 
+// defaultBroadcastTimeout 全员广播 fan-out 的总超时。
+// 脱离请求的 HTTP ctx 后由该超时兜底，避免广播 goroutine 因个别慢操作无限期挂起。
+const defaultBroadcastTimeout = 5 * time.Minute
+
 type InternalMessagePublisher interface {
 	Publish(ctx context.Context, streamId sse.StreamID, event *sse.Event)
+	// TryPublish 非阻塞推送：流不存在或缓冲已满时立即返回 false，不阻塞调用方。
+	// 用于消息广播，避免某个慢客户端的 SSE 流缓冲塞满时卡住整个广播 fan-out。
+	TryPublish(ctx context.Context, streamId sse.StreamID, event *sse.Event) bool
 }
 
 // noopInternalMessagePublisher 是 InternalMessagePublisher 的空操作实现。
@@ -36,6 +45,10 @@ type InternalMessagePublisher interface {
 type noopInternalMessagePublisher struct{}
 
 func (noopInternalMessagePublisher) Publish(_ context.Context, _ sse.StreamID, _ *sse.Event) {}
+
+func (noopInternalMessagePublisher) TryPublish(_ context.Context, _ sse.StreamID, _ *sse.Event) bool {
+	return false
+}
 
 type InternalMessageService struct {
 	adminV1.InternalMessageServiceHTTPServer
@@ -246,16 +259,25 @@ func (s *InternalMessageService) DeleteMessage(ctx context.Context, req *interna
 
 // RevokeMessage 撤销某条消息
 func (s *InternalMessageService) RevokeMessage(ctx context.Context, req *internalMessageV1.RevokeMessageRequest) (*emptypb.Empty, error) {
-	var err error
-	if err = s.internalMessageRepo.Delete(ctx, req.GetMessageId()); err != nil {
-		s.log.Errorf("delete internal message failed: [%d]", req.GetMessageId())
+	// 消息本体删除与收件人撤销分属两个 repo，无共享事务。
+	// 此前第一个错误被第二个覆盖并丢弃，消息删除失败但收件人撤销成功时会向客户端返回成功（消息仍在）。
+	// 这里两者都执行，用 errors.Join 聚合，保证任一失败都如实上报。
+	var errs []error
+	if err := s.internalMessageRepo.Delete(ctx, req.GetMessageId()); err != nil {
+		s.log.Errorf("delete internal message failed: [%d] %s", req.GetMessageId(), err)
+		errs = append(errs, fmt.Errorf("delete message failed: %w", err))
 	}
 
-	if err = s.internalMessageRecipientRepo.RevokeMessage(ctx, req); err != nil {
-		s.log.Errorf("delete internal message inbox failed: [%d][%d]", req.GetMessageId(), req.GetUserId())
+	if err := s.internalMessageRecipientRepo.RevokeMessage(ctx, req); err != nil {
+		s.log.Errorf("delete internal message inbox failed: [%d][%d] %s", req.GetMessageId(), req.GetUserId(), err)
+		errs = append(errs, fmt.Errorf("revoke recipients failed: %w", err))
 	}
 
-	return &emptypb.Empty{}, err
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 // SendMessage 发送消息
@@ -285,22 +307,46 @@ func (s *InternalMessageService) SendMessage(ctx context.Context, req *internalM
 	}
 
 	if req.GetTargetAll() {
-		users, err := s.userRepo.List(ctx, &paginationV1.PagingRequest{NoPaging: trans.Ptr(true)})
-		if err != nil {
-			s.log.Errorf("send message failed, list users failed, %s", err)
-		} else {
-			for _, user := range users.Items {
-				_ = s.sendNotification(ctx, msg.GetId(), user.GetId(), operator.GetUserId(), &now, msg.GetTitle(), msg.GetContent())
+		// 全员广播：fan-out 可能很慢（每个用户一次 DB 写 + Redis SCAN），
+		// 不能阻塞调用方 HTTP 请求，也不能用请求 ctx（客户端断连会中断投递）。
+		// 因此在脱离请求的后台 ctx 上异步执行，并在完成后记录失败计数。
+		go func() {
+			broadcastCtx, cancel := context.WithTimeout(context.Background(), defaultBroadcastTimeout)
+			defer cancel()
+
+			users, err := s.userRepo.List(broadcastCtx, &paginationV1.PagingRequest{NoPaging: trans.Ptr(true)})
+			if err != nil {
+				s.log.Errorf("send message failed, list users failed: %s", err)
+				return
 			}
-		}
-	} else {
-		if req.RecipientUserId != nil {
-			_ = s.sendNotification(ctx, msg.GetId(), req.GetRecipientUserId(), operator.GetUserId(), &now, msg.GetTitle(), msg.GetContent())
-		} else {
-			if len(req.TargetUserIds) != 0 {
-				for _, uid := range req.TargetUserIds {
-					_ = s.sendNotification(ctx, msg.GetId(), uid, operator.GetUserId(), &now, msg.GetTitle(), msg.GetContent())
+
+			var failCount int
+			for _, user := range users.Items {
+				if err := s.sendNotification(broadcastCtx, msg.GetId(), user.GetId(), operator.GetUserId(), &now, msg.GetTitle(), msg.GetContent()); err != nil {
+					failCount++
 				}
+			}
+			if failCount > 0 {
+				s.log.Warnf("broadcast message [%d]: %d/%d recipients failed", msg.GetId(), failCount, len(users.Items))
+			} else {
+				s.log.Infof("broadcast message [%d] to %d recipients done", msg.GetId(), len(users.Items))
+			}
+		}()
+	} else {
+		// 定向发送：人数少，仍同步执行，但同样上报错误而非全部丢弃。
+		if req.RecipientUserId != nil {
+			if err := s.sendNotification(ctx, msg.GetId(), req.GetRecipientUserId(), operator.GetUserId(), &now, msg.GetTitle(), msg.GetContent()); err != nil {
+				s.log.Errorf("send message to user [%d] failed: %s", req.GetRecipientUserId(), err)
+			}
+		} else {
+			var failCount int
+			for _, uid := range req.TargetUserIds {
+				if err := s.sendNotification(ctx, msg.GetId(), uid, operator.GetUserId(), &now, msg.GetTitle(), msg.GetContent()); err != nil {
+					failCount++
+				}
+			}
+			if failCount > 0 {
+				s.log.Warnf("send message [%d]: %d/%d target users failed", msg.GetId(), failCount, len(req.TargetUserIds))
 			}
 		}
 	}
@@ -330,15 +376,26 @@ func (s *InternalMessageService) sendNotification(ctx context.Context, messageId
 	}
 	recipient.Id = entity.Id
 
-	recipientJson, _ := json.Marshal(recipient)
+	recipientJson, err := json.Marshal(recipient)
+	if err != nil {
+		// 序列化失败：记录后跳过推送（SSE 客户端把空 Data 当作断流）。
+		// 收件人记录已落库，不影响投递状态，只是不实时推送。
+		s.log.Errorf("marshal recipient failed, skip sse push: %s", err)
+		return nil
+	}
 
 	recipientStreamIds := s.authenticator.GetAccessTokens(ctx, s.clientType, recipientUserId)
 	for _, streamId := range recipientStreamIds {
-		s.internalMessagePublisher.Publish(ctx, sse.StreamID(streamId), &sse.Event{
+		// 用 TryPublish 非阻塞推送：流不存在或缓冲已满时立即跳过，
+		// 避免某个慢客户端塞满 SSE 流缓冲时阻塞发送方。
+		// 站内信已落库，客户端重连后可通过拉取收件箱补取，实时推送仅为尽力而为。
+		if ok := s.internalMessagePublisher.TryPublish(ctx, sse.StreamID(streamId), &sse.Event{
 			ID:    []byte(id.NewGUIDv4(false)),
 			Data:  recipientJson,
 			Event: []byte("notification"),
-		})
+		}); !ok {
+			s.log.Debugf("sse try publish skipped (stream not exist or buffer full): user=%d stream=%s", recipientUserId, streamId)
+		}
 	}
 
 	return nil
