@@ -274,7 +274,7 @@ func (r *TenantRepo) Update(ctx context.Context, req *identityV1.UpdateTenantReq
 		}
 	}
 
-	builder := r.entClient.Client().Debug().Tenant.Update()
+	builder := r.entClient.Client().Tenant.Update()
 	err := r.repository.UpdateX(ctx, builder, req.Data, req.GetUpdateMask(),
 		func(dto *identityV1.Tenant) {
 			builder.
@@ -335,14 +335,23 @@ func (r *TenantRepo) Delete(ctx context.Context, req *identityV1.DeleteTenantReq
 	return nil
 }
 
-// TenantExists checks if a tenant with the given username exists.
+// TenantExists checks if a tenant with the given code or name exists.
 func (r *TenantRepo) TenantExists(ctx context.Context, req *identityV1.TenantExistsRequest) (*identityV1.TenantExistsResponse, error) {
-	exist, err := r.entClient.Client().Tenant.Query().
-		Where(
-			tenant.CodeEQ(req.GetCode()),
-			tenant.NameEQ(req.GetName()),
-		).
-		Exist(ctx)
+	// code 和 name 各自唯一（见 schema 索引），冲突检测应取 OR：
+	// 此前用 AND，仅当 code 和 name 同时命中同一行才返回存在，单字段冲突被漏判。
+	query := r.entClient.Client().Tenant.Query()
+	predicates := []predicate.Tenant{}
+	if code := req.GetCode(); code != "" {
+		predicates = append(predicates, tenant.CodeEQ(code))
+	}
+	if name := req.GetName(); name != "" {
+		predicates = append(predicates, tenant.NameEQ(name))
+	}
+	if len(predicates) > 0 {
+		query = query.Where(tenant.Or(predicates...))
+	}
+
+	exist, err := query.Exist(ctx)
 	if err != nil {
 		r.log.Errorf("query exist failed: %s", err.Error())
 		return nil, identityV1.ErrorInternalServerError("query exist failed")

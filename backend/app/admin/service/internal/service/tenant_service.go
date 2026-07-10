@@ -218,21 +218,30 @@ func (s *TenantService) CreateTenantWithAdminUser(ctx context.Context, req *iden
 	req.Tenant.CreatedBy = trans.Ptr(operator.UserId)
 	req.User.CreatedBy = trans.Ptr(operator.UserId)
 
-	// Check if tenant code or admin username already exists
-	if _, err = s.tenantRepo.TenantExists(ctx, &identityV1.TenantExistsRequest{
+	// Check if tenant code or name already exists
+	// 此前只检查 err、丢弃 Exist：重复 code/name 不会被拦，直到 DB 唯一约束报原始 500。
+	tenantExistsResp, err := s.tenantRepo.TenantExists(ctx, &identityV1.TenantExistsRequest{
 		Code: req.GetTenant().GetCode(),
 		Name: req.GetTenant().GetName(),
-	}); err != nil {
-		s.log.Errorf("check tenant code exists err: %v", err)
+	})
+	if err != nil {
+		s.log.Errorf("check tenant exists err: %v", err)
 		return nil, err
+	}
+	if tenantExistsResp.GetExist() {
+		return nil, adminV1.ErrorBadRequest("tenant with given code or name already exists")
 	}
 
 	// Check if admin user exists
-	if _, err = s.userRepo.UserExists(ctx, &identityV1.UserExistsRequest{
+	userExistsResp, err := s.userRepo.UserExists(ctx, &identityV1.UserExistsRequest{
 		QueryBy: &identityV1.UserExistsRequest_Username{Username: req.GetUser().GetUsername()},
-	}); err != nil {
+	})
+	if err != nil {
 		s.log.Errorf("check admin user exists err: %v", err)
 		return nil, err
+	}
+	if userExistsResp.GetExist() {
+		return nil, adminV1.ErrorBadRequest("admin user with given username already exists")
 	}
 
 	tx, cleanup, err := s.tenantRepo.BeginTx(ctx)
