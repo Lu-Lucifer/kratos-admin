@@ -49,6 +49,17 @@ func NewFileTransferService(
 	}
 }
 
+// joinObjectPath 拼接 OSS object 的存储路径：目录与文件名之间补 "/"，
+// 目录为空或文件名本身已含前导 "/" 时避免重复斜杠。供下载/删除等按元数据重建 key 时使用。
+func joinObjectPath(directory, fileName string) string {
+	directory = strings.Trim(directory, "/")
+	fileName = strings.TrimLeft(fileName, "/")
+	if directory == "" {
+		return fileName
+	}
+	return directory + "/" + fileName
+}
+
 func parseKey(key string) (folder, filename, ext string) {
 	if key == "" {
 		return "", "", ""
@@ -415,7 +426,9 @@ func (s *FileTransferService) DownloadFile(ctx context.Context, req *storageV1.D
 		req.Selector = &storageV1.DownloadFileRequest_StorageObject{
 			StorageObject: &storageV1.StorageObject{
 				BucketName: resp.BucketName,
-				ObjectName: trans.Ptr(resp.GetFileDirectory() + resp.GetSaveFileName()),
+				// 此前缺少目录与文件名之间的 "/" 分隔，导致拼出的 object key 形如 "dirabc.jpg" 永远 404。
+				// 与 file_service.go Delete 处的拼接逻辑保持一致：dir + "/" + name；目录为空时不加前缀。
+				ObjectName: trans.Ptr(joinObjectPath(resp.GetFileDirectory(), resp.GetSaveFileName())),
 			},
 		}
 

@@ -457,14 +457,32 @@ func (r *UserCredentialRepo) prepareCredential(credentialType *usercredential.Cr
 // ChangeCredential 修改认证信息
 func (r *UserCredentialRepo) ChangeCredential(ctx context.Context, req *authenticationV1.ChangeCredentialRequest) error {
 	if req.GetNeedDecrypt() {
-		// 解密密码
-		bytesPass, _ := base64.StdEncoding.DecodeString(req.GetOldCredential())
-		plainPassword, _ := crypto.AesDecrypt(bytesPass, crypto.DefaultAESKey, nil)
-		req.OldCredential = string(plainPassword)
+		// 解密旧密码
+		oldBytes, err := base64.StdEncoding.DecodeString(req.GetOldCredential())
+		if err != nil {
+			r.log.Errorf("decode base64 old credential failed: %s", err.Error())
+			return authenticationV1.ErrorBadRequest("invalid old credential format")
+		}
+		oldPlain, err := crypto.AesDecrypt(oldBytes, crypto.DefaultAESKey, nil)
+		if err != nil {
+			r.log.Errorf("decrypt old credential failed: %s", err.Error())
+			return authenticationV1.ErrorBadRequest("decrypt old credential failed")
+		}
+		req.OldCredential = string(oldPlain)
 
-		bytesPass, _ = base64.StdEncoding.DecodeString(req.GetNewCredential())
-		plainPassword, _ = crypto.AesDecrypt(bytesPass, crypto.DefaultAESKey, nil)
-		req.NewCredential = string(plainPassword)
+		// 解密新密码。此前 base64/AES 错误被吞掉（_），解密失败会把空串/垃圾串当成新口令
+		// 哈希存储，导致后续登录恒失败且难以排查。这里与 VerifyCredential 对齐：解密失败即报错。
+		newBytes, err := base64.StdEncoding.DecodeString(req.GetNewCredential())
+		if err != nil {
+			r.log.Errorf("decode base64 new credential failed: %s", err.Error())
+			return authenticationV1.ErrorBadRequest("invalid new credential format")
+		}
+		newPlain, err := crypto.AesDecrypt(newBytes, crypto.DefaultAESKey, nil)
+		if err != nil {
+			r.log.Errorf("decrypt new credential failed: %s", err.Error())
+			return authenticationV1.ErrorBadRequest("decrypt new credential failed")
+		}
+		req.NewCredential = string(newPlain)
 	}
 
 	entity, err := r.entClient.Client().UserCredential.
@@ -522,9 +540,17 @@ func (r *UserCredentialRepo) ChangeCredential(ctx context.Context, req *authenti
 // ResetCredential 修改认证信息
 func (r *UserCredentialRepo) ResetCredential(ctx context.Context, req *authenticationV1.ResetCredentialRequest) error {
 	if req.GetNeedDecrypt() {
-		// 解密密码
-		bytesPass, _ := base64.StdEncoding.DecodeString(req.GetNewCredential())
-		plainPassword, _ := crypto.AesDecrypt(bytesPass, crypto.DefaultAESKey, nil)
+		// 解密新密码（base64/AES 错误不可吞：吞错会把空串/垃圾串哈希存为新口令）
+		bytesPass, err := base64.StdEncoding.DecodeString(req.GetNewCredential())
+		if err != nil {
+			r.log.Errorf("decode base64 new credential failed: %s", err.Error())
+			return authenticationV1.ErrorBadRequest("invalid new credential format")
+		}
+		plainPassword, err := crypto.AesDecrypt(bytesPass, crypto.DefaultAESKey, nil)
+		if err != nil {
+			r.log.Errorf("decrypt new credential failed: %s", err.Error())
+			return authenticationV1.ErrorBadRequest("decrypt new credential failed")
+		}
 		req.NewCredential = string(plainPassword)
 	}
 

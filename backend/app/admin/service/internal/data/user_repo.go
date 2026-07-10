@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 
+	"slices"
 	"strconv"
 	"time"
 
@@ -600,32 +601,50 @@ func (r *userRepo) Update(ctx context.Context, req *identityV1.UpdateUserRequest
 		}
 	}()
 
+	// 关联（角色/组织/岗位）的重建采用 delete-then-insert，故只有当对应字段确实在本次
+	// 更新范围（field-mask）内时才收集其 ID，否则只改昵称等普通字段的"部分更新"若 Data 里
+	// 带了（哪怕为空/旧值）关联字段，会误把用户已有角色/组织/岗位全部清空。
+	// maskPathInUpdate：无 mask 视为全量更新（true）；有 mask 则按路径精确匹配。
+	maskPathInUpdate := func(path string) bool {
+		fm := req.GetUpdateMask()
+		if fm == nil || len(fm.Paths) == 0 {
+			return true
+		}
+		return slices.Contains(fm.Paths, path)
+	}
+
 	var roleIds []uint32
-	if len(req.Data.GetRoleIds()) > 0 {
-		roleIds = req.Data.GetRoleIds()
+	if maskPathInUpdate("role_ids") {
+		if len(req.Data.GetRoleIds()) > 0 {
+			roleIds = req.Data.GetRoleIds()
+		}
+		if req.Data.RoleId != nil && *req.Data.RoleId > 0 {
+			roleIds = append(roleIds, *req.Data.RoleId)
+		}
+		roleIds = sliceutil.Unique(roleIds)
 	}
-	if req.Data.RoleId != nil && *req.Data.RoleId > 0 {
-		roleIds = append(roleIds, *req.Data.RoleId)
-	}
-	roleIds = sliceutil.Unique(roleIds)
 
 	var orgUnitIds []uint32
-	if len(req.Data.GetOrgUnitIds()) > 0 {
-		orgUnitIds = req.Data.GetOrgUnitIds()
+	if maskPathInUpdate("org_unit_ids") {
+		if len(req.Data.GetOrgUnitIds()) > 0 {
+			orgUnitIds = req.Data.GetOrgUnitIds()
+		}
+		if req.Data.OrgUnitId != nil && *req.Data.OrgUnitId > 0 {
+			orgUnitIds = append(orgUnitIds, *req.Data.OrgUnitId)
+		}
+		orgUnitIds = sliceutil.Unique(orgUnitIds)
 	}
-	if req.Data.OrgUnitId != nil && *req.Data.OrgUnitId > 0 {
-		orgUnitIds = append(orgUnitIds, *req.Data.OrgUnitId)
-	}
-	orgUnitIds = sliceutil.Unique(orgUnitIds)
 
 	var positionIds []uint32
-	if len(req.Data.GetPositionIds()) > 0 {
-		positionIds = req.Data.GetPositionIds()
+	if maskPathInUpdate("position_ids") {
+		if len(req.Data.GetPositionIds()) > 0 {
+			positionIds = req.Data.GetPositionIds()
+		}
+		if req.Data.PositionId != nil && *req.Data.PositionId > 0 {
+			positionIds = append(positionIds, *req.Data.PositionId)
+		}
+		positionIds = sliceutil.Unique(positionIds)
 	}
-	if req.Data.PositionId != nil && *req.Data.PositionId > 0 {
-		positionIds = append(positionIds, *req.Data.PositionId)
-	}
-	positionIds = sliceutil.Unique(positionIds)
 
 	req.GetUpdateMask().Paths = utils.FilterBlacklist(req.GetUpdateMask().Paths, []string{
 		"role_ids",

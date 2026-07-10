@@ -121,8 +121,9 @@ func (c *MinIOClient) GetUploadPresignedUrl(ctx context.Context, req *storageV1.
 			return nil, storageV1.ErrorUploadFailed("failed to generate presigned PUT policy")
 		}
 
+		// 注意：主机替换必须作用于已赋值的 uploadUrl，此前误用 downloadUrl（此时仍为 ""）导致 no-op。
 		uploadUrl = presignedURL.String()
-		uploadUrl = ReplaceEndpointHost(downloadUrl, c.conf.Minio.UploadHost, c.conf.Minio.Endpoint)
+		uploadUrl = ReplaceEndpointHost(uploadUrl, c.conf.Minio.UploadHost, c.conf.Minio.Endpoint)
 
 		downloadUrl = JoinObjectUrl(presignedURL.Host, bucketName, objectName)
 		downloadUrl = ReplaceEndpointHost(downloadUrl, c.conf.Minio.DownloadHost, c.conf.Minio.Endpoint)
@@ -132,10 +133,21 @@ func (c *MinIOClient) GetUploadPresignedUrl(ctx context.Context, req *storageV1.
 
 	case storageV1.GetUploadPresignedUrlRequest_Post:
 		policy := minio.NewPostPolicy()
-		_ = policy.SetBucket(bucketName)
-		_ = policy.SetKey(objectName)
-		_ = policy.SetExpires(time.Now().UTC().Add(expiry))
-		_ = policy.SetContentType(req.GetContentType())
+		// policy 的 Set* 调用可能因参数非法返回错误，静默忽略会使策略缺少约束（如 content-type），
+		// 因此这里检查并在失败时直接返回。
+		for _, e := range []error{
+			policy.SetBucket(bucketName),
+			policy.SetKey(objectName),
+			policy.SetExpires(time.Now().UTC().Add(expiry)),
+			policy.SetContentType(req.GetContentType()),
+			// 预签名上传同样必须施加大小上限，避免客户端绕过服务端直接上传超大对象（DoS/存储滥用）。
+			policy.SetContentLengthRange(0, int64(MaxUploadSize)),
+		} {
+			if e != nil {
+				c.log.Errorf("Failed to build presigned POST policy: %v", e)
+				return nil, storageV1.ErrorUploadFailed("failed to build presigned POST policy")
+			}
+		}
 
 		presignedURL, formData, err = c.mc.PresignedPostPolicy(ctx, policy)
 		if err != nil {
@@ -143,11 +155,12 @@ func (c *MinIOClient) GetUploadPresignedUrl(ctx context.Context, req *storageV1.
 			return nil, storageV1.ErrorUploadFailed("failed to generate presigned POST policy")
 		}
 
+		// 此前此处有三处变量串错：UploadHost 替换误用 downloadUrl、DownloadHost 替换结果误赋给 uploadUrl。
 		uploadUrl = presignedURL.String()
-		uploadUrl = ReplaceEndpointHost(downloadUrl, c.conf.Minio.UploadHost, c.conf.Minio.Endpoint)
+		uploadUrl = ReplaceEndpointHost(uploadUrl, c.conf.Minio.UploadHost, c.conf.Minio.Endpoint)
 
 		downloadUrl = JoinObjectUrl(presignedURL.Host, bucketName, objectName)
-		uploadUrl = ReplaceEndpointHost(downloadUrl, c.conf.Minio.DownloadHost, c.conf.Minio.Endpoint)
+		downloadUrl = ReplaceEndpointHost(downloadUrl, c.conf.Minio.DownloadHost, c.conf.Minio.Endpoint)
 		if !strings.HasPrefix(downloadUrl, presignedURL.Scheme) {
 			downloadUrl = presignedURL.Scheme + "://" + downloadUrl
 		}
