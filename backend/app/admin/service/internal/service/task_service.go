@@ -21,6 +21,7 @@ import (
 	adminV1 "go-wind-admin/api/gen/go/admin/service/v1"
 	taskV1 "go-wind-admin/api/gen/go/task/service/v1"
 
+	appViewer "go-wind-admin/pkg/entgo/viewer"
 	"go-wind-admin/pkg/middleware/auth"
 	"go-wind-admin/pkg/oss"
 	"go-wind-admin/pkg/task"
@@ -151,8 +152,13 @@ func (s *TaskService) Update(ctx context.Context, req *taskV1.UpdateTaskRequest)
 		return nil, err
 	}
 
-	// 获取更新前的任务，用于判断调度器中是否有正在运行的注册项
-	oldTask, _ := s.taskRepo.Get(ctx, &taskV1.GetTaskRequest{QueryBy: &taskV1.GetTaskRequest_Id{Id: req.GetId()}})
+	// 获取更新前的任务，用于判断调度器中是否有正在运行的注册项。
+	// 此处不可吞错：若 Get 失败则 oldTask==nil，下方 remove 会因 oldTask==nil 被跳过，
+	// 导致旧调度项残留（任务"停用/更新后仍运行"）。故失败直接返回。
+	oldTask, err := s.taskRepo.Get(ctx, &taskV1.GetTaskRequest{QueryBy: &taskV1.GetTaskRequest_Id{Id: req.GetId()}})
+	if err != nil {
+		return nil, err
+	}
 
 	req.Data.Id = trans.Ptr(req.GetId())
 
@@ -188,16 +194,24 @@ func (s *TaskService) Update(ctx context.Context, req *taskV1.UpdateTaskRequest)
 func (s *TaskService) Delete(ctx context.Context, req *taskV1.DeleteTaskRequest) (*emptypb.Empty, error) {
 	var err error
 	var t *taskV1.Task
+	// 获取待删除任务用于清理调度项。失败必须返回：否则 t==nil 会跳过调度清理，
+	// 造成 DB 已删但调度器里周期任务仍触发的"幽灵任务"泄漏。
 	if t, err = s.taskRepo.Get(ctx, &taskV1.GetTaskRequest{QueryBy: &taskV1.GetTaskRequest_Id{Id: req.GetId()}}); err != nil {
-		s.log.Error(err)
+		return nil, err
 	}
 
 	if err = s.taskRepo.Delete(ctx, req); err != nil {
 		return nil, err
 	}
 
-	if t != nil {
-		_ = s.stopTask(t)
+	// DB 删除成功后清理调度项。stopTask 在 enable=false 时会返回错误并跳过清理，
+	// 但 disabled 任务的调度项仍可能残留（经由直接改库或历史 Update 路径），
+	// 因此这里绕过 enable 保护，直接按 typeName 注销。
+	if s.hasScheduler() && t.GetType() == taskV1.Task_PERIODIC && t.GetTypeName() != "" {
+		if removeErr := s.taskScheduler.RemovePeriodicTask(t.GetTypeName()); removeErr != nil {
+			// 注销失败仅告警，不阻断删除（DB 记录已删）
+			s.log.Warnf("删除任务后注销调度项失败[%s]: %v", t.GetTypeName(), removeErr)
+		}
 	}
 
 	return &emptypb.Empty{}, nil
@@ -279,8 +293,22 @@ func (s *TaskService) startAllTask(ctx context.Context) (int32, error) {
 	s.log.Infof("开始开启定时任务，总计[%d]个", resp.GetTotal())
 
 	// 重新启动任务
+	//
+	// 注意（调度器限制）：底层 asynq 调度器用 typeName 既做 handler 路由又做调度项去重键，
+	// entryIDs[typeName] 只能保留一个 entry。若多个租户持有相同 typeName 的 PERIODIC 任务，
+	// 后注册者会覆盖 entryIDs，使先注册的调度项成为无法注销的"孤儿"（永久触发）。
+	// 因此这里按 typeName 去重，每个 typeName 只注册一次（取首个）。
+	// 彻底的跨租户隔离需调度器支持"路由类型/调度键分离"，属库层改造（TODO）。
 	var count int32
+	registeredTypeNames := make(map[string]bool)
 	for _, t := range resp.GetItems() {
+		if t.GetType() == taskV1.Task_PERIODIC {
+			if registeredTypeNames[t.GetTypeName()] {
+				s.log.Warnf("跳过重复 typeName[%s] 的定时任务注册（调度器以 typeName 去重，多租户同名会泄漏孤儿调度项）", t.GetTypeName())
+				continue
+			}
+			registeredTypeNames[t.GetTypeName()] = true
+		}
 		if s.startTask(t) != nil {
 			continue
 		} else {
@@ -428,7 +456,10 @@ func (s *TaskService) startTask(t *taskV1.Task) error {
 func (s *TaskService) AsyncBackup(taskType string, taskData *task.BackupTaskData) error {
 	s.log.Infof("AsyncBackup [%s] [%+v] [%s]", taskType, taskData, taskData.Name)
 
-	ctx := context.Background()
+	// 用 SystemViewerContext 包裹：备份需要导出全部租户的核心表，
+	// 而 TenantPrivacy 在 viewer 缺失时会返回 error 导致带 tenant_id 的表全部查询失败。
+	// SystemViewer 的 IsSystemContext()==true，使 TenantPrivacy.EvalQuery 放行全量数据。
+	ctx := appViewer.NewSystemViewerContext(context.Background())
 	backupName := ""
 	if taskData != nil {
 		backupName = taskData.Name
@@ -442,7 +473,10 @@ func (s *TaskService) AsyncBackup(taskType string, taskData *task.BackupTaskData
 	}
 
 	// 1. 导出核心表（ent 访问收敛在 data 层的 BackupRepo 内）
-	tables := s.backupRepo.ExportCoreTables(ctx)
+	tables, err := s.backupRepo.ExportCoreTables(ctx)
+	if err != nil {
+		return fmt.Errorf("export core tables failed: %w", err)
+	}
 
 	// 2. 序列化为 JSON
 	jsonBytes, err := json.MarshalIndent(map[string]any{

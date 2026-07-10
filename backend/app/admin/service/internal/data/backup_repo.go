@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-kratos/kratos/v2/log"
 	entCrud "github.com/tx7do/go-crud/entgo"
@@ -35,10 +36,12 @@ func (r *BackupRepo) IsConfigured() bool {
 // ExportCoreTables 导出核心业务表的全量记录。
 //
 // 仅导出身份/权限/组织相关配置表（数据量可控、恢复价值高）；审计日志等大体量表不纳入。
-// 遇到单表查询错误时记录告警并跳过，确保部分表故障不阻断整体备份。
+//
+// 任一核心表导出失败即返回 error：备份是"全量恢复"语义，缺表会造成静默还原残缺数据，
+// 因此宁可不产出也不产出残缺备份。调用方据此决定是否重试。
 //
 // 返回的 map 键为表名，值为可被 json 序列化的 ent 实体切片。
-func (r *BackupRepo) ExportCoreTables(ctx context.Context) map[string]any {
+func (r *BackupRepo) ExportCoreTables(ctx context.Context) (map[string]any, error) {
 	client := r.entClient.Client()
 	result := make(map[string]any)
 
@@ -62,13 +65,12 @@ func (r *BackupRepo) ExportCoreTables(ctx context.Context) map[string]any {
 	for _, t := range exports {
 		rows, err := t.query()
 		if err != nil {
-			// 单表失败不阻断整体备份，记录告警后继续
-			r.log.Warnf("backup: export table %q failed (skipped): %s", t.name, err.Error())
-			result[t.name] = map[string]any{"_error": err.Error()}
-			continue
+			// 核心表导出失败直接返回错误，避免产出残缺备份被当作成功
+			r.log.Errorf("backup: export table %q failed: %s", t.name, err.Error())
+			return nil, fmt.Errorf("export table %q failed: %w", t.name, err)
 		}
 		result[t.name] = rows
 	}
 
-	return result
+	return result, nil
 }
