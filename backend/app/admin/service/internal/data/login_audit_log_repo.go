@@ -81,6 +81,9 @@ func (r *LoginAuditLogRepo) init() {
 	r.mapper.AppendConverters(r.statusConverter.NewConverterPair())
 	r.mapper.AppendConverters(r.actionTypeConverter.NewConverterPair())
 	r.mapper.AppendConverters(r.riskLevelConverter.NewConverterPair())
+	// 此前漏注册 loginMethodConverter：写入时直接调 converter 故正常，
+	// 但读回（Get/List）走共享 mapper，login_method 字段恒为零值。补注册。
+	r.mapper.AppendConverters(r.loginMethodConverter.NewConverterPair())
 }
 
 func (r *LoginAuditLogRepo) Count(ctx context.Context, whereCond []func(s *sql.Selector)) (int, error) {
@@ -135,7 +138,7 @@ func (r *LoginAuditLogRepo) Get(ctx context.Context, req *auditV1.GetLoginAuditL
 		return nil, adminV1.ErrorBadRequest("invalid parameter")
 	}
 
-	builder := r.entClient.Client().Debug().LoginAuditLog.Query()
+	builder := r.entClient.Client().LoginAuditLog.Query()
 
 	var whereCond []func(s *sql.Selector)
 	switch req.QueryBy.(type) {
