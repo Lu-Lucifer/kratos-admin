@@ -181,7 +181,11 @@ func NewUserTokenPayloadWithClaims(claims *authn.AuthClaims) (*authenticationV1.
 	return payload, nil
 }
 
-// NewUserTokenPayloadWithJwtMapClaims 从 JWT MapClaims 创建用户令牌
+// NewUserTokenPayloadWithJwtMapClaims 从 JWT MapClaims 创建用户令牌。
+//
+// 安全说明：该函数会被审计日志中间件在请求路径上用 ParseUnverified（不验签）
+// 解析客户端可伪造的 Authorization 头，因此对每个 claim 必须用两值类型断言，
+// 避免 claim 类型不符时 panic 崩溃请求 goroutine（未认证远程 DoS）。
 func NewUserTokenPayloadWithJwtMapClaims(claims jwt.MapClaims) (*authenticationV1.UserTokenPayload, error) {
 	payload := &authenticationV1.UserTokenPayload{}
 
@@ -193,37 +197,31 @@ func NewUserTokenPayloadWithJwtMapClaims(claims jwt.MapClaims) (*authenticationV
 		payload.Username = trans.Ptr(sub)
 	}
 
-	userId, _ := claims[ClaimFieldUserID]
-	if userId != nil {
-		payload.UserId = uint32(userId.(float64))
+	// JSON 数字在 Go 里解码为 float64；这里两值断言，类型不符则跳过而非 panic。
+	if userId, ok := claims[ClaimFieldUserID].(float64); ok {
+		payload.UserId = uint32(userId)
 	}
 
-	tenantId, _ := claims[ClaimFieldTenantID]
-	if tenantId != nil {
-		payload.TenantId = trans.Ptr(uint32(tenantId.(float64)))
+	if tenantId, ok := claims[ClaimFieldTenantID].(float64); ok {
+		payload.TenantId = trans.Ptr(uint32(tenantId))
 	}
 
-	clientId, _ := claims[ClaimFieldClientID]
-	if clientId != nil {
-		payload.ClientId = trans.Ptr(clientId.(string))
+	if clientId, ok := claims[ClaimFieldClientID].(string); ok {
+		payload.ClientId = trans.Ptr(clientId)
 	}
 
-	deviceId, _ := claims[ClaimFieldDeviceID]
-	if deviceId != nil {
-		payload.DeviceId = trans.Ptr(deviceId.(string))
+	if deviceId, ok := claims[ClaimFieldDeviceID].(string); ok {
+		payload.DeviceId = trans.Ptr(deviceId)
 	}
 
-	dataScope, _ := claims[ClaimFieldDataScope]
-	if dataScope != nil {
-		v, ok := identityV1.DataScope_value[dataScope.(string)]
-		if ok {
+	if dataScope, ok := claims[ClaimFieldDataScope].(string); ok {
+		if v, vok := identityV1.DataScope_value[dataScope]; vok {
 			payload.DataScope = trans.Ptr(identityV1.DataScope(v))
 		}
 	}
 
-	orgUnitID, _ := claims[ClaimFieldOrgUnitID]
-	if orgUnitID != nil {
-		payload.OrgUnitId = trans.Ptr(uint32(orgUnitID.(float64)))
+	if orgUnitID, ok := claims[ClaimFieldOrgUnitID].(float64); ok {
+		payload.OrgUnitId = trans.Ptr(uint32(orgUnitID))
 	}
 
 	roleCodes, _ := claims[ClaimFieldRoleCodes]
@@ -231,7 +229,10 @@ func NewUserTokenPayloadWithJwtMapClaims(claims jwt.MapClaims) (*authenticationV
 		switch itf := roleCodes.(type) {
 		case []interface{}:
 			for _, rc := range itf {
-				payload.Roles = append(payload.Roles, rc.(string))
+				// 数组元素同样两值断言，类型不符则跳过该元素。
+				if rcStr, rcOk := rc.(string); rcOk {
+					payload.Roles = append(payload.Roles, rcStr)
+				}
 			}
 
 		case []string:
