@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	paginationV1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
+	"github.com/tx7do/go-crud/viewer"
 	"github.com/tx7do/go-utils/aggregator"
 	"github.com/tx7do/go-utils/id"
 	"github.com/tx7do/go-utils/timeutil"
@@ -308,11 +309,20 @@ func (s *InternalMessageService) SendMessage(ctx context.Context, req *internalM
 
 	if req.GetTargetAll() {
 		// 全员广播：fan-out 可能很慢（每个用户一次 DB 写 + Redis SCAN），
-		// 不能阻塞调用方 HTTP 请求，也不能用请求 ctx（客户端断连会中断投递）。
+		// 不能阻塞调用方 HTTP 请求，也不能直接复用请求 ctx（客户端断连会取消 ctx 进而中断投递）。
 		// 因此在脱离请求的后台 ctx 上异步执行，并在完成后记录失败计数。
+		//
+		// 注意 viewer：请求 ctx 里携带操作人的 UserViewer（auth 中间件注入），ent 的 TenantPrivacy
+		// 在 viewer 缺失时会返回 error。若直接用 context.Background() 会丢掉 viewer，
+		// 导致 userRepo.List 与 recipientRepo.Create 全部失败（广播实际一人未送达）。
+		// 故启动 goroutine 前先从请求 ctx 取出 viewer，再贴到后台 ctx 上，保持与同步路径一致的租户可见性。
+		vc, _ := viewer.FromContext(ctx)
 		go func() {
 			broadcastCtx, cancel := context.WithTimeout(context.Background(), defaultBroadcastTimeout)
 			defer cancel()
+			if vc != nil {
+				broadcastCtx = viewer.WithContext(broadcastCtx, vc)
+			}
 
 			users, err := s.userRepo.List(broadcastCtx, &paginationV1.PagingRequest{NoPaging: trans.Ptr(true)})
 			if err != nil {
