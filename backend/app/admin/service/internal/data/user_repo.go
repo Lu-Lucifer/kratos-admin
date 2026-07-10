@@ -605,16 +605,23 @@ func (r *userRepo) Update(ctx context.Context, req *identityV1.UpdateUserRequest
 	// 更新范围（field-mask）内时才收集其 ID，否则只改昵称等普通字段的"部分更新"若 Data 里
 	// 带了（哪怕为空/旧值）关联字段，会误把用户已有角色/组织/岗位全部清空。
 	// maskPathInUpdate：无 mask 视为全量更新（true）；有 mask 则按路径精确匹配。
-	maskPathInUpdate := func(path string) bool {
+	// 注意 User 同时有单数（role_id）和复数（role_ids）字段，两者任一在 mask 内即视为
+	// 本类关联参与本次更新（与下方收集逻辑一致：RoleIds + RoleId 都会被收集）。
+	maskPathInUpdate := func(paths ...string) bool {
 		fm := req.GetUpdateMask()
 		if fm == nil || len(fm.Paths) == 0 {
 			return true
 		}
-		return slices.Contains(fm.Paths, path)
+		for _, p := range paths {
+			if slices.Contains(fm.Paths, p) {
+				return true
+			}
+		}
+		return false
 	}
 
 	var roleIds []uint32
-	if maskPathInUpdate("role_ids") {
+	if maskPathInUpdate("role_ids", "role_id") {
 		if len(req.Data.GetRoleIds()) > 0 {
 			roleIds = req.Data.GetRoleIds()
 		}
@@ -625,7 +632,7 @@ func (r *userRepo) Update(ctx context.Context, req *identityV1.UpdateUserRequest
 	}
 
 	var orgUnitIds []uint32
-	if maskPathInUpdate("org_unit_ids") {
+	if maskPathInUpdate("org_unit_ids", "org_unit_id") {
 		if len(req.Data.GetOrgUnitIds()) > 0 {
 			orgUnitIds = req.Data.GetOrgUnitIds()
 		}
@@ -636,7 +643,7 @@ func (r *userRepo) Update(ctx context.Context, req *identityV1.UpdateUserRequest
 	}
 
 	var positionIds []uint32
-	if maskPathInUpdate("position_ids") {
+	if maskPathInUpdate("position_ids", "position_id") {
 		if len(req.Data.GetPositionIds()) > 0 {
 			positionIds = req.Data.GetPositionIds()
 		}
@@ -648,8 +655,11 @@ func (r *userRepo) Update(ctx context.Context, req *identityV1.UpdateUserRequest
 
 	req.GetUpdateMask().Paths = utils.FilterBlacklist(req.GetUpdateMask().Paths, []string{
 		"role_ids",
+		"role_id",
 		"position_ids",
+		"position_id",
 		"org_unit_ids",
+		"org_unit_id",
 	})
 
 	var entity *identityV1.User

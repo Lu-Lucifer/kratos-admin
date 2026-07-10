@@ -182,10 +182,15 @@ func (s *TaskService) Update(ctx context.Context, req *taskV1.UpdateTaskRequest)
 		}
 	}
 
-	// 根据更新后的 enable 状态决定是否重新启动
-	if err = s.startTask(t); err != nil {
-		s.log.Error(err)
-		return nil, adminV1.ErrorInternalServerError("task scheduling failed: %s", err.Error())
+	// 根据更新后的 enable 状态决定是否重新启动。
+	// 注意：disable 也是一种合法的更新意图（更新即停用），不应视为调度失败。
+	// startTask 内部对 enable==false 直接返回 error，若此处无差别调用会把
+	// "成功停用"误报成 InternalServerError。因此仅在 enable 时才启动。
+	if t.GetEnable() {
+		if err = s.startTask(t); err != nil {
+			s.log.Error(err)
+			return nil, adminV1.ErrorInternalServerError("task scheduling failed: %s", err.Error())
+		}
 	}
 
 	return &emptypb.Empty{}, nil
