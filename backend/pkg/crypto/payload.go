@@ -14,6 +14,10 @@ const (
 
 // EncryptPayload encrypts the entire payload and returns a map with encrypted data
 // This is used to store encrypted configuration in Redis/Asynq
+//
+// 安全契约：仅当真正完成加密时才置 IsEncryptedKey=true。若全局加密器未配置
+// （EncryptIfNeeded 返回明文原值），则不标记为已加密，避免调用方误判明文为密文
+// 而在解密侧产生"解密失败"或静默数据错乱。
 func EncryptPayload(payload map[string]interface{}) (map[string]interface{}, error) {
 	// Marshal the payload to JSON
 	jsonData, err := json.Marshal(payload)
@@ -22,15 +26,17 @@ func EncryptPayload(payload map[string]interface{}) (map[string]interface{}, err
 	}
 
 	// Encrypt the JSON
-	encrypted, err := EncryptIfNeeded(string(jsonData))
+	plaintext := string(jsonData)
+	encrypted, err := EncryptIfNeeded(plaintext)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt payload: %w", err)
 	}
 
-	// Return a map with encrypted config and metadata
+	// 仅当密文与明文不同（确实加密）时标记 IsEncryptedKey，
+	// 否则保持明文存储，与 DecryptPayload 的"未加密即原样返回"逻辑一致。
 	result := map[string]interface{}{
 		EncryptedConfigKey: encrypted,
-		IsEncryptedKey:     true,
+		IsEncryptedKey:     encrypted != plaintext,
 	}
 
 	// Preserve non-sensitive fields that might be needed for routing/scheduling

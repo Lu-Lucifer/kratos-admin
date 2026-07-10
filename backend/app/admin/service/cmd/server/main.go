@@ -2,16 +2,17 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/tx7do/kratos-transport/transport/asynq"
 	"github.com/tx7do/kratos-transport/transport/sse"
 
 	conf "github.com/tx7do/kratos-bootstrap/api/gen/go/conf/v1"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
-
-	//_ "github.com/tx7do/kratos-bootstrap/config/apollo"
 	//_ "github.com/tx7do/kratos-bootstrap/config/consul"
 	//_ "github.com/tx7do/kratos-bootstrap/config/etcd"
 	//_ "github.com/tx7do/kratos-bootstrap/config/kubernetes"
@@ -36,6 +37,7 @@ import (
 
 	//_ "github.com/tx7do/kratos-bootstrap/tracer"
 
+	appCrypto "go-wind-admin/pkg/crypto"
 	"go-wind-admin/pkg/serviceid"
 )
 
@@ -49,14 +51,27 @@ func newApp(
 	as *asynq.Server,
 	ss *sse.Server,
 ) *kratos.App {
-	return bootstrap.NewApp(ctx,
-		hs,
-		as,
-		ss,
-	)
+	// asynq / sse 在配置缺失时返回 nil（typed-nil）。
+	// kratos 的 app.Run() 会对每个 server 调 Start()/Stop()，
+	// 把 typed-nil 指针当作 transport.Server 解引用会 panic。
+	// 因此这里跳过未配置的服务器，使"未配置 asynq/SSE"的部署能正常启动。
+	servers := []transport.Server{hs}
+	if as != nil {
+		servers = append(servers, as)
+	}
+	if ss != nil {
+		servers = append(servers, ss)
+	}
+	return bootstrap.NewApp(ctx, servers...)
 }
 
 func runApp() error {
+	// 初始化全局加密器（供 task payload 等路径对敏感配置做 AES-GCM 加密）。
+	// 通过环境变量 GOWIND_CRYPTO_KEY 提供密钥；未设置时加密功能禁用（no-op）。
+	// 注意：EncryptPayload 只在真正加密时才标记 IsEncryptedKey，因此未配置密钥
+	// 时 payload 以明文存储且不会被误判为已加密——调用方无需额外处理。
+	initGlobalEncryptorFromEnv()
+
 	ctx := bootstrap.NewContext(
 		context.Background(),
 		&conf.AppInfo{
@@ -66,6 +81,18 @@ func runApp() error {
 		},
 	)
 	return bootstrap.RunApp(ctx, initApp)
+}
+
+// initGlobalEncryptorFromEnv 从环境变量读取加密密钥并初始化全局加密器。
+func initGlobalEncryptorFromEnv() {
+	key := os.Getenv("GOWIND_CRYPTO_KEY")
+	if key == "" {
+		log.Warn("GOWIND_CRYPTO_KEY not set, global encryption disabled (payloads stored in plaintext)")
+		return
+	}
+	if err := appCrypto.InitGlobalEncryptor(key, true); err != nil {
+		log.Errorf("init global encryptor failed, encryption disabled: %v", err)
+	}
 }
 
 func main() {
