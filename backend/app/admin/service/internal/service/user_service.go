@@ -569,13 +569,28 @@ func (s *UserService) Delete(ctx context.Context, req *identityV1.DeleteUserRequ
 	}
 
 	// 获取将被删除的用户信息
-	_, err = s.userRepo.Get(ctx, &identityV1.GetUserRequest{
+	target, err := s.userRepo.Get(ctx, &identityV1.GetUserRequest{
 		QueryBy: &identityV1.GetUserRequest_Id{
 			Id: req.GetId(),
 		},
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// 禁止删除默认超级管理员：初始化时创建的平台级 admin（恒为 id=1，
+	// 即便后续改名也由 id 兜底保护）。误删会导致系统失去超级管理员且无法自动重建。
+	if target.GetId() == 1 ||
+		(target.GetUsername() == constants.DefaultAdminUserName && target.GetTenantId() == 0) {
+		s.log.Errorf("operator [%d] attempted to delete default admin user [%d]",
+			operator.GetUserId(), target.GetId())
+		return nil, adminV1.ErrorBadRequest("default admin cannot be deleted")
+	}
+
+	// 禁止删除自己：误删自身账号将导致当前会话立即失去管理能力。
+	if target.GetId() == operator.GetUserId() {
+		s.log.Errorf("operator [%d] attempted to delete self", operator.GetUserId())
+		return nil, adminV1.ErrorBadRequest("cannot delete yourself")
 	}
 
 	// 删除用户
