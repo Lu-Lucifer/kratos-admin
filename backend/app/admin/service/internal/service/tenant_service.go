@@ -232,17 +232,10 @@ func (s *TenantService) CreateTenantWithAdminUser(ctx context.Context, req *iden
 		return nil, adminV1.ErrorBadRequest("tenant with given code or name already exists")
 	}
 
-	// Check if admin user exists
-	userExistsResp, err := s.userRepo.UserExists(ctx, &identityV1.UserExistsRequest{
-		QueryBy: &identityV1.UserExistsRequest_Username{Username: req.GetUser().GetUsername()},
-	})
-	if err != nil {
-		s.log.Errorf("check admin user exists err: %v", err)
-		return nil, err
-	}
-	if userExistsResp.GetExist() {
-		return nil, adminV1.ErrorBadRequest("admin user with given username already exists")
-	}
+	// 注意：此处不再做 admin username 的全局查重。
+	// username 仅在 (tenant_id, username) 维度唯一（见 ent/schema/user.go 唯一索引），
+	// 不同租户允许使用相同 username。此前按 username 跨租户全局查重会误判冲突、
+	// 且在平台上下文(tid=0)下跨租户泄露用户名存在性。租户内唯一性由 DB 唯一索引保证。
 
 	tx, cleanup, err := s.tenantRepo.BeginTx(ctx)
 	if err != nil {
