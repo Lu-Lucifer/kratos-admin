@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/tx7do/go-crud/viewer"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 
 	paginationV1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
@@ -296,6 +297,10 @@ func (r *UserCredentialRepo) DeleteByIdentifier(ctx context.Context, identityTyp
 		usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(&identityType)),
 		usercredential.IdentifierEQ(identifier),
 	)
+	// 租户范围过滤（平台管理员 tenant_id=0 不限定）
+	if tid, hasTenant := maybeTenantFromViewer(ctx); hasTenant {
+		builder.Where(usercredential.TenantIDEQ(tid))
+	}
 	if affected, err := builder.Exec(ctx); err != nil {
 		if ent.IsNotFound(err) {
 			return authenticationV1.ErrorNotFound("user credential not found")
@@ -335,13 +340,34 @@ func (r *UserCredentialRepo) Get(ctx context.Context, req *authenticationV1.GetU
 	return dto, err
 }
 
+// maybeTenantFromViewer returns the viewer's tenant id if present and >0, plus whether a viewer context exists.
+func maybeTenantFromViewer(ctx context.Context) (tenantID uint32, hasTenant bool) {
+	vc, exist := viewer.FromContext(ctx)
+	if !exist {
+		return 0, false
+	}
+	tid := vc.TenantID()
+	if tid == 0 {
+		return 0, false
+	}
+	return uint32(tid), true
+}
+
 func (r *UserCredentialRepo) GetByIdentifier(ctx context.Context, req *authenticationV1.GetUserCredentialByIdentifierRequest) (*authenticationV1.UserCredential, error) {
 	builder := r.entClient.Client().UserCredential.Query()
 
-	builder.Where(
+	var whereConds []predicate.UserCredential
+	whereConds = append(whereConds,
 		usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(req.GetIdentityType()))),
 		usercredential.IdentifierEQ(req.GetIdentifier()),
 	)
+
+	// 租户范围过滤（平台管理员 tenant_id=0 不限定）
+	if tid, hasTenant := maybeTenantFromViewer(ctx); hasTenant {
+		whereConds = append(whereConds, usercredential.TenantIDEQ(tid))
+	}
+
+	builder.Where(whereConds...)
 
 	entity, err := builder.Only(ctx)
 	if err != nil {
@@ -368,48 +394,67 @@ func (r *UserCredentialRepo) performDummyVerify(plainCredential string) {
 	_, _ = r.passwordCrypto.Verify(plainCredential, dummyPasswordHash)
 }
 
-func (r *UserCredentialRepo) VerifyCredential(ctx context.Context, req *authenticationV1.VerifyCredentialRequest) (*authenticationV1.VerifyCredentialResponse, error) {
-	if req.GetNeedDecrypt() {
-		// 解密密码
-		bytesPass, err := base64.StdEncoding.DecodeString(req.GetCredential())
+// FindUserCredential 根据身份类型+标识符查询凭证，并通过密码匹配找到正确的租户内的凭证。
+// 用于登录流程：多租户场景下 identifier 可能在多个租户中重复，通过密码匹配消歧义。
+// needDecrypt 为 true 时，plainCredential 应为 base64+AES 加密密文，会自动解密。
+// 返回匹配到的用户 ID，调用方可据此通过 ID 查找用户。
+func (r *UserCredentialRepo) FindUserCredential(ctx context.Context, identityType authenticationV1.UserCredential_IdentityType, identifier, plainCredential string, needDecrypt bool) (uint32, error) {
+	if needDecrypt {
+		bytesPass, err := base64.StdEncoding.DecodeString(plainCredential)
 		if err != nil {
 			r.log.Errorf("decode base64 credential failed: %s", err.Error())
-			return nil, authenticationV1.ErrorBadRequest("invalid credential format")
+			return 0, authenticationV1.ErrorBadRequest("invalid credential format")
 		}
-		plainPassword, err := crypto.AesDecrypt(bytesPass, crypto.DefaultAESKey, nil)
+		decrypted, err := crypto.AesDecrypt(bytesPass, crypto.DefaultAESKey, nil)
 		if err != nil {
 			r.log.Errorf("decrypt credential failed: %s", err.Error())
-			return nil, authenticationV1.ErrorBadRequest("decrypt credential failed")
+			return 0, authenticationV1.ErrorBadRequest("decrypt credential failed")
 		}
-
-		req.Credential = string(plainPassword)
+		plainCredential = string(decrypted)
 	}
 
-	entity, err := r.entClient.Client().UserCredential.Query().
-		Select(usercredential.FieldCredentialType, usercredential.FieldCredential, usercredential.FieldStatus).
-		Where(
-			usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(req.GetIdentityType()))),
-			usercredential.IdentifierEQ(req.GetIdentifier()),
+	entities, err := r.entClient.Client().UserCredential.Query().
+		Select(
+			usercredential.FieldUserID,
+			usercredential.FieldCredentialType,
+			usercredential.FieldCredential,
+			usercredential.FieldStatus,
 		).
-		Only(ctx)
+		Where(
+			usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(identityType))),
+			usercredential.IdentifierEQ(identifier),
+		).
+		All(ctx)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			// 恒定时间防护：用户不存在时也跑一次 bcrypt 校验，避免被计时攻击枚举用户名
-			r.performDummyVerify(req.GetCredential())
-			return nil, authenticationV1.ErrorUserNotFound("user not found")
+		r.log.Errorf("query credential failed: %s", err.Error())
+		return 0, authenticationV1.ErrorServiceUnavailable("db error")
+	}
+
+	if len(entities) == 0 {
+		// 恒定时间防护：用户不存在时也跑一次 bcrypt 校验，避免被计时攻击枚举用户名
+		r.performDummyVerify(plainCredential)
+		return 0, authenticationV1.ErrorUserNotFound("user not found")
+	}
+
+	// 遍历所有匹配的凭证行，通过密码匹配找到正确的租户
+	for _, e := range entities {
+		if e.Status == nil || e.CredentialType == nil || e.Credential == nil || e.UserID == nil {
+			continue
 		}
-
-		r.log.Errorf("query one data failed: %s", err.Error())
-
-		return nil, authenticationV1.ErrorServiceUnavailable("db error")
+		if *e.Status != usercredential.StatusEnabled {
+			continue
+		}
+		if r.verifyCredential(e.CredentialType, plainCredential, *e.Credential) {
+			return *e.UserID, nil
+		}
 	}
 
-	if *entity.Status != usercredential.StatusEnabled {
-		return nil, authenticationV1.ErrorUserFreeze("account has freeze")
-	}
+	return 0, authenticationV1.ErrorInvalidPassword("incorrect password")
+}
 
-	if !r.verifyCredential(entity.CredentialType, req.GetCredential(), *entity.Credential) {
-		return nil, authenticationV1.ErrorInvalidPassword("incorrect password")
+func (r *UserCredentialRepo) VerifyCredential(ctx context.Context, req *authenticationV1.VerifyCredentialRequest) (*authenticationV1.VerifyCredentialResponse, error) {
+	if _, err := r.FindUserCredential(ctx, req.GetIdentityType(), req.GetIdentifier(), req.GetCredential(), req.GetNeedDecrypt()); err != nil {
+		return nil, err
 	}
 
 	return &authenticationV1.VerifyCredentialResponse{
@@ -485,18 +530,27 @@ func (r *UserCredentialRepo) ChangeCredential(ctx context.Context, req *authenti
 		req.NewCredential = string(newPlain)
 	}
 
+	// 租户范围 where 条件（平台管理员 tenant_id=0 不限定）
+	tenantWhere := []predicate.UserCredential{
+		usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(req.GetIdentityType()))),
+		usercredential.IdentifierEQ(req.GetIdentifier()),
+	}
+	if tid, hasTenant := maybeTenantFromViewer(ctx); hasTenant {
+		tenantWhere = append(tenantWhere, usercredential.TenantIDEQ(tid))
+	}
+
 	entity, err := r.entClient.Client().UserCredential.
 		Query().
 		Select(
 			usercredential.FieldCredentialType,
 			usercredential.FieldCredential,
 		).
-		Where(
-			usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(req.GetIdentityType()))),
-			usercredential.IdentifierEQ(req.GetIdentifier()),
-		).
+		Where(tenantWhere...).
 		Only(ctx)
 	if err != nil {
+		if ent.IsNotFound(err) {
+			return authenticationV1.ErrorNotFound("user credential not found")
+		}
 		r.log.Errorf("query one data failed: %s", err.Error())
 		return authenticationV1.ErrorInternalServerError("query one data failed")
 	}
@@ -522,10 +576,7 @@ func (r *UserCredentialRepo) ChangeCredential(ctx context.Context, req *authenti
 	}
 
 	builder := r.entClient.Client().UserCredential.Update()
-	builder.Where(
-		usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(req.GetIdentityType()))),
-		usercredential.IdentifierEQ(req.GetIdentifier()),
-	)
+	builder.Where(tenantWhere...)
 	builder.
 		SetCredential(newCredential).
 		SetUpdatedAt(time.Now())
@@ -554,17 +605,26 @@ func (r *UserCredentialRepo) ResetCredential(ctx context.Context, req *authentic
 		req.NewCredential = string(plainPassword)
 	}
 
+	// 租户范围 where 条件（平台管理员 tenant_id=0 不限定）
+	tenantWhere := []predicate.UserCredential{
+		usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(req.GetIdentityType()))),
+		usercredential.IdentifierEQ(req.GetIdentifier()),
+	}
+	if tid, hasTenant := maybeTenantFromViewer(ctx); hasTenant {
+		tenantWhere = append(tenantWhere, usercredential.TenantIDEQ(tid))
+	}
+
 	entity, err := r.entClient.Client().UserCredential.
 		Query().
 		Select(
 			usercredential.FieldCredentialType,
 		).
-		Where(
-			usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(req.GetIdentityType()))),
-			usercredential.IdentifierEQ(req.GetIdentifier()),
-		).
+		Where(tenantWhere...).
 		Only(ctx)
 	if err != nil {
+		if ent.IsNotFound(err) {
+			return authenticationV1.ErrorNotFound("user credential not found")
+		}
 		r.log.Errorf("query one data failed: %s", err.Error())
 		return authenticationV1.ErrorInternalServerError("query one data failed")
 	}
@@ -585,10 +645,7 @@ func (r *UserCredentialRepo) ResetCredential(ctx context.Context, req *authentic
 	}
 
 	builder := r.entClient.Client().UserCredential.Update()
-	builder.Where(
-		usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(req.GetIdentityType()))),
-		usercredential.IdentifierEQ(req.GetIdentifier()),
-	)
+	builder.Where(tenantWhere...)
 	builder.
 		SetCredential(newCredential).
 		SetUpdatedAt(time.Now())

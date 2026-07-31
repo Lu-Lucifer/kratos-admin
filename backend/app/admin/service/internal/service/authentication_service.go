@@ -384,14 +384,11 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		return nil, authenticationV1.ErrorBadRequest("invalid or missing captcha")
 	}
 
-	// ===== 凭证校验 =====
+	// ===== 凭证校验 + 多租户消歧义：按密码匹配到正确的租户内凭证 =====
+	var matchedUserID uint32
 	var err error
-	if _, err = s.userCredentialRepo.VerifyCredential(ctx, &authenticationV1.VerifyCredentialRequest{
-		IdentityType: authenticationV1.UserCredential_USERNAME,
-		Identifier:   req.GetUsername(),
-		Credential:   req.GetPassword(),
-		NeedDecrypt:  true,
-	}); err != nil {
+	matchedUserID, err = s.userCredentialRepo.FindUserCredential(ctx, authenticationV1.UserCredential_USERNAME, req.GetUsername(), req.GetPassword(), true)
+	if err != nil {
 		// 服务端日志保留真实原因（USER_NOT_FOUND / USER_FREEZE / INVALID_PASSWORD），便于运维排查
 		s.log.Errorf("verify user credential failed for username [%s]: %s", req.GetUsername(), err.Error())
 
@@ -406,11 +403,11 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		return nil, normalizeLoginVerifyError(err)
 	}
 
-	// 获取用户信息
+	// 获取用户信息（按凭证归属的 user_id 精确查找，避免同 identifier 多租户歧义）
 	var user *identityV1.User
-	user, err = s.userRepo.Get(ctx, &identityV1.GetUserRequest{QueryBy: &identityV1.GetUserRequest_Username{Username: req.GetUsername()}})
+	user, err = s.userRepo.Get(ctx, &identityV1.GetUserRequest{QueryBy: &identityV1.GetUserRequest_Id{Id: matchedUserID}})
 	if err != nil {
-		s.log.Errorf("get user by username [%s] failed [%s]", req.GetUsername(), err.Error())
+		s.log.Errorf("get user by id [%d] failed [%s]", matchedUserID, err.Error())
 		return nil, err
 	}
 
