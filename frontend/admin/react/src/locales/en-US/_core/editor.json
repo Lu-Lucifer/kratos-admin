@@ -63,5 +63,6 @@
   "toggleHeaderColumn": "Toggle Header Column",
   "toggleHeaderCell": "Toggle Header Cell",
   "jsonParseError": "JSON parse error: {{error}}",
-  "unknownError": "Unknown error"
+  "unknownError": "Unknown error",
+  "jsonSerializeError": "JSON serialization error"
 }

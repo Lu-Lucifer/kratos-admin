@@ -40,7 +40,6 @@ const FileManagement = () => {
   const deleteMutation = useDeleteFile({
     onSuccess: () => {
       message.success(t('deleteSuccess'));
-      actionRef.current?.reload();
       queryClient.invalidateQueries({ queryKey: ['listFiles'] });
     },
     onError: (error: Error) => {
@@ -52,7 +51,6 @@ const FileManagement = () => {
   const uploadMutation = useUploadFile({
     onSuccess: () => {
       message.success(t('uploadSuccess'));
-      actionRef.current?.reload();
       queryClient.invalidateQueries({ queryKey: ['listFiles'] });
     },
     onError: (error: Error) => {

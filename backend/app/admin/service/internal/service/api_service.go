@@ -74,7 +74,7 @@ func (s *ApiService) Get(ctx context.Context, req *permissionV1.GetApiRequest) (
 }
 
 func (s *ApiService) Create(ctx context.Context, req *permissionV1.CreateApiRequest) (*emptypb.Empty, error) {
-	if req.Data == nil {
+	if req == nil || req.Data == nil {
 		return nil, adminV1.ErrorBadRequest("invalid parameter")
 	}
 
@@ -99,7 +99,7 @@ func (s *ApiService) Create(ctx context.Context, req *permissionV1.CreateApiRequ
 }
 
 func (s *ApiService) Update(ctx context.Context, req *permissionV1.UpdateApiRequest) (*emptypb.Empty, error) {
-	if req.Data == nil {
+	if req == nil || req.Data == nil {
 		return nil, adminV1.ErrorBadRequest("invalid parameter")
 	}
 

@@ -124,15 +124,26 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
         return;
       }
       if (Array.isArray(newValue) || (newValue !== null && typeof newValue === 'object')) {
-        const serialized = JSON.stringify(newValue, null, 2);
-        if (serialized !== localValueRef.current) {
-          localValueRef.current = serialized;
-          onChange?.(serialized);
+        try {
+          const serialized = JSON.stringify(newValue, null, 2);
+          if (serialized !== localValueRef.current) {
+            localValueRef.current = serialized;
+            onChange?.(serialized);
+          }
+          setJsonData(newValue);
+          setParseError('');
+        } catch (error) {
+          const err = error as Error;
+          setParseError(
+            i18next.t('editor:jsonSerializeError', {
+              error: err.message || i18next.t('editor:unknownError'),
+            }),
+          );
+          onError?.(err);
         }
-        setJsonData(newValue);
       }
     },
-    [onChange, validateAndFormat],
+    [onChange, onError, validateAndFormat],
   );
 
   // Dark mode tracking

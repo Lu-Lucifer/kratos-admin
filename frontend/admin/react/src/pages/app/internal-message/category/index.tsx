@@ -36,7 +36,6 @@ const InternalMessageCategoryManagement = () => {
   const deleteMutation = useDeleteMessageCategory({
     onSuccess: () => {
       message.success(t('deleteSuccess'));
-      actionRef.current?.reload();
       queryClient.invalidateQueries({ queryKey: ['listMessageCategories'] });
     },
     onError: (error: Error) => {

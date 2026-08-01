@@ -10,6 +10,7 @@ import {
 } from 'vue';
 
 import { preferences } from '@vben/preferences';
+import { $t } from '#/locales';
 
 import VueJsonEditor from 'json-editor-vue';
 
@@ -87,7 +88,7 @@ const validateAndFormat = (value: string) => {
     return { parsed, formatted };
   } catch (error) {
     const err = error as Error;
-    parseError.value = `JSON解析错误: ${err.message || '未知错误'}`;
+    parseError.value = `${$t('common.editor.json_parse_error')}: ${err.message || $t('common.editor.unknown_error')}`;
     isValidJson.value = false;
     emit('error', err);
     return { parsed: null, formatted: value };
@@ -155,7 +156,7 @@ watch(
       isValidJson.value = true;
     } catch (error) {
       const err = error as Error;
-      parseError.value = `JSON序列化错误: ${err.message || '未知错误'}`;
+      parseError.value = `${$t('common.editor.json_serialize_error')}: ${err.message || $t('common.editor.unknown_error')}`;
       isValidJson.value = false;
       emit('error', err);
     }

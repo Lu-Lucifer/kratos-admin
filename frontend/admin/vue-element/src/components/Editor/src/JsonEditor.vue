@@ -22,6 +22,7 @@
 import { computed, getCurrentInstance, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 import { preferences } from "@/core/preferences";
+import { useI18n } from "@/core/i18n";
 
 import VueJsonEditor from "json-editor-vue";
 
@@ -57,6 +58,8 @@ const emit = defineEmits<{
   (e: "ready"): void;
   (e: "update:modelValue", value: string): void;
 }>();
+
+const { t } = useI18n();
 
 // 响应式数据
 const localValue = ref(props.modelValue);
@@ -99,7 +102,7 @@ const validateAndFormat = (value: string) => {
     return { parsed, formatted };
   } catch (error) {
     const err = error as Error;
-    parseError.value = `JSON解析错误: ${err.message || "未知错误"}`;
+    parseError.value = `${t("common.editor.json_parse_error")}: ${err.message || t("common.editor.unknown_error")}`;
     isValidJson.value = false;
     emit("error", err);
     return { parsed: null, formatted: value };
@@ -167,7 +170,7 @@ watch(
       isValidJson.value = true;
     } catch (error) {
       const err = error as Error;
-      parseError.value = `JSON序列化错误: ${err.message || "未知错误"}`;
+      parseError.value = `${t("common.editor.json_serialize_error")}: ${err.message || t("common.editor.unknown_error")}`;
       isValidJson.value = false;
       emit("error", err);
     }

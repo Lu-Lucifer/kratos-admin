@@ -307,6 +307,9 @@
     "videoWidth": "Video Width",
     "words": "words",
     "chars": "chars",
-    "importMarkdown": "Import Markdown"
+    "importMarkdown": "Import Markdown",
+    "json_parse_error": "JSON parse error",
+    "json_serialize_error": "JSON serialization error",
+    "unknown_error": "Unknown error"
   }
 }
