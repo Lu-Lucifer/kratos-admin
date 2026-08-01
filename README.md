@@ -277,6 +277,17 @@ go-wind-admin/
     </tr>
 </table>
 
+## 社区与贡献
+
+欢迎参与 GoWind Admin 的建设。以下文档说明如何贡献代码、报告问题与反馈安全漏洞：
+
+- [贡献指南](./CONTRIBUTING.md) —— 开发环境、代码生成约定、提交规范与 PR 流程
+- [行为准则](./.github/CODE_OF_CONDUCT.md) —— 社区互动预期
+- [安全策略](./SECURITY.md) —— 漏洞上报流程与覆盖范围
+- [更新日志](./CHANGELOG.md) —— 版本变更记录
+- Issue 模板：[Bug 报告](./.github/ISSUE_TEMPLATE/bug_report.md) · [功能请求](./.github/ISSUE_TEMPLATE/feature_request.md)
+- [PR 模板](./.github/PULL_REQUEST_TEMPLATE.md)
+
 ## 联系我们
 
 - 微信个人号：`yang_lin_bo`（备注：`go-wind-admin`）
