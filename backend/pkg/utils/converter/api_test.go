@@ -44,10 +44,10 @@ func TestApiPermissionConverter_ConvertByOperationID(t *testing.T) {
 		op   string
 		want string
 	}{
-		{"rpc with service and name", "TaskService_ListTaskTypeName", "task:task-type-name:list"},
-		{"rpc without Service suffix", "Task_ListTaskTypeName", "task:task-type-name:list"},
-		{"get walk route data", "ApiService_GetWalkRouteData", "api:walk-route-data:get"},
-		{"rpc without name", "Task_List", "task:list"},
+		{"rpc with service and name", "TaskService_ListTaskTypeName", "task:task-type-name:view"},
+		{"rpc without Service suffix", "Task_ListTaskTypeName", "task:task-type-name:view"},
+		{"get walk route data", "ApiService_GetWalkRouteData", "api:walk-route-data:view"},
+		{"rpc without name", "Task_List", "task:view"},
 		{"invalid rpc format", "GetStatus", ""},
 	}
 
