@@ -70,13 +70,10 @@
         </div>
       </el-form-item>
 
-      <div class="flex-x-between w-full">
+      <div class="w-full">
         <el-checkbox v-model="loginFormData.rememberMe">
           {{ t("core.login.rememberMe") }}
         </el-checkbox>
-        <el-link type="primary" underline="never" @click="toOtherForm('resetPwd')">
-          {{ t("core.login.forgetPassword") }}
-        </el-link>
       </div>
 
       <!-- 登录按钮 -->
@@ -86,13 +83,6 @@
         </el-button>
       </el-form-item>
     </el-form>
-
-    <div flex-center gap-10px>
-      <el-text size="default">{{ t("core.login.noAccount") }}</el-text>
-      <el-link type="primary" underline="never" @click="toOtherForm('register')">
-        {{ t("core.login.register") }}
-      </el-link>
-    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -204,11 +194,6 @@ function checkCapsLock(event: KeyboardEvent) {
   if (event instanceof KeyboardEvent) {
     isCapsLock.value = event.getModifierState("CapsLock");
   }
-}
-
-const emit = defineEmits(["update:modelValue"]);
-function toOtherForm(type: "register" | "resetPwd") {
-  emit("update:modelValue", type);
 }
 </script>
 

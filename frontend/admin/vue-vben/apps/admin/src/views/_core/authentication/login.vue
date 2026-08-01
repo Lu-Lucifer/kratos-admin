@@ -151,7 +151,7 @@ async function handleSubmit(values: Record<string, any>) {
     :show-code-login="false"
     :show-forget-password="false"
     :show-qrcode-login="false"
-    :show-register="true"
+    :show-register="false"
     :show-third-party-login="false"
     @submit="handleSubmit"
   />

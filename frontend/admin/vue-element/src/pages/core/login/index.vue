@@ -41,7 +41,6 @@
           <transition name="fade-slide" mode="out-in">
             <component
               :is="formComponents[component]"
-              v-model="component"
               class="auth-panel__form"
             />
           </transition>
@@ -63,14 +62,12 @@ import SloganIcon from "./icons/slogan.vue";
 
 const { t } = useI18n();
 
-type LayoutMap = "login" | "register" | "resetPwd";
+type LayoutMap = "login";
 
 const component = ref<LayoutMap>("login");
 
 const formComponents = {
   login: defineAsyncComponent(() => import("./components/Login.vue")),
-  register: defineAsyncComponent(() => import("./components/Register.vue")),
-  resetPwd: defineAsyncComponent(() => import("./components/ResetPwd.vue")),
 };
 </script>
 
