@@ -41,6 +41,7 @@
     "register": "注 册",
     "username": "用户名",
     "password": "密码",
+    "tenantCode": "租户编号（留空为平台登录）",
     "captchaCode": "验证码",
     "captchaRefresh": "点击刷新验证码",
     "capsLock": "大写锁定已打开",

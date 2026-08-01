@@ -384,10 +384,24 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		return nil, authenticationV1.ErrorBadRequest("invalid or missing captcha")
 	}
 
-	// ===== 凭证校验 + 多租户消歧义：按密码匹配到正确的租户内凭证 =====
+	// ===== 租户解析：tenant_code 留空视为平台（tenant 0），非空则按编号定位租户 =====
+	// 解析后的 tenantID 限定后续凭证查询范围，消除同名 identifier 跨租户歧义。
+	var tenantID uint32 = 0
+	if code := req.GetTenantCode(); strings.TrimSpace(code) != "" {
+		tenant, _ := s.tenantRepo.Get(ctx, &identityV1.GetTenantRequest{
+			QueryBy: &identityV1.GetTenantRequest_Code{Code: code},
+		})
+		// 查不到、或租户非启用状态，统一返回同一文案，防止通过返回差异枚举有效租户编号
+		if tenant == nil || tenant.GetStatus() != identityV1.Tenant_ON {
+			return nil, authenticationV1.ErrorBadRequest("invalid tenant")
+		}
+		tenantID = tenant.GetId()
+	}
+
+	// ===== 凭证校验：在解析出的 tenant 范围内查单条凭证并校验密码 =====
 	var matchedUserID uint32
 	var err error
-	matchedUserID, err = s.userCredentialRepo.FindUserCredential(ctx, authenticationV1.UserCredential_USERNAME, req.GetUsername(), req.GetPassword(), true)
+	matchedUserID, err = s.userCredentialRepo.FindUserCredential(ctx, tenantID, authenticationV1.UserCredential_USERNAME, req.GetUsername(), req.GetPassword(), true)
 	if err != nil {
 		// 服务端日志保留真实原因（USER_NOT_FOUND / USER_FREEZE / INVALID_PASSWORD），便于运维排查
 		s.log.Errorf("verify user credential failed for username [%s]: %s", req.GetUsername(), err.Error())
@@ -409,6 +423,13 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 	if err != nil {
 		s.log.Errorf("get user by id [%d] failed [%s]", matchedUserID, err.Error())
 		return nil, err
+	}
+
+	// 纵深防御：凭证行的 tenant 必须与用户行的 tenant 一致，否则拒绝登录
+	if user.GetTenantId() != tenantID {
+		s.log.Errorf("tenant mismatch for user [%d]: credential tenant [%d] vs user tenant [%d]",
+			matchedUserID, tenantID, user.GetTenantId())
+		return nil, authenticationV1.ErrorBadRequest("invalid tenant")
 	}
 
 	tokenPayload := &authenticationV1.UserTokenPayload{

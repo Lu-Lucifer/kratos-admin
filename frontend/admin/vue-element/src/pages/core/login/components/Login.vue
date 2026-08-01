@@ -11,6 +11,15 @@
       size="large"
       :validate-on-rule-change="false"
     >
+      <!-- 租户编号（可选，留空为平台登录） -->
+      <el-form-item prop="tenant_code">
+        <el-input v-model.trim="loginFormData.tenant_code" :placeholder="t('core.login.tenantCode')">
+          <template #prefix>
+            <el-icon><User /></el-icon>
+          </template>
+        </el-input>
+      </el-form-item>
+
       <!-- 用户名 -->
       <el-form-item prop="username">
         <el-input v-model.trim="loginFormData.username" :placeholder="t('core.login.username')">
@@ -104,6 +113,7 @@ const captchaId = ref("");
 const captchaImage = ref("");
 // 记住我
 const loginFormData = ref<any>({
+  tenant_code: "",
   username: "admin",
   password: "123456",
   captchaCode: "",

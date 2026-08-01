@@ -40,6 +40,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (values: {
     username: string;
     password: string;
+    tenant_code?: string;
     remember?: boolean;
     captcha?: string;
   }) => {
@@ -48,6 +49,7 @@ const Login: React.FC = () => {
         {
           username: values.username,
           password: values.password,
+          tenant_code: values.tenant_code,
           grant_type: 'password',
         },
         undefined,
@@ -84,6 +86,17 @@ const Login: React.FC = () => {
         size="large"
         initialValues={{ remember: true }}
       >
+        <Form.Item
+          name="tenant_code"
+          className="auth-form-item"
+        >
+          <Input
+            prefix={<UserOutlined />}
+            placeholder={t('tenantCodePlaceholder')}
+            autoComplete="off"
+          />
+        </Form.Item>
+
         <Form.Item
           name="username"
           className="auth-form-item"

@@ -124,6 +124,7 @@ async function login(
     const resp = await authLogin({
       username: params.username,
       password: encryptPassword(params.password),
+      tenant_code: params.tenant_code,
       grant_type: "password",
     });
 

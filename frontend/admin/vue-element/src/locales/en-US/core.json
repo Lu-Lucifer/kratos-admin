@@ -41,6 +41,7 @@
     "register": "Register",
     "username": "Username",
     "password": "Password",
+    "tenantCode": "Tenant code (leave empty for platform)",
     "captchaCode": "Captcha",
     "captchaRefresh": "Click to refresh captcha",
     "capsLock": "Caps Lock is On",

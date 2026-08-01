@@ -215,6 +215,8 @@ func (x *LoginRequest) Redact() {
 	// Safe field: DeviceId
 
 	// Safe field: Jti
+
+	// Safe field: TenantCode
 }
 
 // Ensure LoginResponse implements the Redactor interface at compile time.

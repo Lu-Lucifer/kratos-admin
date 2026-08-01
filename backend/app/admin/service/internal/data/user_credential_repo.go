@@ -394,11 +394,12 @@ func (r *UserCredentialRepo) performDummyVerify(plainCredential string) {
 	_, _ = r.passwordCrypto.Verify(plainCredential, dummyPasswordHash)
 }
 
-// FindUserCredential 根据身份类型+标识符查询凭证，并通过密码匹配找到正确的租户内的凭证。
-// 用于登录流程：多租户场景下 identifier 可能在多个租户中重复，通过密码匹配消歧义。
+// FindUserCredential 在指定租户范围内根据身份类型+标识符查询单条凭证并校验密码。
+// tenantID 由调用方解析确定（登录时按 tenant_code 解析；留空视为平台 tenant 0）。
+// (tenant_id, identity_type, identifier) 在该 tenant 内唯一，无需跨租户消歧。
 // needDecrypt 为 true 时，plainCredential 应为 base64+AES 加密密文，会自动解密。
 // 返回匹配到的用户 ID，调用方可据此通过 ID 查找用户。
-func (r *UserCredentialRepo) FindUserCredential(ctx context.Context, identityType authenticationV1.UserCredential_IdentityType, identifier, plainCredential string, needDecrypt bool) (uint32, error) {
+func (r *UserCredentialRepo) FindUserCredential(ctx context.Context, tenantID uint32, identityType authenticationV1.UserCredential_IdentityType, identifier, plainCredential string, needDecrypt bool) (uint32, error) {
 	if needDecrypt {
 		bytesPass, err := base64.StdEncoding.DecodeString(plainCredential)
 		if err != nil {
@@ -413,7 +414,7 @@ func (r *UserCredentialRepo) FindUserCredential(ctx context.Context, identityTyp
 		plainCredential = string(decrypted)
 	}
 
-	entities, err := r.entClient.Client().UserCredential.Query().
+	entity, err := r.entClient.Client().UserCredential.Query().
 		Select(
 			usercredential.FieldUserID,
 			usercredential.FieldCredentialType,
@@ -421,39 +422,40 @@ func (r *UserCredentialRepo) FindUserCredential(ctx context.Context, identityTyp
 			usercredential.FieldStatus,
 		).
 		Where(
+			usercredential.TenantIDEQ(tenantID),
 			usercredential.IdentityTypeEQ(*r.identityTypeConverter.ToEntity(trans.Ptr(identityType))),
 			usercredential.IdentifierEQ(identifier),
 		).
-		All(ctx)
+		Only(ctx)
 	if err != nil {
+		// 恒定时间防护：用户不存在时也跑一次 bcrypt 校验，避免被计时攻击枚举用户名
+		r.performDummyVerify(plainCredential)
+		if ent.IsNotFound(err) {
+			return 0, authenticationV1.ErrorUserNotFound("user not found")
+		}
 		r.log.Errorf("query credential failed: %s", err.Error())
 		return 0, authenticationV1.ErrorServiceUnavailable("db error")
 	}
 
-	if len(entities) == 0 {
-		// 恒定时间防护：用户不存在时也跑一次 bcrypt 校验，避免被计时攻击枚举用户名
+	if entity.Status == nil || entity.CredentialType == nil || entity.Credential == nil || entity.UserID == nil {
+		r.performDummyVerify(plainCredential)
+		return 0, authenticationV1.ErrorUserNotFound("user not found")
+	}
+	if *entity.Status != usercredential.StatusEnabled {
 		r.performDummyVerify(plainCredential)
 		return 0, authenticationV1.ErrorUserNotFound("user not found")
 	}
 
-	// 遍历所有匹配的凭证行，通过密码匹配找到正确的租户
-	for _, e := range entities {
-		if e.Status == nil || e.CredentialType == nil || e.Credential == nil || e.UserID == nil {
-			continue
-		}
-		if *e.Status != usercredential.StatusEnabled {
-			continue
-		}
-		if r.verifyCredential(e.CredentialType, plainCredential, *e.Credential) {
-			return *e.UserID, nil
-		}
+	if r.verifyCredential(entity.CredentialType, plainCredential, *entity.Credential) {
+		return *entity.UserID, nil
 	}
 
 	return 0, authenticationV1.ErrorInvalidPassword("incorrect password")
 }
 
 func (r *UserCredentialRepo) VerifyCredential(ctx context.Context, req *authenticationV1.VerifyCredentialRequest) (*authenticationV1.VerifyCredentialResponse, error) {
-	if _, err := r.FindUserCredential(ctx, req.GetIdentityType(), req.GetIdentifier(), req.GetCredential(), req.GetNeedDecrypt()); err != nil {
+	// 该内部 RPC 请求未携带租户信息，按平台（tenant 0）范围校验。
+	if _, err := r.FindUserCredential(ctx, 0, req.GetIdentityType(), req.GetIdentifier(), req.GetCredential(), req.GetNeedDecrypt()); err != nil {
 		return nil, err
 	}
 
