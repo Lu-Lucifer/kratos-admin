@@ -39,6 +39,7 @@ export * from './permission-group';
 export * from './policy-evaluation-log';
 
 export * from './position';
+export * from './redis-cache-monitor';
 export * from './role';
 // 通用枚举与工具函数
 export * from './shared';

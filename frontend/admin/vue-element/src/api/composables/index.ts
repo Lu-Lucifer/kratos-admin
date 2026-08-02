@@ -48,5 +48,8 @@ export * from "./data-access-audit-log";
 export * from "./permission-audit-log";
 export * from "./policy-evaluation-log";
 
+// 缓存监控
+export * from "./redis-cache-monitor";
+
 // 内部消息
 export * from "./internal-message";

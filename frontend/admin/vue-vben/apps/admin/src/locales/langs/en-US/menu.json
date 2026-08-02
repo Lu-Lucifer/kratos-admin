@@ -47,7 +47,8 @@
     "dataAccessAuditLog": "Data Logs",
     "operationAuditLog": "Operation Logs",
     "permissionAuditLog": "Permission Logs",
-    "policyEvaluationLog": "Policy Evaluation Logs"
+    "policyEvaluationLog": "Policy Evaluation Logs",
+    "redisCacheMonitor": "Redis Cache Monitor"
   },
   "internalMessage": {
     "moduleName": "Internal Messages",

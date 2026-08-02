@@ -5778,6 +5778,61 @@ export type identityservicev1_DeletePositionRequest = {
   id?: number;
 };
 
+// Redis缓存监控管理服务（只读）
+export interface RedisCacheMonitorService {
+  // 查询Redis缓存监控信息
+  Get(
+    request: redis_cacheservicev1_GetRedisCacheMonitorRequest,
+  ): Promise<redis_cacheservicev1_RedisCacheMonitorInfo>;
+}
+
+export function createRedisCacheMonitorServiceClient(
+  transport: ClientTransport,
+): RedisCacheMonitorService {
+  return {
+    Get(_request) {
+      const path = `admin/v1/redis-cache-monitor`;
+      const body = null;
+      return transport.unary(path, 'GET', body, {
+        service: 'RedisCacheMonitorService',
+        method: 'Get',
+      }) as Promise<redis_cacheservicev1_RedisCacheMonitorInfo>;
+    },
+  };
+}
+// 查询Redis缓存监控信息 - 请求（空）
+export type redis_cacheservicev1_GetRedisCacheMonitorRequest = {
+};
+
+// Redis缓存监控信息
+export type redis_cacheservicev1_RedisCacheMonitorInfo = {
+  dbSize: number | undefined;
+  sections: redis_cacheservicev1_InfoSection[] | undefined;
+  slowlog: redis_cacheservicev1_SlowLogEntry[] | undefined;
+};
+
+// INFO 输出的单个 section
+export type redis_cacheservicev1_InfoSection = {
+  entries: redis_cacheservicev1_InfoEntry[] | undefined;
+  name: string | undefined;
+};
+
+// INFO 输出的单个 key/value 对
+export type redis_cacheservicev1_InfoEntry = {
+  key: string | undefined;
+  value: string | undefined;
+};
+
+// SLOWLOG GET 返回的单条慢日志
+export type redis_cacheservicev1_SlowLogEntry = {
+  args: string[] | undefined;
+  clientAddr: string | undefined;
+  clientName: string | undefined;
+  createdAt: undefined | wellKnownTimestamp;
+  durationUsec: number | undefined;
+  id: number | undefined;
+};
+
 // 角色管理服务
 export interface RoleService {
   // 查询角色列表
@@ -7309,6 +7364,7 @@ export class ApiClient {
   private _permissionService?: PermissionService;
   private _policyEvaluationLogService?: PolicyEvaluationLogService;
   private _positionService?: PositionService;
+  private _redisCacheMonitorService?: RedisCacheMonitorService;
   private _roleService?: RoleService;
   private _taskService?: TaskService;
   private _tenantService?: TenantService;
@@ -7410,6 +7466,10 @@ export class ApiClient {
 
   get positionService(): PositionService {
     return this._positionService ??= createPositionServiceClient(this._transport);
+  }
+
+  get redisCacheMonitorService(): RedisCacheMonitorService {
+    return this._redisCacheMonitorService ??= createRedisCacheMonitorServiceClient(this._transport);
   }
 
   get roleService(): RoleService {

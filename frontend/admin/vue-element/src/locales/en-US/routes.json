@@ -29,7 +29,8 @@
     "operationAuditLog": "Operation Audit Log",
     "dataAccessAuditLog": "Data Access Audit Log",
     "permissionAuditLog": "Permission Audit Log",
-    "policyEvaluationLog": "Policy Evaluation Log"
+    "policyEvaluationLog": "Policy Evaluation Log",
+    "redisCacheMonitor": "Redis Cache Monitor"
   },
   "system": {
     "moduleName": "System Management",

@@ -52,6 +52,9 @@ managed:
     - file_option: go_package
       path: resource/service/v1
       value: go-wind-admin/api/gen/go/permission/service/v1;resourcepb
+    - file_option: go_package
+      path: redis_cache/service/v1
+      value: go-wind-admin/api/gen/go/redis_cache/service/v1;rediscachepb
 
 plugins:
   # generate go code

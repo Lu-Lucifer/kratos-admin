@@ -48,7 +48,8 @@
     "dataAccessAuditLog": "数据日志",
     "operationAuditLog": "操作日志",
     "permissionAuditLog": "权限日志",
-    "policyEvaluationLog": "策略评估日志"
+    "policyEvaluationLog": "策略评估日志",
+    "redisCacheMonitor": "Redis缓存监控"
   },
   "internalMessage": {
     "moduleName": "站内消息",

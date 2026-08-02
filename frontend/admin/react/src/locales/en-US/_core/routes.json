@@ -16,6 +16,7 @@
   "data-access-audit-log": "Data Access Audit Log",
   "permission-audit-log": "Permission Audit Log",
   "policy-evaluation-log": "Policy Evaluation Log",
+  "redis-cache-monitor": "Redis Cache Monitor",
   "opm": "Organization & Personnel",
   "org-units": "Organization Structure",
   "positions": "Position Management",
