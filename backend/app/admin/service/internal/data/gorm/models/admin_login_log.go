@@ -29,5 +29,5 @@ type LoginAuditLog struct {
 }
 
 func (LoginAuditLog) TableName() string {
-	return "sys_login-audit-logs"
+	return "sys_login_audit_logs"
 }
