@@ -29,8 +29,6 @@ export function useNotice() {
   const detail = ref<any | null>(null);
   const dialogVisible = ref(false);
 
-  let unsubscribe: (() => void) | null = null;
-
   // ============================================
   // 数据获取
   // ============================================
@@ -55,16 +53,24 @@ export function useNotice() {
     unreadTotal.value = result.total ?? 0;
   }
 
-  async function read(id: string | number) {
-    const numericId = Number(id);
-    detail.value = await fetchGetInternalMessage({ id: numericId });
+  async function read(item: { id?: number; messageId?: number }) {
+    // 注意区分两种 id：
+    // - item.id 是收件记录 id (InternalMessageRecipient.id)，用于标记已读 recipientIds
+    // - item.messageId 是消息本身 id，用于 fetchGetInternalMessage 取详情
+    // 之前错误地把收件记录 id 当作消息 id 传给 fetchGetInternalMessage，
+    // 导致详情取错或 404。
+    const recipientId = item.id;
+    const messageId = item.messageId;
+    if (recipientId == null && messageId == null) return;
+
+    detail.value = await fetchGetInternalMessage({ id: messageId });
     dialogVisible.value = true;
 
-    // 标记为已读
+    // 标记为已读（用收件记录 id）
     const userId = userStore.userInfo?.id;
-    if (userId) {
+    if (userId && recipientId != null) {
       try {
-        await markNotificationAsRead({ userId, recipientIds: [numericId] });
+        await markNotificationAsRead({ userId, recipientIds: [recipientId] });
         ElMessage.success("已标记为已读");
       } catch {
         ElMessage.error("标记失败");
@@ -72,10 +78,12 @@ export function useNotice() {
     }
 
     // 从列表中移除已读项
-    const idx = list.value.findIndex((item) => item.id === numericId);
-    if (idx >= 0) {
-      list.value.splice(idx, 1);
-      if (unreadTotal.value > 0) unreadTotal.value -= 1;
+    if (recipientId != null) {
+      const idx = list.value.findIndex((row) => row.id === recipientId);
+      if (idx >= 0) {
+        list.value.splice(idx, 1);
+        if (unreadTotal.value > 0) unreadTotal.value -= 1;
+      }
     }
 
     await fetchList();
@@ -248,10 +256,12 @@ export function useNotice() {
   });
 
   onBeforeUnmount(() => {
-    if (unsubscribe) {
-      unsubscribe();
-      unsubscribe = null;
-    }
+    // 必须按回调引用显式注销，否则 globalSSEClient.handlers 会持续累加：
+    // NoticeDropdown 每次重新挂载（布局切换/路由往返/热重载）都会重新 on()，
+    // 若不 off()，一条新消息会触发 N 次回调（N=累计挂载次数），
+    // 导致 unreadTotal 重复自增、桌面通知重复弹出、list 反复 unshift。
+    globalSSEClient.off(NOTICE_EVENT, handleSseNotification);
+    globalSSEClient.off("notification-revoke", handleSseRevoke);
   });
 
   return {

@@ -111,6 +111,10 @@ const OrgList: React.FC<OrgListProps> = ({
     // 清除选中
     setSelectedKeys([]);
     onOrgSelect(undefined);
+    // 清空搜索词：搜索 effect 现在只依赖 [searchValue]，
+    // 若不清空，切换租户后 treeData 变成新 key 集合，但 expandedKeys 仍指向旧树
+    // 的 key（在新树里不存在），导致展开态错乱。
+    setSearchValue('');
   };
 
   // 选中组织节点

@@ -322,8 +322,15 @@ watch(visible, (val) => {
 async function handleSubmit() {
   if (!formRef.value) return;
 
+  // 校验失败时 validate 会 reject 字段错误对象（非 false），用二段式区分校验失败与接口失败。
+  // 否则 catch 里 `error !== false` 恒为 true，校验失败（如必填项为空）会误弹「创建/更新失败」。
+  const valid = await formRef.value.validate().then(
+    () => true,
+    () => false,
+  );
+  if (!valid) return;
+
   try {
-    await formRef.value.validate();
     submitLoading.value = true;
 
     const submitData = {
@@ -341,14 +348,13 @@ async function handleSubmit() {
 
     handleClose();
     emit("success");
-  } catch (error) {
-    if (error !== false) {
-      ElMessage.error(
-        isCreate.value
-          ? $t("common.notification.create_failed")
-          : $t("common.notification.update_failed")
-      );
-    }
+  } catch {
+    // 仅接口失败会进入此分支（校验失败已在上方提前 return）
+    ElMessage.error(
+      isCreate.value
+        ? $t("common.notification.create_failed")
+        : $t("common.notification.update_failed"),
+    );
   } finally {
     submitLoading.value = false;
   }

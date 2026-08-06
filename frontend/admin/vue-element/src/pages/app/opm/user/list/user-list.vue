@@ -104,6 +104,9 @@ watch(
   () => [userViewStore.currentOrgUnitId, userViewStore.currentTenantId],
   () => {
     pageRef.value?.refresh();
+    // 角色/职位下拉选项依赖租户/组织，切换后必须重跑 initFn 刷新，
+    // 否则下拉里仍是旧租户/旧组织下的选项，按过期选项搜索会查不到人。
+    pageRef.value?.reloadFieldOptions(["roleId", "positionId"]);
   }
 );
 

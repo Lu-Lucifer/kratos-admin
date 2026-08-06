@@ -67,6 +67,12 @@ export function useTableState<T = any, Q = any>(config: UseTableConfig) {
     return selection.value.map((r) => (r as any)[rowKey]);
   }
 
+  // 清空已选中行。删除（批量/单条）成功后必须调用，
+  // 否则 selection 仍含已删记录的 id，下次批量删除会带上不存在的 id。
+  function clearSelection() {
+    selection.value = [];
+  }
+
   return {
     data,
     loading,
@@ -76,5 +82,6 @@ export function useTableState<T = any, Q = any>(config: UseTableConfig) {
     fetch,
     handleSelectionChange,
     getSelectionIds,
+    clearSelection,
   };
 }

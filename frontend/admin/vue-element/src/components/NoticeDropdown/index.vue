@@ -25,7 +25,7 @@
               v-for="item in list"
               :key="item.id"
               class="notice-item"
-              @click="read(item?.id || '')"
+              @click="read(item)"
             >
               <!-- 头像 -->
               <div class="notice-item__avatar">

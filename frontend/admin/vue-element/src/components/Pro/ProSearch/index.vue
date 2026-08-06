@@ -274,6 +274,17 @@ defineExpose({
   setQueryParams: (params: Partial<T>) => {
     Object.assign(queryParams, params);
   },
+  // 按 field 名重跑该字段的 initFn（重新拉取下拉选项）。
+  // initFn 默认只在 onMounted 执行一次；当字段选项依赖外部响应式数据
+  // （如租户/组织切换）时，调用方可通过此方法触发重新加载，避免选项过期。
+  reloadFieldOptions: (fieldNames: string | string[]) => {
+    const names = Array.isArray(fieldNames) ? fieldNames : [fieldNames];
+    props.fields.forEach((field) => {
+      if (field.initFn && names.includes(field.field as string)) {
+        field.initFn(field as any);
+      }
+    });
+  },
 });
 </script>
 

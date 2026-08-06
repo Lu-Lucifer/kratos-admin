@@ -3,6 +3,7 @@
     <!-- 搜索区 -->
     <ProSearch
       v-if="!showSkeleton && searchVisible && config.search?.fields?.length"
+      ref="searchRef"
       :fields="config.search.fields"
       :colon="config.search.colon"
       :is-expandable="config.search.isExpandable"
@@ -164,6 +165,7 @@ const tableState = useTableState<T, Q>({
 
 const modalState = useModalState<T>(rowKey);
 const tableRef = ref<any>(null);
+const searchRef = ref<any>(null);
 const contentRef = ref<HTMLElement | null>(null);
 const exportModalRef = ref<InstanceType<typeof ExportModal>>();
 const importModalRef = ref<InstanceType<typeof ImportModal>>();
@@ -370,6 +372,10 @@ async function handleBatchDelete() {
   });
   await props.config.table.deleteAction?.(ids);
   ElMessage.success(t("pages.curd.message.deleteSuccess"));
+  // 清空选中行：否则 selection 仍含已删 id，UI 勾选也不会自动清除，
+  // 再次批量删除会带上不存在的 id。
+  tableState.clearSelection();
+  tableRef.value?.clearSelection();
   tableState.fetch(searchParams, true);
 }
 
@@ -383,6 +389,8 @@ async function handleDelete(row: T) {
   });
   await props.config.table.deleteAction?.(id);
   ElMessage.success(t("pages.curd.message.deleteSuccess"));
+  tableState.clearSelection();
+  tableRef.value?.clearSelection();
   tableState.fetch(searchParams, true);
 }
 
@@ -467,6 +475,10 @@ defineExpose({
   modalState,
   searchParams,
   refresh: () => tableState.fetch(searchParams),
+  // 透传 ProSearch.reloadFieldOptions：按字段名重跑 initFn 刷新下拉选项。
+  // 用于外部响应式数据（租户/组织）变化后刷新 role/position 等选项。
+  reloadFieldOptions: (fieldNames: string | string[]) =>
+    searchRef.value?.reloadFieldOptions(fieldNames),
 });
 </script>
 

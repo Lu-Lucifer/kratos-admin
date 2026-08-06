@@ -64,7 +64,13 @@ export const useDictStore = defineStore('dict', () => {
     }));
   }
 
-  function $reset() {}
+  function $reset() {
+    // 登出/重认证时 resetAllStores 会遍历调各 store 的 $reset()。
+    // 此前为空实现导致 dictEntryCache 残留，配合 fetchAllDictEntries 的
+    // 「缓存非空即早返回」逻辑，会使用户 A 登出后用户 B（SPA 不刷新）
+    // 直接命中 A 的字典缓存，造成跨用户/跨租户字典数据泄漏。
+    dictEntryCache.value = {};
+  }
 
   return {
     $reset,

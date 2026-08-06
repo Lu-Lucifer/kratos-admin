@@ -326,6 +326,12 @@ export const useAuthStore = create<AuthState>()(
         // 用户关闭页面几天后再打开时这些值早已过期，但 AuthGuard 只检查 accessToken 是否存在，
         // 会导致用户带着过期 token 进入应用、首个请求 401 后才被弹回登录页（先看到页面再被踢）。
         // 这里在 rehydrate 阶段提前清理过期的 token，让用户直接走登录流程。
+        //
+        // 注意：此处直接 mutate state 清理 token 字段（不调用 forceLogout）。
+        // rehydrate 发生在 store 创建期、组件订阅之前，直接赋值即可让首次读取拿到清理后的值；
+        // 不调 forceLogout 是为了避免其在启动期触发 setState → persist 写回的潜在递归，
+        // 且 stopRefreshTimer/disconnectSSEServer/queryClient.clear 此时本就尚未启动。
+        // 后续任意一次 set() 会通过 partialize 把 null 写回 localStorage，最终一致。
         if (!state) return;
         const now = Date.now();
         const refreshExpired =
@@ -337,7 +343,6 @@ export const useAuthStore = create<AuthState>()(
             'Persisted token expired on rehydrate, clearing auth state.',
             { accessExpired, refreshExpired },
           );
-          // 复用 forceLogout 的清理逻辑，确保 token / 缓存一致地清空
           state.accessToken = null;
           state.refreshTokenValue = null;
           state.accessTokenExpireAt = null;
