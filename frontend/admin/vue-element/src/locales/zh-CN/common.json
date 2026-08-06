@@ -195,7 +195,9 @@
   "validation": {
     "required": "请输入",
     "selectRequired": "请选择",
-    "email": "请输入有效的邮箱地址"
+    "email": "请输入有效的邮箱地址",
+    "phoneFormat": "请输入有效的手机号",
+    "passwordMin": "密码长度不能少于6位"
   },
   "dateRange": {
     "today": "今天",

@@ -113,7 +113,12 @@ function open(row?: any) {
   if (row) {
     isCreate.value = false;
     currentId.value = row.id;
-    Object.assign(formData, row);
+    // 仅回填表单声明的字段，避免把 id/createdAt 等不可变字段灌入 formData
+    formData.name = row.name ?? "";
+    formData.code = row.code ?? "";
+    formData.sortOrder = row.sortOrder ?? 1;
+    formData.isEnabled = row.isEnabled ?? true;
+    formData.remark = row.remark ?? "";
   } else {
     isCreate.value = true;
     currentId.value = undefined;
@@ -131,8 +136,14 @@ function handleClose() {
 async function handleSubmit() {
   if (!formRef.value) return;
 
+  // 校验失败时 validate 会 reject 字段错误对象（非 false），用二段式区分校验失败与接口失败
+  const valid = await formRef.value.validate().then(
+    () => true,
+    () => false
+  );
+  if (!valid) return;
+
   try {
-    await formRef.value.validate();
     loading.value = true;
 
     if (isCreate.value) {
@@ -145,15 +156,13 @@ async function handleSubmit() {
 
     emit("success");
     handleClose();
-  } catch (error) {
-    if (error !== false) {
-      // 非表单验证错误
-      ElMessage.error(
-        isCreate.value
-          ? $t("common.notification.createFailed")
-          : $t("common.notification.updateFailed")
-      );
-    }
+  } catch {
+    // 仅接口失败会进入此分支（校验失败已在上方提前 return）
+    ElMessage.error(
+      isCreate.value
+        ? $t("common.notification.createFailed")
+        : $t("common.notification.updateFailed")
+    );
   } finally {
     loading.value = false;
   }

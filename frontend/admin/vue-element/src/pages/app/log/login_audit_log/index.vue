@@ -192,7 +192,7 @@ const pageConfig = computed<ProPageConfig>(() => ({
             ipAddress: queryParams.ipAddress,
             status: queryParams.status,
             actionType: queryParams.actionType,
-            riskType: queryParams.riskLevel,
+            riskLevel: queryParams.riskLevel,
             created_at__gte: startTime,
             created_at__lte: endTime,
           },

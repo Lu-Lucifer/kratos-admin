@@ -69,7 +69,9 @@ const router = useRouter();
 
 const userId = computed(() => {
   const id = route.params.id ?? -1;
-  return Number(id);
+  const num = Number(id);
+  // 防止非数字 id（如 'abc'）产生 NaN 传入接口，对齐 React 版守卫
+  return isNaN(num) ? undefined : num;
 });
 
 const { mutateAsync: updateUser } = useUpdateUser();
@@ -100,6 +102,7 @@ async function handleBanAccount() {
       }
     );
 
+    if (userId.value === undefined) return;
     await updateUser({ id: userId.value, values: { status: "DISABLED" } });
     ElMessage.success($t("common.notification.update_status_success"));
   } catch {

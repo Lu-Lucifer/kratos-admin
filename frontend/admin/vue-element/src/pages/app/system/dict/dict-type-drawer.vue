@@ -105,8 +105,20 @@ const formRules = {
   ],
 };
 
+// 包装 open：编辑模式下显式回填表单声明字段（避免 useDrawerForm 默认不回填导致编辑态空白）
+function open(data?: { create?: boolean; row?: any }) {
+  drawer.open(data, (row: any) => {
+    if (!row) return;
+    // 仅回填 defaults 声明的字段，不拷贝 id/createdAt 等不可变字段
+    drawer.formData.typeName = row.typeName ?? "";
+    drawer.formData.typeCode = row.typeCode ?? "";
+    drawer.formData.sortOrder = row.sortOrder ?? 1;
+    drawer.formData.isEnabled = row.isEnabled ?? true;
+  });
+}
+
 // 暴露方法
-defineExpose({ open: drawer.open });
+defineExpose({ open });
 </script>
 
 <style lang="scss" scoped>

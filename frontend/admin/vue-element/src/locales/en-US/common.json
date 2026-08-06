@@ -195,7 +195,9 @@
   "validation": {
     "required": "Please input",
     "selectRequired": "Please select",
-    "email": "Please enter a valid email address"
+    "email": "Please enter a valid email address",
+    "phoneFormat": "Please enter a valid phone number",
+    "passwordMin": "Password must be at least 6 characters"
   },
   "dateRange": {
     "today": "Today",

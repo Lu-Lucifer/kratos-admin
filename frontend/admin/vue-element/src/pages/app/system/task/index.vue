@@ -11,9 +11,9 @@
       <!-- 是否启用 -->
       <template #enable="scope: any">
         <ElSwitch
-          v-model="scope.row.enable"
+          :model-value="scope.row.enable"
           :loading="scope.row.pending"
-          @change="(value: string | number | boolean) => handleEnableChanged(scope.row, !!value)"
+          @update:model-value="(value: string | number | boolean) => handleEnableChanged(scope.row, !!value)"
         />
       </template>
 
@@ -282,15 +282,18 @@ async function handleOperate(data: { name: string; row: any }) {
 
 async function handleEnableChanged(row: any, checked: boolean) {
   row.pending = true;
-  row.enable = checked;
+  // 不乐观赋值 row.enable：Switch 用 :model-value 单向绑定服务器值，
+  // 操作结果由 refresh() 从服务器重载决定，避免失败时 UI 与服务器状态脱节。
   try {
-    await updateTask({ id: row.id, values: { enable: row.enable } });
-    await controlTask({ typeName: row.typeName, controlType: row.enable ? "Start" : "Stop" });
+    await updateTask({ id: row.id, values: { enable: checked } });
+    await controlTask({ typeName: row.typeName, controlType: checked ? "Start" : "Stop" });
     ElMessage.success($t("common.notification.update_status_success"));
   } catch {
     ElMessage.error($t("common.notification.update_status_failed"));
   } finally {
     row.pending = false;
+    // 无论成功失败，都从服务器刷新，确保 UI 反映真实状态
+    pageRef.value?.refresh();
   }
 }
 

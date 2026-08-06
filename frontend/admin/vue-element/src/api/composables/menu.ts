@@ -144,17 +144,20 @@ export function travelMenuChild(nodes: Menu[] | undefined, parent: Menu): boolea
   return false;
 }
 
-export function buildMenuTree(menus: Menu[]): Menu[] {
+export function buildMenuTree(menus: Menu[], excludeId?: number): Menu[] {
   // 深拷贝，避免修改 vue-query 缓存中的原始数据
   const cloned = structuredClone(menus);
   const tree: Menu[] = [];
   for (const menu of cloned) {
     if (!menu) continue;
+    // 排除指定节点（防自环：编辑某菜单时不让它出现在自己的父级候选里）
+    if (excludeId !== undefined && menu.id === excludeId) continue;
     if (menu.parentId !== 0 && menu.parentId !== undefined) continue;
     tree.push(menu);
   }
   for (const menu of cloned) {
     if (!menu) continue;
+    if (excludeId !== undefined && menu.id === excludeId) continue;
     if (menu.parentId === 0 || menu.parentId === undefined) continue;
     if (travelMenuChild(tree, menu)) continue;
     tree.push(menu);

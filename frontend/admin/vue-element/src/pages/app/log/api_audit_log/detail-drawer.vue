@@ -117,25 +117,25 @@
           {{ data?.signature || "-" }}
         </ElDescriptionsItem>
         <ElDescriptionsItem
-          v-if="data?.requestBody"
           :label="$t('pages.api_audit_log.requestBody')"
           :span="2"
         >
-          <pre class="pre-text">{{ data.requestBody }}</pre>
+          <pre v-if="data?.requestBody" class="pre-text">{{ data.requestBody }}</pre>
+          <template v-else>-</template>
         </ElDescriptionsItem>
         <ElDescriptionsItem
-          v-if="data?.requestHeader"
           :label="$t('pages.api_audit_log.requestHeader')"
           :span="2"
         >
-          <pre class="pre-text">{{ data.requestHeader }}</pre>
+          <pre v-if="data?.requestHeader" class="pre-text">{{ data.requestHeader }}</pre>
+          <template v-else>-</template>
         </ElDescriptionsItem>
         <ElDescriptionsItem
-          v-if="data?.response"
           :label="$t('pages.api_audit_log.response')"
           :span="2"
         >
-          <pre class="pre-text">{{ data.response }}</pre>
+          <pre v-if="data?.response" class="pre-text">{{ data.response }}</pre>
+          <template v-else>-</template>
         </ElDescriptionsItem>
       </ElDescriptions>
     </div>

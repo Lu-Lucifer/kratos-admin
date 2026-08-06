@@ -39,7 +39,7 @@
 
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { computed, ref } from "vue";
-import { ElButton, ElDrawer, ElDialog } from "element-plus";
+import { ElButton, ElDrawer, ElDialog, ElMessage } from "element-plus";
 import { useI18n } from "@/core/i18n";
 import ProForm from "../ProForm/index.vue";
 import type { ProModalConfig, ModalMode } from "./types";
@@ -115,6 +115,11 @@ async function handleSubmit() {
     await props.config.submitAction?.(props.formData!);
     emit("submit");
     visible.value = false;
+  } catch (error) {
+    // 校验或提交失败时向用户给出反馈，避免静默失败
+    if (error !== false) {
+      ElMessage.error(t("common.operationFailed"));
+    }
   } finally {
     submitting.value = false;
   }

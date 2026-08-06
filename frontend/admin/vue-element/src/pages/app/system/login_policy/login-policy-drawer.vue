@@ -137,7 +137,12 @@ function open(row?: any) {
     // 编辑模式
     isCreate.value = false;
     currentId.value = row.id;
-    Object.assign(formData, row);
+    // 仅回填表单声明的字段，避免把 id/createdAt 等不可变字段灌入 formData
+    formData.targetId = row.targetId ?? "";
+    formData.type = row.type ?? "";
+    formData.method = row.method ?? "";
+    formData.value = row.value ?? "";
+    formData.reason = row.reason ?? "";
   } else {
     // 创建模式
     isCreate.value = true;

@@ -53,17 +53,18 @@
 
         <ElDivider />
 
-        <div class="message-detail__content" v-html="detail.content"></div>
+        <div class="message-detail__content" v-html="sanitizedContent"></div>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { ElTag, ElDivider, ElAvatar, ElMessage, ElTooltip } from "element-plus";
 import { UserFilled } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
+import DOMPurify from "dompurify";
 
 import ProPage from "@/components/Pro/ProPage/index.vue";
 import SvgIcon from "@/components/SvgIcon/index.vue";
@@ -87,6 +88,12 @@ const userStore = useAppUserStore();
 const pageRef = ref();
 const detailDialogVisible = ref(false);
 const detail = ref<any | null>(null);
+
+// 对消息正文进行 XSS 净化，防止富文本内容中注入脚本（存储型 XSS）
+const sanitizedContent = computed(() => {
+  const raw = detail.value?.content;
+  return raw ? DOMPurify.sanitize(String(raw)) : "";
+});
 
 const pageConfig = computed<ProPageConfig>(() => ({
   skeleton: true,

@@ -1,5 +1,11 @@
 <template>
   <div class="redis-cache-monitor-page">
+    <template v-if="isLoading">
+      <el-card shadow="hover" class="mb-4">
+        <el-empty :description="$t('common.loading')" />
+      </el-card>
+    </template>
+    <template v-else>
     <el-card shadow="hover" class="mb-4">
       <template #header>
         <span class="card-title">{{ $t("pages.redis_cache_monitor.dbSizeCardTitle") }}</span>
@@ -16,7 +22,7 @@
         <template #header>
           <span class="card-title">{{ $t("pages.redis_cache_monitor.infoCardTitle") }}</span>
         </template>
-        <el-empty :description="$t('pages.redis_cache_monitor.noInfo')" />
+        <el-empty :description="$t("pages.redis_cache_monitor.noInfo')" />
       </el-card>
     </template>
     <template v-else>
@@ -41,7 +47,7 @@
         </template>
         <template v-if="expandedSections[`${section.name}-${idx}`]">
           <template v-if="section.entries.length === 0">
-            <el-empty :description="$t('pages.redis_cache_monitor.noEntries')" />
+            <el-empty :description="$t("pages.redis_cache_monitor.noEntries") />
           </template>
           <template v-else>
             <el-descriptions :column="1" border>
@@ -56,7 +62,7 @@
           </template>
         </template>
         <template v-else>
-          <el-empty :description="$t('pages.redis_cache_monitor.collapsed')" />
+          <el-empty :description="$t("pages.redis_cache_monitor.collapsed") />
         </template>
       </el-card>
     </template>
@@ -105,11 +111,12 @@
     </el-card>
 
     <div class="disclaimer">{{ $t("pages.redis_cache_monitor.disclaimer") }}</div>
+    </template>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { formatDateTime } from "@/utils";
 import { $t } from "@/core/i18n";
 import { useRedisCacheMonitorInfo } from "@/api/composables";
@@ -126,10 +133,21 @@ function toggleSection(key: string) {
   expandedSections.value = { ...expandedSections.value, [key]: !expandedSections.value[key] };
 }
 
-const info = (data.value as redis_cacheservicev1_RedisCacheMonitorInfo | undefined) ?? undefined;
-const sections = (info?.sections ?? []) as { name: string; entries: { key: string; value: string }[] }[];
-const dbSize = info?.dbSize ?? 0;
-const slowlog = (info?.slowlog ?? []) as redis_cacheservicev1_SlowLogEntry[];
+// 通过 computed 派生，使数据返回后视图能响应式更新（data 为 useQuery 的响应式 ref）
+const info = computed(
+  () => (data.value as redis_cacheservicev1_RedisCacheMonitorInfo | undefined) ?? undefined,
+);
+const sections = computed(
+  () =>
+    (info.value?.sections ?? []) as {
+      name: string;
+      entries: { key: string; value: string }[];
+    }[],
+);
+const dbSize = computed(() => info.value?.dbSize ?? 0);
+const slowlog = computed(
+  () => (info.value?.slowlog ?? []) as redis_cacheservicev1_SlowLogEntry[],
+);
 </script>
 
 <style lang="scss" scoped>
