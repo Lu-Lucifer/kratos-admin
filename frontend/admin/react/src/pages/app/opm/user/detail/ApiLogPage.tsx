@@ -55,7 +55,9 @@ const ApiLogPage: React.FC<ApiLogPageProps> = ({ userId }) => {
       render: (_, _record, index) => {
         const pagination = actionRef.current?.pageInfo;
         const page = pagination?.current || 1;
-        const pageSize = pagination?.pageSize || 20;
+        // 首次渲染时 pageInfo 可能尚未就绪，回退到表格默认分页大小，
+        // 避免第一页序号与实际 pageSize 不一致导致错位。
+        const pageSize = pagination?.pageSize || TABLE.DEFAULT_PAGE_SIZE;
         return (page - 1) * pageSize + index + 1;
       },
     },
@@ -73,8 +75,8 @@ const ApiLogPage: React.FC<ApiLogPageProps> = ({ userId }) => {
       valueType: 'select',
       fieldProps: {
         options: [
-          { label: t('success.true'), value: 'true' },
-          { label: t('success.false'), value: 'false' },
+          { label: t('success.true'), value: true },
+          { label: t('success.false'), value: false },
         ],
       },
       render: (_, record) => (

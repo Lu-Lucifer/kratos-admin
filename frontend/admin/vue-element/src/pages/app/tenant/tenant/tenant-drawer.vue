@@ -4,17 +4,17 @@
     :title="title"
     :config="{ component: 'drawer', drawer: { size: DRAWER_WIDTH, closeOnClickModal: false } }"
   >
-    <ElForm :model="formData" label-width="120px">
+    <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="120px">
       <!-- 基本信息 -->
-      <ElFormItem :label="$t('pages.tenant.name')" required>
+      <ElFormItem :label="$t('pages.tenant.name')" prop="name" required>
         <ElInput v-model="formData.name" :placeholder="$t('common.placeholder.input')" clearable />
       </ElFormItem>
 
-      <ElFormItem :label="$t('pages.tenant.code')" required>
+      <ElFormItem :label="$t('pages.tenant.code')" prop="code" required>
         <ElInput v-model="formData.code" :placeholder="$t('common.placeholder.input')" clearable />
       </ElFormItem>
 
-      <ElFormItem :label="$t('pages.tenant.type')" required>
+      <ElFormItem :label="$t('pages.tenant.type')" prop="type" required>
         <ElSelect
           v-model="formData.type"
           :placeholder="$t('common.placeholder.select')"
@@ -30,7 +30,7 @@
         </ElSelect>
       </ElFormItem>
 
-      <ElFormItem :label="$t('pages.tenant.auditStatus')" required>
+      <ElFormItem :label="$t('pages.tenant.auditStatus')" prop="auditStatus" required>
         <ElSelect
           v-model="formData.auditStatus"
           :placeholder="$t('common.placeholder.select')"
@@ -46,7 +46,7 @@
         </ElSelect>
       </ElFormItem>
 
-      <ElFormItem :label="$t('common.table.status')" required>
+      <ElFormItem :label="$t('common.table.status')" prop="status" required>
         <ElSelect
           v-model="formData.status"
           :placeholder="$t('common.placeholder.select')"
@@ -74,7 +74,7 @@
       <!-- 管理员设置（仅创建时显示） -->
       <ElDivider v-if="isCreate">{{ $t("pages.tenant.adminSetting") }}</ElDivider>
 
-      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminUserName')" required>
+      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminUserName')" prop="user.username" required>
         <ElInput
           v-model="formData.user.username"
           :placeholder="$t('common.placeholder.input')"
@@ -82,7 +82,7 @@
         />
       </ElFormItem>
 
-      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminPassword')" required>
+      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminPassword')" prop="password" required>
         <ElInput
           v-model="formData.password"
           type="password"
@@ -91,7 +91,7 @@
         />
       </ElFormItem>
 
-      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminPasswordConfirm')" required>
+      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminPasswordConfirm')" prop="passwordConfirm" required>
         <ElInput
           v-model="formData.passwordConfirm"
           type="password"
@@ -100,7 +100,7 @@
         />
       </ElFormItem>
 
-      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminMobile')" required>
+      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminMobile')" prop="user.mobile" required>
         <ElInput
           v-model="formData.user.mobile"
           :placeholder="$t('common.placeholder.input')"
@@ -108,7 +108,7 @@
         />
       </ElFormItem>
 
-      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminEmail')" required>
+      <ElFormItem v-if="isCreate" :label="$t('pages.tenant.adminEmail')" prop="user.email" required>
         <ElInput
           v-model="formData.user.email"
           :placeholder="$t('common.placeholder.input')"
@@ -132,6 +132,7 @@
 import { computed, ref, watch } from "vue";
 
 import { ElMessage } from "element-plus";
+import type { FormInstance, FormRules } from "element-plus";
 
 import {
   tenantAuditStatusList,
@@ -152,7 +153,10 @@ import ProModal from "@/components/Pro/ProModal/index.vue";
 // 通过 inject 获取列表页传入的 modalApi
 const modalApi = injectProModalApi();
 
-const data = computed(() => modalApi.getData<{ create?: boolean; row?: Tenant }>());
+// 注意：不能使用 modalApi.getData()，其内部对 toRaw(store).sharedData 取值会丢失响应式，
+// 导致多次 open（新增↔编辑切换、编辑不同租户）时 data/isCreate 停留在首次快照，造成串数据。
+// 这里直接读取响应式的 store.sharedData。
+const data = computed(() => modalApi.store.sharedData as { create?: boolean; row?: Tenant });
 const isCreate = computed(() => !!data.value.create);
 
 const visible = computed({
@@ -185,6 +189,42 @@ const formData = ref({
   password: "",
   passwordConfirm: "",
 });
+
+const formRef = ref<FormInstance>();
+
+// 表单校验规则（补齐 required + 格式校验，与 React 版对齐）
+const formRules: FormRules = {
+  name: [{ required: true, message: $t("common.validation.required"), trigger: "blur" }],
+  code: [{ required: true, message: $t("common.validation.required"), trigger: "blur" }],
+  type: [{ required: true, message: $t("common.validation.selectRequired"), trigger: "change" }],
+  auditStatus: [
+    { required: true, message: $t("common.validation.selectRequired"), trigger: "change" },
+  ],
+  status: [{ required: true, message: $t("common.validation.selectRequired"), trigger: "change" }],
+  "user.username": [
+    { required: true, message: $t("common.validation.required"), trigger: "blur" },
+  ],
+  "user.mobile": [
+    { required: true, message: $t("common.validation.required"), trigger: "blur" },
+    {
+      pattern: /^1[3-9]\d{9}$/,
+      message: $t("common.validation.phoneFormat"),
+      trigger: "blur",
+    },
+  ],
+  "user.email": [
+    { required: true, message: $t("common.validation.required"), trigger: "blur" },
+    { type: "email", message: $t("common.validation.email"), trigger: "blur" },
+  ],
+  password: [
+    { required: true, message: $t("common.validation.required"), trigger: "blur" },
+    { min: 6, message: $t("common.validation.passwordMin"), trigger: "blur" },
+  ],
+  passwordConfirm: [
+    { required: true, message: $t("common.validation.required"), trigger: "blur" },
+    { min: 6, message: $t("common.validation.passwordMin"), trigger: "blur" },
+  ],
+};
 
 // 弹窗标题
 const title = computed(() =>
@@ -254,11 +294,9 @@ const handleSubmit = async () => {
   try {
     loading.value = true;
 
-    // 验证必填字段
-    if (!formData.value.name || !formData.value.code) {
-      ElMessage.error($t("common.placeholder.input"));
-      return;
-    }
+    // 表单校验（required + 手机/邮箱格式 + 密码长度，由 formRules 驱动）
+    if (!formRef.value) return;
+    await formRef.value.validate();
 
     if (isCreate.value) {
       await createTenantWithAdminUser();
@@ -286,13 +324,16 @@ async function createTenantWithAdminUser() {
   // 检查租户编码是否存在
   try {
     const result = await fetchListTenants(
-      new PaginationQuery({ formValues: { code: formData.value.code, name: formData.value.name } })
+      new PaginationQuery({ formValues: { code: formData.value.code } })
     );
     if (result.items && result.items.length > 0) {
-      throw new Error("Tenant code already exists");
+      // 查询成功且存在重复，提示编码已存在
+      ElMessage.error($t("pages.tenant.tenant_code_exists"));
+      return;
     }
   } catch {
-    ElMessage.error($t("pages.tenant.tenant_code_exists"));
+    // 查询本身失败（网络/500 等），不能误判为编码已存在
+    ElMessage.error($t("common.operationFailed"));
     return;
   }
 

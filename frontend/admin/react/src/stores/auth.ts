@@ -152,7 +152,15 @@ export const useAuthStore = create<AuthState>()(
           if (onSuccess) {
             onSuccess();
           } else if (userInfo?.homePath) {
-            window.location.href = userInfo.homePath;
+            // 校验 homePath 必须为同源相对路径，防止服务端返回值导致开放重定向
+            const rawHomePath = userInfo.homePath;
+            if (
+              typeof rawHomePath === 'string' &&
+              rawHomePath.startsWith('/') &&
+              !rawHomePath.startsWith('//')
+            ) {
+              window.location.href = rawHomePath;
+            }
           }
         } catch (err: any) {
           const errorMsg = err?.message || i18next.t('auth:loginFailed');
@@ -311,6 +319,32 @@ export const useAuthStore = create<AuthState>()(
           hasRefreshToken: !!persisted.refreshTokenValue,
         });
         return persisted;
+      },
+      onRehydrateStorage: () => (state) => {
+        // 应用启动时校验持久化的 token 是否已过期。
+        // accessTokenExpireAt / refreshTokenExpireAt 是基于 Date.now() 计算的绝对时间戳，
+        // 用户关闭页面几天后再打开时这些值早已过期，但 AuthGuard 只检查 accessToken 是否存在，
+        // 会导致用户带着过期 token 进入应用、首个请求 401 后才被弹回登录页（先看到页面再被踢）。
+        // 这里在 rehydrate 阶段提前清理过期的 token，让用户直接走登录流程。
+        if (!state) return;
+        const now = Date.now();
+        const refreshExpired =
+          state.refreshTokenExpireAt != null && state.refreshTokenExpireAt <= now;
+        const accessExpired =
+          state.accessTokenExpireAt != null && state.accessTokenExpireAt <= now;
+        if (refreshExpired || accessExpired) {
+          console.warn(
+            'Persisted token expired on rehydrate, clearing auth state.',
+            { accessExpired, refreshExpired },
+          );
+          // 复用 forceLogout 的清理逻辑，确保 token / 缓存一致地清空
+          state.accessToken = null;
+          state.refreshTokenValue = null;
+          state.accessTokenExpireAt = null;
+          state.refreshTokenExpireAt = null;
+          state.userInfo = null;
+          state.error = null;
+        }
       },
     },
   ),

@@ -298,13 +298,13 @@ export const useAuthStore = defineStore('auth', () => {
 
       accessStore.setAccessToken(null);
       accessStore.setRefreshToken(null);
+      // 注意：setIsAccessChecked(false) 之前必须先读出原值用于下面的 modal 判定，
+      // 否则下方 accessStore.isAccessChecked 永远是 false，modal 模式恒不触发。
+      const wasAccessChecked = accessStore.isAccessChecked;
       accessStore.setIsAccessChecked(false);
       accessStore.setAccessCodes([]);
 
-      if (
-        preferences.app.loginExpiredMode === 'modal' &&
-        accessStore.isAccessChecked
-      ) {
+      if (preferences.app.loginExpiredMode === 'modal' && wasAccessChecked) {
         accessStore.setLoginExpired(true);
       } else {
         // 非 modal 模式直接清理并跳转登录页

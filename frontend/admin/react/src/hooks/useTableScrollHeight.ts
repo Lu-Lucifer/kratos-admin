@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TABLE, LAYOUT_HEIGHTS } from '@/config/constants';
 
 /**
@@ -106,7 +106,12 @@ export function useTableScrollHeight(options: {
 /**
  * 简化版的表格高度 Hook
  * 自动估算常见布局的排除高度
- * 
+ *
+ * @deprecated 此 hook 当前在全项目内无任何调用方，且实现存在致命缺陷：
+ * 内部声明的 headerRef/breadcrumbRef/toolbarRef 从未绑定到任何 DOM 元素
+ * （hook 未返回这些 ref），因此测量值永远为 0，excludeHeight 恒为 0。
+ * 启用前需先重构为返回 ref 供调用方绑定，否则按需删除。
+ *
  * @param extraOffset - 额外偏移量
  * @returns 表格高度字符串
  */

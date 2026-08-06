@@ -135,7 +135,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
 
 import ProModal from "@/components/Pro/ProModal/index.vue";
@@ -239,7 +239,7 @@ function handleEditRow(row: any) {
   row.editing = true;
 }
 
-// 保存行
+// 保存行（仅更新本地 i18nDataMap，统一在 handleSubmit 时提交，避免失焦即写库）
 async function handleSaveRow(row: any) {
   row.editing = false;
 
@@ -248,30 +248,6 @@ async function handleSaveRow(row: any) {
       entryLabel: row.entryLabel,
       description: row.description,
     };
-  }
-
-  // 如果不是新建，立即保存
-  if (!isCreate.value && currentId.value) {
-    try {
-      submitLoading.value = true;
-      await updateDictEntry({
-        id: currentId.value!,
-        values: {
-          ...formData,
-          i18n: i18nDataMap.value,
-        },
-      });
-      ElMessage.success($t("common.notification.save_success"));
-    } catch {
-      ElMessage.error($t("common.notification.update_failed"));
-      // 恢复原值
-      if (row._backup) {
-        row.entryLabel = row._backup.entryLabel;
-        row.description = row._backup.description;
-      }
-    } finally {
-      submitLoading.value = false;
-    }
   }
 }
 
@@ -334,6 +310,13 @@ function handleClose() {
   visible.value = false;
   resetForm();
 }
+
+// 监听 visible：ProModal 通过遮罩/ESC/右上角关闭时 visible 会变 false，
+// 但不会触发上面的 handleClose（那只是取消按钮的点击事件）。
+// 此处统一在关闭时重置表单与 i18n 数据，避免上次编辑的残留串到下次打开。
+watch(visible, (val) => {
+  if (!val) resetForm();
+});
 
 // 提交表单
 async function handleSubmit() {

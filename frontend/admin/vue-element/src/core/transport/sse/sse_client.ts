@@ -159,16 +159,26 @@ export class SSEClient {
         this.status = "error";
         this.triggerHandler("error", err, new Event("error"));
 
-        // 手动关闭不重连
+        // 手动关闭不重连：抛出异常会被 fetchEventSource 当作致命错误，
+        // 触发 reject 终止重试（区别于返回数值表示「稍后重试」）。
         if (this.abortController?.signal.aborted) {
           throw err;
         }
 
+        // fetchEventSource 的运行时契约：onerror 返回数值时，
+        // 该数值会被用作下一次重试的 setTimeout 间隔（ms）。
+        // 默认不返回时库使用 DefaultRetryInterval=1000ms，这里返回配置的
+        // reconnectDelay，避免服务端持续断开时形成紧密重连风暴。
         console.log(`[SSE] ${this.config.reconnectDelay}ms 后重试...`);
+        return this.config.reconnectDelay;
       },
 
       // 关闭
       onclose: () => {
+        // 服务端主动关闭连接时 fetchEventSource 默认会 resolve 终止整个流程、不再重连。
+        // 这里抛出异常使其落入 onerror 的处理路径（库会把 onclose 抛出的异常
+        // 交给 catch 分支，进而调用 onerror），由 onerror 返回 reconnectDelay
+        // 实现带退避的重连。
         this.status = "disconnected";
         throw new Error("SSE 连接关闭，准备重连");
       },
@@ -206,7 +216,14 @@ export class SSEClient {
     if (this.transport === "event-source") {
       this._connectByEventSource(targetUrl);
     } else {
-      this._connectByFetchEventSource(targetUrl);
+      // _connectByFetchEventSource 是 async，其内部的 throw（如 onopen 失败）
+      // 会让 Promise reject。这里必须捕获，否则会变成 Unhandled Promise Rejection，
+      // 且 this.status 会永久停在 'connecting'，导致后续 connect() 被状态守卫挡住、
+      // 再也连不上。失败时重置为 disconnected 以允许后续重连。
+      this._connectByFetchEventSource(targetUrl).catch((err) => {
+        this.status = "disconnected";
+        console.error("[SSE] connect failed:", err);
+      });
     }
 
     return null;

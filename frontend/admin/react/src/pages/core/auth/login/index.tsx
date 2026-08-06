@@ -34,8 +34,30 @@ const Login: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    refreshCaptcha();
-  }, [refreshCaptcha]);
+    // React 18 StrictMode 下 effect 会执行两次，导致两个并发的
+    // fetchGenerateCaptcha 请求；后到的响应会覆盖先到的 captchaId，
+    // 而后端通常一次性消费 captcha，登录时用的 captchaId 可能对应已被
+    // 先到请求作废的 captcha。这里用 cancelled 标志位丢弃首次（被 double-invoke
+    // 的第一次）请求的结果，确保 state 始终是最后一次请求的值。
+    let cancelled = false;
+    const run = async () => {
+      setCaptchaLoading(true);
+      try {
+        const resp = await fetchGenerateCaptcha();
+        if (cancelled) return;
+        setCaptchaId(resp.captchaId ?? '');
+        setCaptchaImage(resp.imageBase64 ?? '');
+      } catch {
+        // 验证码获取失败不阻断页面，登录时会再次校验
+      } finally {
+        if (!cancelled) setCaptchaLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = async (values: {
     username: string;
@@ -59,9 +81,16 @@ const Login: React.FC = () => {
       message.success(t('loginSuccess'));
 
       // 跳转到重定向页面或首页
-      const redirect = searchParams.get('redirect') || '/';
+      // 校验 redirect 必须为同源相对路径，防止开放重定向（如 ?redirect=https://evil.com 或 //evil.com）
+      const rawRedirect = searchParams.get('redirect') || '/';
+      const safeRedirect =
+        typeof rawRedirect === 'string' &&
+        rawRedirect.startsWith('/') &&
+        !rawRedirect.startsWith('//')
+          ? rawRedirect
+          : '/';
       setTimeout(() => {
-        navigate(redirect);
+        navigate(safeRedirect);
       }, 300);
     } catch (error: any) {
       // 登录失败后刷新验证码

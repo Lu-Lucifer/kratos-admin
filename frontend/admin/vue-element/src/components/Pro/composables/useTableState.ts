@@ -25,7 +25,12 @@ export function useTableState<T = any, Q = any>(config: UseTableConfig) {
     background: true,
   });
 
+  // 请求序号：防止快速翻页/搜索时「旧请求慢返回」覆盖「新请求」的结果。
+  // 每次发起请求前自增，await 后比对；若期间又发起了新请求，则丢弃本次结果。
+  let reqId = 0;
+
   async function fetch(queryParams: any = {}, resetPage = false) {
+    const currentReqId = ++reqId;
     loading.value = true;
     if (resetPage) pagination.currentPage = 1;
 
@@ -39,6 +44,9 @@ export function useTableState<T = any, Q = any>(config: UseTableConfig) {
 
     try {
       const res = await config.indexAction(params as Q);
+      // 期间若已发起新请求（翻页/搜索/重置），丢弃本次过期的结果，
+      // 避免把旧数据写回 data/pagination 造成内容与分页器错位。
+      if (currentReqId !== reqId) return;
       if (showPagination && !Array.isArray(res)) {
         data.value = (res as PaginationResult<T>).items ?? [];
         pagination.total = Number((res as PaginationResult<T>).total) || 0;
@@ -46,7 +54,8 @@ export function useTableState<T = any, Q = any>(config: UseTableConfig) {
         data.value = Array.isArray(res) ? res : ((res as PaginationResult<T>).items ?? []);
       }
     } finally {
-      loading.value = false;
+      // 仅当这是最后一次请求时才关闭 loading，否则交给后续请求的 finally 处理。
+      if (currentReqId === reqId) loading.value = false;
     }
   }
 

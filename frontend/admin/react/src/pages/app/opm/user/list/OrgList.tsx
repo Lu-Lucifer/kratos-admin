@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Tree, Select, Input, Button, App, theme } from 'antd';
 import {
   ExpandOutlined,
@@ -36,7 +36,6 @@ const OrgList: React.FC<OrgListProps> = ({
 
   // 租户下拉
   const [tenantOptions, setTenantOptions] = useState<{ label: string; value: number }[]>([]);
-  const [selectedTenantValue, setSelectedTenantValue] = useState<string>('');
 
   // 组织树
   const [treeData, setTreeData] = useState<any[]>([]);
@@ -44,6 +43,16 @@ const OrgList: React.FC<OrgListProps> = ({
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [autoExpandParent, setAutoExpandParent] = useState(true);
+
+  // 用 ref 持有 t/message/treeData，避免把它们放进 effect 依赖：
+  // - t 来自 useTranslation，切换语言时会变化，会导致组织树被重新拉取并重置展开/选中状态；
+  // - treeData 进入搜索 effect 依赖会导致每次重拉都清空用户手动展开的节点。
+  const tRef = useRef(t);
+  tRef.current = t;
+  const messageRef = useRef(message);
+  messageRef.current = message;
+  const treeDataRef = useRef(treeData);
+  treeDataRef.current = treeData;
 
   // 获取有效租户 ID
   const effectiveTenantId = useMemo(() => {
@@ -85,14 +94,12 @@ const OrgList: React.FC<OrgListProps> = ({
       cleanEmptyChildren(items);
       const tree = mapToAntTree(items);
       setTreeData(tree);
-      // 默认展开全部
-      const keys = collectAllKeys(tree);
-      setExpandedKeys(keys);
+      // 默认折叠全部节点，与 Vue 版一致
     } catch (error: any) {
-      message.error(error.message || t('fetchFailed'));
+      messageRef.current.error(error.message || tRef.current('fetchFailed'));
       setTreeData([]);
     }
-  }, [effectiveTenantId, message, t]);
+  }, [effectiveTenantId]);
 
   useEffect(() => {
     fetchOrgUnits();
@@ -100,7 +107,6 @@ const OrgList: React.FC<OrgListProps> = ({
 
   // 租户切换
   const handleTenantChanged = (value: number | undefined) => {
-    setSelectedTenantValue(value != null ? String(value) : '');
     onTenantSelect(value);
     // 清除选中
     setSelectedKeys([]);
@@ -141,7 +147,8 @@ const OrgList: React.FC<OrgListProps> = ({
     }
   }, [currentOrgUnitId, treeData]);
 
-  // 搜索自动展开
+  // 搜索自动展开：只依赖 searchValue，treeData 经 ref 读取。
+  // 避免把 treeData 放入依赖导致每次重拉（租户/语言切换）都清空用户手动展开的节点。
   useEffect(() => {
     const q = searchValue.trim();
     if (!q) {
@@ -150,10 +157,10 @@ const OrgList: React.FC<OrgListProps> = ({
       return;
     }
     const parentKeys = new Set<React.Key>();
-    collectMatchParents(treeData, q.toLowerCase(), parentKeys);
+    collectMatchParents(treeDataRef.current, q.toLowerCase(), parentKeys);
     setExpandedKeys([...parentKeys]);
     setAutoExpandParent(true);
-  }, [searchValue, treeData]);
+  }, [searchValue]);
 
   // 展开全部
   const handleExpandAll = () => {
@@ -211,7 +218,7 @@ const OrgList: React.FC<OrgListProps> = ({
             allowClear
             style={{ width: '100%', marginBottom: 8 }}
             placeholder={t('tenantIdPlaceholder')}
-            value={selectedTenantValue || undefined}
+            value={currentTenantId ?? undefined}
             options={tenantOptions}
             onChange={(value) => handleTenantChanged(value != null ? Number(value) : undefined)}
           />

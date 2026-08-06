@@ -2,6 +2,7 @@ import { computed, reactive, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { $t } from "@/core/i18n";
 import { DRAWER_WIDTH } from "@/constants";
+import { cloneDeep } from "@/utils";
 
 /**
  * Drawer 表单通用状态管理
@@ -71,7 +72,15 @@ export function useDrawerForm<T extends Record<string, any>>(options: {
 
   // === 重置表单 ===
   function resetForm() {
-    Object.assign(formData, { ...options.defaults });
+    // 深拷贝 defaults 后再赋值，避免：
+    // 1) 浅拷贝下嵌套对象/数组与 options.defaults 共享引用，
+    //    编辑后通过同一引用反向污染 defaults，导致后续打开带回脏数据；
+    // 2) 上次编辑多出来的字段残留在 formData 里（先清空再赋值）。
+    const fresh = cloneDeep(options.defaults);
+    Object.keys(formData).forEach((k) => {
+      delete (formData as any)[k];
+    });
+    Object.assign(formData, fresh);
   }
 
   // === 打开 ===
@@ -117,8 +126,14 @@ export function useDrawerForm<T extends Record<string, any>>(options: {
   ) {
     if (!formRef) return;
 
+    // 校验失败时 validate 会 reject 字段错误对象（非 false），用二段式区分校验失败与接口失败
+    const valid = await formRef.validate().then(
+      () => true,
+      () => false,
+    );
+    if (!valid) return;
+
     try {
-      await formRef.validate();
       submitLoading.value = true;
 
       const values = transformValues ? transformValues({ ...formData }) : { ...formData };
@@ -133,14 +148,13 @@ export function useDrawerForm<T extends Record<string, any>>(options: {
 
       onSuccess?.();
       close();
-    } catch (error) {
-      if (error !== false) {
-        ElMessage.error(
-          isCreate.value
-            ? $t("common.notification.createFailed")
-            : $t("common.notification.updateFailed"),
-        );
-      }
+    } catch {
+      // 仅接口失败会进入此分支（校验失败已在上方提前 return）
+      ElMessage.error(
+        isCreate.value
+          ? $t("common.notification.createFailed")
+          : $t("common.notification.updateFailed"),
+      );
     } finally {
       submitLoading.value = false;
     }

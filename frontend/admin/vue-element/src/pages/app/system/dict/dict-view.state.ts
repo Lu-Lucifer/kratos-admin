@@ -55,8 +55,6 @@ export const useDictViewStore = defineStore("dict-view", {
           })
         );
 
-        await this.setCurrentTypeId(null);
-
         return this.languageList;
       } catch (error) {
         console.error("获取语言列表失败:", error);
@@ -74,16 +72,14 @@ export const useDictViewStore = defineStore("dict-view", {
     async fetchTypeList(currentPage: number, pageSize: number, formValues: any) {
       this.loading = true;
       try {
-        this.typeList = await fetchListDictTypes(
+        const res = await fetchListDictTypes(
           new PaginationQuery({
             paging: { page: currentPage, pageSize },
             formValues,
           })
         );
-
-        await this.setCurrentTypeId(null);
-
-        return this.typeList;
+        this.typeList = res;
+        return res;
       } catch (error) {
         console.error("获取字典类型列表失败:", error);
         this.resetTypeList();
@@ -114,7 +110,7 @@ export const useDictViewStore = defineStore("dict-view", {
 
       this.loading = true;
       try {
-        this.entryList = await fetchListDictEntries(
+        const res = await fetchListDictEntries(
           new PaginationQuery({
             paging: { page: currentPage, pageSize },
             formValues: {
@@ -123,9 +119,18 @@ export const useDictViewStore = defineStore("dict-view", {
             },
           })
         );
+        // 防竞态：快速切换字典类型（A→B）时两次请求并发，
+        // 若 A 后返回，这里校验 typeId 是否仍为当前选中类型，
+        // 避免过期的 A 结果覆盖当前 B 的列表。
+        if (typeId === this.currentTypeId) {
+          this.entryList = res;
+        }
+        return res;
       } catch (error) {
         console.error(`获取字典类型[${typeId}]的字典项列表失败:`, error);
-        this.resetEntryList();
+        if (typeId === this.currentTypeId) {
+          this.resetEntryList();
+        }
       } finally {
         this.loading = false;
       }

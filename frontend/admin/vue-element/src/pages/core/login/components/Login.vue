@@ -104,9 +104,12 @@ const captchaImage = ref("");
 // 记住我
 const loginFormData = ref<any>({
   tenant_code: "",
-  username: "admin",
-  password: "123456",
+  username: "",
+  password: "",
   captchaCode: "",
+  // 模板中 v-model="loginFormData.rememberMe" 会读写该字段，
+  // 显式初始化为 false 以保证响应式稳定（避免运行时动态新增属性）。
+  rememberMe: false,
 });
 
 const loginRules = computed(() => {
@@ -176,8 +179,16 @@ async function handleLoginSubmit() {
       },
       async () => {
         // 登录成功，跳转到目标页面
-        const redirectPath = (route.query.redirect as string) || "/";
-        await router.push(decodeURIComponent(redirectPath));
+        // 校验 redirect 必须为同源相对路径，防止开放重定向（如 ?redirect=https://evil.com 或 //evil.com）
+        const rawRedirect = (route.query.redirect as string) || "/";
+        const decodedPath = decodeURIComponent(rawRedirect);
+        const safePath =
+          typeof decodedPath === "string" &&
+          decodedPath.startsWith("/") &&
+          !decodedPath.startsWith("//")
+            ? decodedPath
+            : "/";
+        await router.push(safePath);
       }
     );
   } catch {

@@ -59,6 +59,12 @@ const DictEntryDrawer: React.FC<DictEntryDrawerProps> = ({
   const [i18nData, setI18nData] = useState<I18nRow[]>([]);
   const [i18nLoading, setI18nLoading] = useState(false);
   const [editingKey, setEditingKey] = useState<string>('');
+  // 编辑开始时的原始值快照，取消编辑时用于还原（对齐 Vue 版 _backup 机制）
+  const [i18nBackup, setI18nBackup] = useState<{
+    key: string;
+    entryLabel: string;
+    description: string;
+  } | null>(null);
 
   // 加载字典类型下拉数据
   useEffect(() => {
@@ -77,17 +83,34 @@ const DictEntryDrawer: React.FC<DictEntryDrawerProps> = ({
 
   // 编辑模式下设置表单值
   useEffect(() => {
-    if (open && mode === 'edit' && data) {
-      setTimeout(() => {
-        formRef.current?.setFieldsValue({
+    if (!(open && mode === 'edit' && data)) return;
+    // destroyOnClose 下，open 由 false→true 时表单刚挂载，formRef 可能尚未就绪。
+    // 这里用「轮询等待 formRef 就绪 + 取消标志位」替代裸 setTimeout(0)，
+    // 既避免 StrictMode 双调用导致的竞态，也防止组件卸载后 setState。
+    let cancelled = false;
+    let attempts = 0;
+    const applyValues = () => {
+      if (cancelled) return;
+      const form = formRef.current;
+      if (form) {
+        form.setFieldsValue({
           typeId: data.typeId || typeId,
           entryValue: data.entryValue || '',
           numericValue: data.numericValue,
           sortOrder: data.sortOrder ?? 1,
           isEnabled: data.isEnabled ?? true,
         });
-      }, 0);
-    }
+        return;
+      }
+      // formRef 尚未挂载，下一帧重试（最多约 ~500ms）
+      if (attempts++ < 30) {
+        requestAnimationFrame(applyValues);
+      }
+    };
+    requestAnimationFrame(applyValues);
+    return () => {
+      cancelled = true;
+    };
   }, [open, mode, data, typeId]);
 
   // 加载 i18n 数据（打开时加载语言列表）
@@ -178,14 +201,37 @@ const DictEntryDrawer: React.FC<DictEntryDrawerProps> = ({
   const isEditing = (record: I18nRow) => record.key === editingKey;
 
   const edit = (record: I18nRow) => {
+    // 进入编辑前快照原始值，供取消时还原（避免取消后改动仍保留）
+    setI18nBackup({
+      key: record.key,
+      entryLabel: record.entryLabel,
+      description: record.description,
+    });
     setEditingKey(record.key);
   };
 
   const cancel = () => {
+    // 取消编辑：从快照还原该行的原始值
+    if (i18nBackup) {
+      setI18nData((prev) =>
+        prev.map((row) =>
+          row.key === i18nBackup.key
+            ? {
+                ...row,
+                entryLabel: i18nBackup.entryLabel,
+                description: i18nBackup.description,
+              }
+            : row,
+        ),
+      );
+      setI18nBackup(null);
+    }
     setEditingKey('');
   };
 
   const save = (_key: string) => {
+    // 保存：保留改动，清除快照
+    setI18nBackup(null);
     setEditingKey('');
   };
 

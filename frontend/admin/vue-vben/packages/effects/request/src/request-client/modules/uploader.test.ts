@@ -40,9 +40,10 @@ describe('fileUploader', () => {
       url,
       expect.any(FormData),
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        // 不应手动设置 Content-Type：浏览器发送 FormData 时会自动生成
+        // 带 boundary 的 'multipart/form-data; boundary=...'，
+        // 手动写死会导致 boundary 丢失，后端无法解析。
+        headers: {},
       },
     );
   });
@@ -72,12 +73,37 @@ describe('fileUploader', () => {
       url,
       expect.any(FormData),
       {
+        // 调用方传入的自定义 header 原样保留，但不应注入 Content-Type
+        // （由浏览器自动生成带 boundary 的值）。
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Custom-Header': 'value',
         },
       },
     );
+  });
+
+  it('should strip caller-provided Content-Type so the browser can set the boundary', async () => {
+    const url = 'https://example.com/upload';
+    const file = new File(['file content'], 'test.txt', { type: 'text/plain' });
+    const mockResponse: AxiosResponse = {
+      config: {} as any,
+      data: { success: true },
+      headers: {},
+      status: 200,
+      statusText: 'OK',
+    };
+
+    (
+      mockAxiosInstance.post as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValueOnce(mockResponse);
+
+    // 调用方误传了无 boundary 的 Content-Type，uploader 应剥离它，
+    // 否则后端会因找不到 boundary 而解析失败。
+    await fileUploader.upload(url, { file }, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    } as AxiosRequestConfig);
+    const calledArgs = (mockAxiosInstance.post as any).mock.calls[0];
+    expect(calledArgs[2].headers['Content-Type']).toBeUndefined();
   });
 
   it('should handle errors gracefully', async () => {
