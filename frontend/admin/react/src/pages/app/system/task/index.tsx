@@ -62,6 +62,10 @@ const TaskManagement = () => {
   // 更新操作（用于启用/禁用切换）
   const updateMutation = useUpdateTask();
 
+  // 记录当前正在切换启用/禁用的任务 id，使该行的 Switch 显示 loading，
+  // 而不是所有行共享 updateMutation.isPending 导致全部开关同时转圈。
+  const [loadingTaskId, setLoadingTaskId] = useState<number | undefined>(undefined);
+
   // 控制单个任务
   const controlMutation = useControlTask({
     onSuccess: () => {
@@ -108,6 +112,7 @@ const TaskManagement = () => {
 
   // 启用/禁用切换
   const handleEnableChange = async (record: Task, checked: boolean) => {
+    setLoadingTaskId(record.id as number);
     try {
       await updateMutation.mutateAsync({
         id: record.id as number,
@@ -121,6 +126,8 @@ const TaskManagement = () => {
       actionRef.current?.reload();
     } catch {
       message.error(t('updateStatusFailed'));
+    } finally {
+      setLoadingTaskId(undefined);
     }
   };
 
@@ -177,7 +184,7 @@ const TaskManagement = () => {
       render: (_, record) => (
         <Switch
           checked={record.enable as boolean}
-          loading={updateMutation.isPending}
+          loading={loadingTaskId === record.id}
           onChange={(checked) => handleEnableChange(record, checked)}
         />
       ),

@@ -113,6 +113,17 @@ export const MainLayout = ({ routes: dynamicRoutes }: MainLayoutProps) => {
   // 全屏状态
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // 监听 fullscreenchange：isFullscreen 必须跟随浏览器真实全屏状态，
+  // 而非仅由按钮点击乐观设置。用户按 Esc 或通过浏览器 UI 退出全屏时
+  // 不会触发按钮点击，若不监听此事件，图标状态会与真实状态脱节。
+  // requestFullscreen() 的 Promise 也可能 reject（如 iframe 未授权），
+  // 监听事件可一并修正乐观置 true 的错误状态。
+  useEffect(() => {
+    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
   // 设置面板
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -208,12 +219,15 @@ export const MainLayout = ({ routes: dynamicRoutes }: MainLayoutProps) => {
         onToggleCollapse={() => setSidebarHidden(!sidebarHidden)}
         onRefresh={triggerPageRefresh}
         onToggleFullscreen={() => {
+          // 不在此处乐观 setIsFullscreen：全屏状态的更新统一由上面的
+          // fullscreenchange 监听器处理，确保始终与浏览器真实状态一致。
+          // （requestFullscreen/exitFullscreen 的 Promise 若 reject，监听器也不会误置）
           if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-            setIsFullscreen(true);
+            document.documentElement.requestFullscreen().catch(() => {
+              /* 进入全屏被拒绝（如 iframe 未授权），忽略 */
+            });
           } else {
-            document.exitFullscreen();
-            setIsFullscreen(false);
+            document.exitFullscreen().catch(() => {});
           }
         }}
         onLogout={logout}

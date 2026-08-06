@@ -15,7 +15,7 @@ import { useCreateRole, useUpdateRole } from '@/api/hooks/role';
 import { fetchListPermissionGroups } from '@/api/hooks/permission-group';
 import { fetchListPermissions } from '@/api/hooks/permission';
 import { PaginationQuery } from '@/core';
-import { getStatusOptions, buildPermissionTree, filterNumbers } from '../constants';
+import { getStatusOptions, buildPermissionTree, extractLeafIds } from '../constants';
 
 interface RoleDrawerProps {
   open: boolean;
@@ -107,7 +107,9 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
     try {
       const payload = {
         ...values,
-        permissions: filterNumbers(checkedKeys),
+        // 用叶子交集剥离权限组父节点 ID（父子联动会自动勾选父节点，
+        // 组 ID 混入提交会被后端当作权限 ID，可能越权绑定）。
+        permissions: extractLeafIds(checkedKeys, treeData),
       };
 
       if (mode === 'create') {

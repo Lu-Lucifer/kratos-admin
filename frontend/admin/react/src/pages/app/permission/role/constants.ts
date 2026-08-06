@@ -73,3 +73,30 @@ export function filterNumbers(values: any[]): number[] {
     .filter((v) => typeof v === 'number' && !isNaN(v))
     .map((v) => Number(v));
 }
+
+/**
+ * 递归收集树中所有「叶子节点」（无 children）的 key。
+ * 用于提交勾选值时剥离父节点 key：
+ * 这些 Tree 默认开启父子联动，勾选某父节点下全部子节点时父节点会被自动勾选，
+ * 其 key（权限组/父菜单的 ID）会混入 checkedKeys。若直接 filterNumbers 提交，
+ * 组/父菜单 ID 会被后端当作权限/菜单 ID 处理，可能造成越权绑定。
+ * 这里用叶子集合对 checkedKeys 求交集，只保留真正的叶子 ID。
+ */
+export function extractLeafIds(checkedKeys: any[], treeData: any[]): number[] {
+  if (!Array.isArray(checkedKeys) || !Array.isArray(treeData)) return [];
+  const leafIds = new Set<number>();
+  const collect = (nodes: any[]) => {
+    for (const node of nodes) {
+      if (node.children && node.children.length > 0) {
+        collect(node.children);
+      } else if (typeof node.key === 'number' && !isNaN(node.key)) {
+        leafIds.add(node.key);
+      }
+    }
+  };
+  collect(treeData);
+  return checkedKeys
+    .flat(Infinity)
+    .filter((v): v is number => typeof v === 'number' && !isNaN(v) && leafIds.has(v))
+    .map((v) => Number(v));
+}

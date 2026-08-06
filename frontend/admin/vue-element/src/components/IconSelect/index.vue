@@ -6,11 +6,11 @@
           <slot>
             <el-input v-model="selectedIcon" readonly placeholder="点击选择图标" class="reference">
               <template #prepend>
-                <!-- 根据图标类型展示 -->
+                <!-- 根据图标类型展示，两个分支互斥，避免双重渲染 -->
                 <el-icon v-if="isElementIcon">
                   <component :is="selectedIcon.replace('el-icon-', '')" />
                 </el-icon>
-                <SvgIcon :icon="selectedIcon" />
+                <SvgIcon v-else :icon="selectedIcon" />
               </template>
               <template #suffix>
                 <!-- 清空按钮 -->

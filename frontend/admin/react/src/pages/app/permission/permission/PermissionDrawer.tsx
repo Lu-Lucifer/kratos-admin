@@ -26,6 +26,7 @@ import {
   buildMenuTree,
   buildApiTree,
   filterNumbers,
+  extractLeafIds,
 } from './constants';
 
 interface PermissionDrawerProps {
@@ -237,7 +238,10 @@ const PermissionDrawer: React.FC<PermissionDrawerProps> = ({
 
       const payload = {
         ...values,
-        menuIds: filterNumbers(menuCheckedKeys),
+        // 菜单树用叶子交集剥离父菜单 ID（父子联动会自动勾选父菜单，
+        // 其 ID 混入提交会被后端当作菜单 ID）。API 树父节点 key 是
+        // 'module_${mod}' 字符串，filterNumbers 能正确剥离，无需叶子过滤。
+        menuIds: extractLeafIds(menuCheckedKeys, menuTreeData),
         apiIds: filterNumbers(apiCheckedKeys),
       };
 

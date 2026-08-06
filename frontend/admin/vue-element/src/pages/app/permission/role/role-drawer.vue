@@ -190,7 +190,14 @@ async function open(data?: { create: boolean; row?: any }) {
 
     // 如果是编辑模式，填充数据
     if (!isCreate.value && data?.row) {
-      Object.assign(formData, data.row);
+      // 仅回填表单声明的字段，避免把 id/createdAt/tenantName/tenantId 等
+      // 不可变字段灌入 formData，进而被 ...formData 带入提交载荷。
+      // （permissions 由树勾选控制，由 setCheckedKeys 回填，不在此赋值）
+      formData.name = data.row.name ?? "";
+      formData.code = data.row.code ?? "";
+      formData.sortOrder = data.row.sortOrder ?? 1;
+      formData.status = data.row.status ?? "ON";
+      formData.description = data.row.description ?? "";
 
       // 设置权限树的选中状态
       await nextTick();
@@ -211,6 +218,12 @@ function handleClose() {
 
 // 重置表单
 function resetForm() {
+  // 先删除所有 formData 上可能被历史 Object.assign 残留的多余 key
+  // （id/createdAt/tenantName/tenantId 等），再恢复声明字段的默认值，
+  // 确保跨抽屉开启无脏数据残留。
+  Object.keys(formData).forEach((k) => {
+    delete (formData as any)[k];
+  });
   formData.name = "";
   formData.code = "";
   formData.sortOrder = 1;

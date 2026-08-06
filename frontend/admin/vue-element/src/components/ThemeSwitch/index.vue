@@ -85,11 +85,16 @@ function handleToggle(event: MouseEvent) {
         },
       );
     }
+  }).catch(() => {
+    // transition 可能因文档不可见（切换标签页/最小化）或被新过渡抢占而 reject，
+    // 这里吞掉异常，style 的清理统一交给下面的 finally。
   });
 
-  transition.finished.then(() => {
+  transition.finished.finally(() => {
+    // 无论过渡成功还是被中止，都必须移除注入的 <style>，
+    // 否则它会在 <head> 中永久残留（每次中止都泄漏一个）。
     style.remove();
-  });
+  }).catch(() => {});
 }
 </script>
 

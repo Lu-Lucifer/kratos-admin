@@ -126,6 +126,14 @@ export function useTiptapEditor(options: UseTiptapEditorOptions) {
 
   // 监听 placeholder 变化
   watch(placeholder, (newVal) => {
+    // 注意：直接 mutate 扩展 options.placeholder 是未文档化的内部访问。
+    // Tiptap 的 Placeholder 扩展基于 ProseMirror decoration 实现，decoration
+    // 仅在 EditorState 重新计算时依据当前 options 生成；直接改 options 后若
+    // 没有触发 state 重算，新占位文本可能不会立即生效（典型场景：i18n 切语言
+    // 导致 placeholder 文本变更）。升级 tiptap 后此 mutate 也可能失效或抛错。
+    // 官方推荐方式是 editor.extensionManager.reconfigure 或重建编辑器，但前者
+    // 跨版本不稳定、后者会丢失光标/内容，故此处暂保留 mutate 并在此标注。
+    // 若后续 placeholder 动态更新失效，应改为重建编辑器或升级后用 reconfigure。
     const placeholderExt = editor.value?.extensionManager?.extensions.find(
       (e: any) => e.name === "placeholder"
     );

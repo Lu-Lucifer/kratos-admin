@@ -125,7 +125,12 @@ const RedisCacheMonitor = () => {
         }
       >
         <Table<redis_cacheservicev1_SlowLogEntry>
-          rowKey={(record) => record?.id ?? Math.random()}
+          rowKey={(record, index) =>
+            // 不用 Math.random 兜底：否则每次重渲染同一行都生成新 key，
+            // 导致整行 DOM 销毁重建、丢失行内状态并产生性能开销。
+            // 用稳定的多字段复合 key + index 兜底唯一性。
+            `${record?.clientAddr ?? ''}-${record?.command ?? ''}-${record?.duration ?? ''}-${index}`
+          }
           dataSource={slowlog}
           pagination={false}
           size="small"
