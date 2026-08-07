@@ -114,16 +114,16 @@ export function orgUnitStatusToName(status: OrgUnit_Status) {
   return matchedItem ? matchedItem.label : '';
 }
 
-export function orgUnitStatusToColor(status: OrgUnit_Status) {
+// 语义：ON=success，OFF/default=default（由 antd 主题 token 驱动）
+export function orgUnitStatusToColor(
+  status: OrgUnit_Status,
+): 'default' | 'success' {
   switch (status) {
-    case 'OFF': {
-      return '#8C8C8C';
-    }
     case 'ON': {
-      return '#52C41A';
+      return 'success';
     }
     default: {
-      return '#C9CDD4';
+      return 'default';
     }
   }
 }
@@ -170,24 +170,48 @@ export function orgUnitTypeToName(orgUnitType: OrgUnit_Type) {
   return matchedItem ? matchedItem.label : '';
 }
 
-const ORG_UNIT_COLOR_MAP: Record<string, string> = {
-  BRANCH: '#4096FF',
-  COMMITTEE: '#00B42A',
-  COMPANY: '#165DFF',
-  DEPARTMENT: '#722ED1',
-  DIVISION: '#FF7D00',
-  OTHER: '#86909C',
-  PROJECT: '#F53F3F',
-  REGION: '#14C9C9',
-  SUBSIDIARY: '#6B778C',
-  TEAM: '#FFC53D',
-  DEFAULT: '#C9CDD4',
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换），
+// 保留各类型区分度，避免硬编码 hex 在暗黑下产生刺眼浅色块。
+const ORG_UNIT_COLOR_MAP: Record<
+  string,
+  | 'blue'
+  | 'green'
+  | 'purple'
+  | 'orange'
+  | 'cyan'
+  | 'red'
+  | 'volcano'
+  | 'geekblue'
+  | 'gold'
+  | 'default'
+> = {
+  BRANCH: 'blue',
+  COMMITTEE: 'green',
+  COMPANY: 'geekblue',
+  DEPARTMENT: 'purple',
+  DIVISION: 'orange',
+  OTHER: 'default',
+  PROJECT: 'red',
+  REGION: 'cyan',
+  SUBSIDIARY: 'volcano',
+  TEAM: 'gold',
+  DEFAULT: 'default',
 };
 
-export function orgUnitTypeToColor(orgUnitType: OrgUnit_Type) {
-  return (
-    ORG_UNIT_COLOR_MAP[orgUnitType as string] || ORG_UNIT_COLOR_MAP.DEFAULT
-  );
+export function orgUnitTypeToColor(
+  orgUnitType: OrgUnit_Type,
+):
+  | 'blue'
+  | 'green'
+  | 'purple'
+  | 'orange'
+  | 'cyan'
+  | 'red'
+  | 'volcano'
+  | 'geekblue'
+  | 'gold'
+  | 'default' {
+  return ORG_UNIT_COLOR_MAP[orgUnitType as string] ?? 'default';
 }
 
 export const findOrgUnit = (

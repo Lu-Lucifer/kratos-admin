@@ -206,13 +206,14 @@ onBeforeMount(() => {
     color: #c0c4cc;
   }
 
-  // background 风格暗色模式
+  // background 风格：浅色分支使用 Element Plus fill token，避免白底白芯片在亮色模式下不可见
+  // 暗色模式由下方 html.dark & 分支覆盖，保持原有外观
   &.breadcrumb--background {
     .el-breadcrumb__item:not(:last-child) .el-breadcrumb__inner {
-      background-color: rgba(255, 255, 255, 0.06);
+      background-color: var(--el-fill-color-light);
     }
     .el-breadcrumb__item:not(:last-child) .el-breadcrumb__inner:hover {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: var(--el-fill-color);
     }
   }
 

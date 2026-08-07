@@ -71,23 +71,43 @@ export const operationAuditLogActionList = computed(() => [
   { value: 'OTHER', label: t('enum.operationAuditLog.action.OTHER') },
 ]);
 
-const OPERATION_AUDIT_LOG_ACTION_COLOR_MAP: Record<string, string> = {
-  CREATE: '#1677FF',
-  UPDATE: '#597EF7',
-  DELETE: '#FF4D4F',
-  READ: '#6B7280',
-  ASSIGN: '#722ED1',
-  UNASSIGN: '#A855F7',
-  EXPORT: '#00B42A',
-  IMPORT: '#36CFC9',
-  OTHER: '#86909C',
-  DEFAULT: '#86909C',
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换）。
+const OPERATION_AUDIT_LOG_ACTION_COLOR_MAP: Record<
+  string,
+  | 'blue'
+  | 'geekblue'
+  | 'red'
+  | 'purple'
+  | 'magenta'
+  | 'green'
+  | 'cyan'
+  | 'default'
+> = {
+  CREATE: 'blue',
+  UPDATE: 'geekblue',
+  DELETE: 'red',
+  READ: 'default',
+  ASSIGN: 'purple',
+  UNASSIGN: 'magenta',
+  EXPORT: 'green',
+  IMPORT: 'cyan',
+  OTHER: 'default',
+  DEFAULT: 'default',
 };
 
-export function operationAuditLogActionToColor(action: OperationActionType) {
+export function operationAuditLogActionToColor(
+  action: OperationActionType,
+):
+  | 'blue'
+  | 'geekblue'
+  | 'red'
+  | 'purple'
+  | 'magenta'
+  | 'green'
+  | 'cyan'
+  | 'default' {
   return (
-    OPERATION_AUDIT_LOG_ACTION_COLOR_MAP[action as string] ||
-    OPERATION_AUDIT_LOG_ACTION_COLOR_MAP.DEFAULT
+    OPERATION_AUDIT_LOG_ACTION_COLOR_MAP[action as string] ?? 'default'
   );
 }
 

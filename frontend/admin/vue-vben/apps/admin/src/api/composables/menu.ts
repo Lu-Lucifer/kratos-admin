@@ -210,25 +210,29 @@ export function menuTypeToName(menuType: any): string {
   return matchedItem ? matchedItem.label : '';
 }
 
-export function menuTypeToColor(menuType: Menu_Type) {
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换），
+// 保留各类型区分度，避免硬编码 hex 在暗黑下产生刺眼浅色块。
+export function menuTypeToColor(
+  menuType: Menu_Type,
+): 'red' | 'green' | 'blue' | 'purple' | 'default' {
   switch (menuType) {
     case 'BUTTON': {
-      return '#F56C6C';
+      return 'red';
     }
     case 'CATALOG': {
-      return '#27AE60';
+      return 'green';
     }
     case 'EMBEDDED': {
-      return '#4096FF';
+      return 'blue';
     }
     case 'LINK': {
-      return '#9B59B6';
+      return 'purple';
     }
     case 'MENU': {
-      return '#165DFF';
+      return 'blue';
     }
     default: {
-      return '#86909C';
+      return 'default';
     }
   }
 }

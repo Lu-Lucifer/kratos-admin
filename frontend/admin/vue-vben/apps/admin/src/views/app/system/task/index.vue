@@ -473,30 +473,31 @@ async function handleEnableChanged(row: any, checked: boolean) {
 </template>
 
 <style scoped>
+/* 绿色按钮使用 antd success 主题 token，亮/暗模式自动切换，避免硬编码色值在不同主题下不协调 */
 .btn-start-all {
-  background-color: #52c41a !important;
-  border-color: #52c41a !important;
-  color: #fff !important;
+  background-color: var(--ant-color-success) !important;
+  border-color: var(--ant-color-success) !important;
+  color: var(--ant-color-text-light-solid) !important;
 }
 
 .btn-start-all:hover,
 .btn-start-all:focus {
-  background-color: #4cae4c !important;
-  border-color: #4cae4c !important;
+  background-color: var(--ant-color-success-active) !important;
+  border-color: var(--ant-color-success-active) !important;
 }
 
 .btn-start-all[disabled] {
-  background-color: #c2e7b0 !important;
-  border-color: #c2e7b0 !important;
-  color: #86b379 !important;
+  background-color: var(--ant-color-bg-container-disabled) !important;
+  border-color: var(--ant-color-bg-container-disabled) !important;
+  color: var(--ant-color-text-disabled) !important;
   cursor: not-allowed !important;
 }
 
 :deep(.green-link-btn) {
-  color: #52c41a !important;
+  color: var(--ant-color-success) !important;
 }
 
 :deep(.green-link-btn:hover) {
-  color: #4cae4c !important;
+  color: var(--ant-color-success-active) !important;
 }
 </style>

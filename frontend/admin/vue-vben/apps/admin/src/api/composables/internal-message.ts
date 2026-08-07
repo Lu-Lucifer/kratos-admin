@@ -321,24 +321,25 @@ export function internalMessageStatusLabel(
   return matchedItem ? matchedItem.label : '';
 }
 
-const INTERNAL_MESSAGE_STATUS_COLOR_MAP: Record<string, string> = {
-  ARCHIVED: '#86909C',
-  DELETED: '#C9CDD4',
-  DRAFT: '#9CA3AF',
-  PUBLISHED: '#00B42A',
-  REVOKED: '#F53F3F',
-  SCHEDULED: '#165DFF',
-  DEFAULT: '#E5E7EB',
+// 状态色使用 antd 预设状态名（由主题 token 驱动）。
+// 语义：PUBLISHED=success，SCHEDULED=warning，REVOKED=error，其余/default=default。
+const INTERNAL_MESSAGE_STATUS_COLOR_MAP: Record<
+  string,
+  'success' | 'warning' | 'error' | 'default'
+> = {
+  ARCHIVED: 'default',
+  DELETED: 'default',
+  DRAFT: 'default',
+  PUBLISHED: 'success',
+  REVOKED: 'error',
+  SCHEDULED: 'warning',
+  DEFAULT: 'default',
 };
 
 export function internalMessageStatusColor(
   status: InternalMessage_Status,
-): string {
-  return (
-    INTERNAL_MESSAGE_STATUS_COLOR_MAP[status as string] ??
-    INTERNAL_MESSAGE_STATUS_COLOR_MAP.DEFAULT ??
-    '#E5E7EB'
-  );
+): 'success' | 'warning' | 'error' | 'default' {
+  return INTERNAL_MESSAGE_STATUS_COLOR_MAP[status as string] ?? 'default';
 }
 
 export function internalMessageTypeLabel(value: InternalMessage_Type): string {
@@ -347,19 +348,21 @@ export function internalMessageTypeLabel(value: InternalMessage_Type): string {
   return matchedItem ? matchedItem.label : '';
 }
 
-const INTERNAL_MESSAGE_TYPE_COLOR_MAP: Record<string, string> = {
-  GROUP: '#00B42A',
-  NOTIFICATION: '#165DFF',
-  PRIVATE: '#722ED1',
-  DEFAULT: '#C9CDD4',
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换）。
+const INTERNAL_MESSAGE_TYPE_COLOR_MAP: Record<
+  string,
+  'green' | 'blue' | 'purple' | 'default'
+> = {
+  GROUP: 'green',
+  NOTIFICATION: 'blue',
+  PRIVATE: 'purple',
+  DEFAULT: 'default',
 };
 
-export function internalMessageTypeColor(type: InternalMessage_Type): string {
-  return (
-    INTERNAL_MESSAGE_TYPE_COLOR_MAP[type as string] ??
-    INTERNAL_MESSAGE_TYPE_COLOR_MAP.DEFAULT ??
-    '#C9CDD4'
-  );
+export function internalMessageTypeColor(
+  type: InternalMessage_Type,
+): 'green' | 'blue' | 'purple' | 'default' {
+  return INTERNAL_MESSAGE_TYPE_COLOR_MAP[type as string] ?? 'default';
 }
 
 export function internalMessageRecipientStatusLabel(
@@ -370,34 +373,25 @@ export function internalMessageRecipientStatusLabel(
   return matchedItem ? matchedItem.label : '';
 }
 
-const INTERNAL_MESSAGE_RECIPIENT_COLOR_THEME: Record<
+// 状态色使用 antd 预设状态名（由主题 token 驱动），不再需要 light/dark 双套调色板。
+// 语义：REVOKED=error，其余/default=default。theme 参数保留以维持调用签名兼容，但不再生效。
+const INTERNAL_MESSAGE_RECIPIENT_COLOR_MAP: Record<
   string,
-  Record<string, string>
+  'error' | 'default'
 > = {
-  light: {
-    DELETED: '#C9CDD4',
-    READ: '#86909C',
-    RECEIVED: '#165DFF',
-    REVOKED: '#F53F3F',
-    SENT: '#4096FF',
-    DEFAULT: '#E5E7EB',
-  },
-  dark: {
-    DELETED: '#6E7681',
-    READ: '#4E5969',
-    RECEIVED: '#2F77FF',
-    REVOKED: '#F87171',
-    SENT: '#69B1FF',
-    DEFAULT: '#4B5563',
-  },
+  DELETED: 'default',
+  READ: 'default',
+  RECEIVED: 'default',
+  REVOKED: 'error',
+  SENT: 'default',
+  DEFAULT: 'default',
 };
 
 export function internalMessageRecipientStatusColor(
   status: InternalMessageRecipient_Status,
-  theme: 'dark' | 'light' = 'light',
-): string {
-  const colorMap = INTERNAL_MESSAGE_RECIPIENT_COLOR_THEME[theme] ?? {
-    DEFAULT: '#E5E7EB',
-  };
-  return colorMap[status as string] ?? colorMap.DEFAULT ?? '#E5E7EB';
+  _theme: 'dark' | 'light' = 'light',
+): 'error' | 'default' {
+  return (
+    INTERNAL_MESSAGE_RECIPIENT_COLOR_MAP[status as string] ?? 'default'
+  );
 }

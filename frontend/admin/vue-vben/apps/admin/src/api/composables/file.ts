@@ -122,24 +122,44 @@ export function ossProviderLabel(value: OSSProvider): string {
   return matchedItem ? matchedItem.label : '';
 }
 
-const OSS_PROVIDER_COLOR_MAP: Record<string, string> = {
-  LOCAL: '#36D399',
-  MINIO: '#2563EB',
-  QINIU: '#722ED1',
-  ALIYUN: '#FF6A00',
-  TENCENT: '#12B7F5',
-  BAIDU: '#4080FF',
-  HUAWEI: '#E64340',
-  AWS: '#FF9900',
-  AZURE: '#0078D4',
-  GOOGLE: '#4285F4',
-  DEFAULT: '#C9CDD4',
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换），
+// 保留各云厂商区分度，避免硬编码 hex 在暗黑下产生刺眼浅色块。
+const OSS_PROVIDER_COLOR_MAP: Record<
+  string,
+  | 'green'
+  | 'blue'
+  | 'purple'
+  | 'orange'
+  | 'cyan'
+  | 'red'
+  | 'gold'
+  | 'geekblue'
+  | 'default'
+> = {
+  LOCAL: 'green',
+  MINIO: 'blue',
+  QINIU: 'purple',
+  ALIYUN: 'orange',
+  TENCENT: 'cyan',
+  BAIDU: 'geekblue',
+  HUAWEI: 'red',
+  AWS: 'gold',
+  AZURE: 'blue',
+  GOOGLE: 'geekblue',
+  DEFAULT: 'default',
 };
 
-export function ossProviderColor(type: OSSProvider): string {
-  return (
-    OSS_PROVIDER_COLOR_MAP[type as string] ??
-    OSS_PROVIDER_COLOR_MAP.DEFAULT ??
-    '#C9CDD4'
-  );
+export function ossProviderColor(
+  type: OSSProvider,
+):
+  | 'green'
+  | 'blue'
+  | 'purple'
+  | 'orange'
+  | 'cyan'
+  | 'red'
+  | 'gold'
+  | 'geekblue'
+  | 'default' {
+  return OSS_PROVIDER_COLOR_MAP[type as string] ?? 'default';
 }

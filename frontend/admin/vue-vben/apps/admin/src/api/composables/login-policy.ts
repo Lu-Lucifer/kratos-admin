@@ -124,20 +124,23 @@ export const loginPolicyMethodList = computed(() => [
   { value: 'DEVICE', label: t('enum.loginPolicy.method.DEVICE') },
 ]);
 
-const LOGIN_POLICY_METHOD_COLOR_MAP: Record<string, string> = {
-  IP: '#4096FF',
-  MAC: '#909399',
-  REGION: '#FF9A2E',
-  TIME: '#F56C6C',
-  DEVICE: '#86909C',
-  DEFAULT: '#86909C',
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换）。
+const LOGIN_POLICY_METHOD_COLOR_MAP: Record<
+  string,
+  'blue' | 'orange' | 'red' | 'default'
+> = {
+  IP: 'blue',
+  MAC: 'default',
+  REGION: 'orange',
+  TIME: 'red',
+  DEVICE: 'default',
+  DEFAULT: 'default',
 };
 
-export function loginPolicyMethodToColor(methodName: LoginPolicy_Method) {
-  return (
-    LOGIN_POLICY_METHOD_COLOR_MAP[methodName as string] ||
-    LOGIN_POLICY_METHOD_COLOR_MAP.DEFAULT
-  );
+export function loginPolicyMethodToColor(
+  methodName: LoginPolicy_Method,
+): 'blue' | 'orange' | 'red' | 'default' {
+  return LOGIN_POLICY_METHOD_COLOR_MAP[methodName as string] ?? 'default';
 }
 
 export function loginPolicyTypeToName(typeName: LoginPolicy_Type) {
@@ -146,7 +149,11 @@ export function loginPolicyTypeToName(typeName: LoginPolicy_Type) {
   return matchedItem ? matchedItem.label : '';
 }
 
-export function loginPolicyTypeToColor(typeName: LoginPolicy_Type) {
+// 类型色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换）。
+// 'gray' 非预设色，改为 'default' 由主题 token 提供中性色。
+export function loginPolicyTypeToColor(
+  typeName: LoginPolicy_Type,
+): 'red' | 'green' | 'default' {
   switch (typeName) {
     case 'BLACKLIST': {
       return 'red';
@@ -155,7 +162,7 @@ export function loginPolicyTypeToColor(typeName: LoginPolicy_Type) {
       return 'green';
     }
     default: {
-      return 'gray';
+      return 'default';
     }
   }
 }

@@ -21,24 +21,21 @@ export const successStatusList = computed(() => [
   { value: false, label: $t('enum.successStatus.failed') },
 ]);
 
+// 颜色统一使用 antd 预设状态名，由主题 token 驱动，亮/暗模式自动切换，
+// 避免硬编码 hex 在暗黑模式下产生刺眼浅色块标签。
+// 语义：启用=success，禁用=default
 export function enableBoolToColor(
   enable: 'false' | 'FALSE' | 'False' | 'true' | 'TRUE' | 'True' | boolean,
-) {
+): 'default' | 'success' {
   switch (enable) {
-    case false:
-    case 'false':
-    case 'FALSE':
-    case 'False': {
-      return '#8C8C8C';
-    }
     case true:
     case 'true':
     case 'TRUE':
     case 'True': {
-      return '#52C41A';
+      return 'success';
     }
     default: {
-      return '#C9CDD4';
+      return 'default';
     }
   }
 }
@@ -92,16 +89,16 @@ export function statusToName(status: 'OFF' | 'ON' | undefined) {
   return matchedItem ? matchedItem.label : '';
 }
 
-export function statusToColor(status: 'OFF' | 'ON' | undefined) {
+// 语义：ON=success，OFF/default=default
+export function statusToColor(
+  status: 'OFF' | 'ON' | undefined,
+): 'default' | 'success' {
   switch (status) {
-    case 'OFF': {
-      return '#8C8C8C';
-    }
     case 'ON': {
-      return '#52C41A';
+      return 'success';
     }
     default: {
-      return '#C9CDD4';
+      return 'default';
     }
   }
 }
@@ -109,8 +106,9 @@ export function statusToColor(status: 'OFF' | 'ON' | undefined) {
 // 成功/失败状态
 // ==============================
 
-export function successToColor(success: boolean) {
-  return success ? 'limegreen' : 'crimson';
+// 语义：成功=success，失败=error（均由 antd 主题 token 驱动，暗黑自动切换）
+export function successToColor(success: boolean): 'success' | 'error' {
+  return success ? 'success' : 'error';
 }
 
 export function successToName(success: boolean) {

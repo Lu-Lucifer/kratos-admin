@@ -420,9 +420,9 @@ body,
   margin-bottom: var(--gowind-form-item-margin-bottom);
 }
 
-/* 表单 Label 亮色模式加深，增强可读性 */
+/* 表单 Label 跟随 Element Plus 主题变量，亮/暗模式自动切换，避免暗黑下低对比 */
 .el-form-item__label {
-  color: #475569 !important;
+  color: var(--el-text-color-regular) !important;
   font-weight: 550 !important;
   font-size: 14px; // 表单标签字号
 }

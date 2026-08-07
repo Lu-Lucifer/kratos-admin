@@ -61,58 +61,63 @@ export function useGetLoginAuditLog(
 // 登录审计日志枚举与工具函数
 // ==============================
 
-const COLORS = {
-  neutral: '#86909C',
-  success: '#1F7A34',
-  warning: '#FA8C16',
-  danger: '#D32F2F',
-  info: '#1890FF',
+// 状态色使用 antd 预设状态名（由主题 token 驱动，亮/暗自动切换），替代原硬编码 hex 调色板。
+// 语义：SUCCESS/LOW=success，PARTIAL/LOCKED/SESSION_EXPIRED/KICKED_OUT/PASSWORD_RESET/MEDIUM=warning，
+// FAILED/HIGH=error，UNSPECIFIED/LOGOUT/default=default。
+type LoginAuditStatusColor = 'success' | 'error' | 'warning' | 'default';
+
+const LOGIN_AUDIT_LOG_STATUS_COLOR_MAP: Record<
+  string,
+  LoginAuditStatusColor
+> = {
+  STATUS_UNSPECIFIED: 'default',
+  SUCCESS: 'success',
+  FAILED: 'error',
+  PARTIAL: 'warning',
+  LOCKED: 'warning',
 };
 
-const LOGIN_AUDIT_LOG_STATUS_COLOR_MAP: Record<string, string> = {
-  STATUS_UNSPECIFIED: COLORS.neutral,
-  SUCCESS: COLORS.success,
-  FAILED: COLORS.danger,
-  PARTIAL: COLORS.warning,
-  LOCKED: COLORS.warning,
+const LOGIN_AUDIT_LOG_ACTION_TYPE_COLOR_MAP: Record<
+  string,
+  LoginAuditStatusColor
+> = {
+  ACTION_TYPE_UNSPECIFIED: 'default',
+  LOGIN: 'success',
+  LOGOUT: 'default',
+  SESSION_EXPIRED: 'warning',
+  KICKED_OUT: 'warning',
+  PASSWORD_RESET: 'warning',
 };
 
-const LOGIN_AUDIT_LOG_ACTION_TYPE_COLOR_MAP: Record<string, string> = {
-  ACTION_TYPE_UNSPECIFIED: COLORS.neutral,
-  LOGIN: COLORS.success,
-  LOGOUT: COLORS.info,
-  SESSION_EXPIRED: COLORS.warning,
-  KICKED_OUT: COLORS.warning,
-  PASSWORD_RESET: COLORS.warning,
-};
-
-const LOGIN_AUDIT_LOG_RISK_LEVEL_COLOR_MAP: Record<string, string> = {
-  RISK_LEVEL_UNSPECIFIED: COLORS.neutral,
-  LOW: COLORS.success,
-  MEDIUM: COLORS.warning,
-  HIGH: COLORS.danger,
+const LOGIN_AUDIT_LOG_RISK_LEVEL_COLOR_MAP: Record<
+  string,
+  LoginAuditStatusColor
+> = {
+  RISK_LEVEL_UNSPECIFIED: 'default',
+  LOW: 'success',
+  MEDIUM: 'warning',
+  HIGH: 'error',
 };
 
 export function getLoginAuditLogStatusColor(
   status: LoginAuditLog_Status,
-): string {
-  return LOGIN_AUDIT_LOG_STATUS_COLOR_MAP[status as string] || COLORS.neutral;
+): LoginAuditStatusColor {
+  return LOGIN_AUDIT_LOG_STATUS_COLOR_MAP[status as string] ?? 'default';
 }
 
 export function getLoginAuditLogActionTypeColor(
   actionType: LoginAuditLog_ActionType,
-): string {
+): LoginAuditStatusColor {
   return (
-    LOGIN_AUDIT_LOG_ACTION_TYPE_COLOR_MAP[actionType as string] ||
-    COLORS.neutral
+    LOGIN_AUDIT_LOG_ACTION_TYPE_COLOR_MAP[actionType as string] ?? 'default'
   );
 }
 
 export function getLoginAuditLogRiskLevelColor(
   riskLevel: LoginAuditLog_RiskLevel,
-): string {
+): LoginAuditStatusColor {
   return (
-    LOGIN_AUDIT_LOG_RISK_LEVEL_COLOR_MAP[riskLevel as string] || COLORS.neutral
+    LOGIN_AUDIT_LOG_RISK_LEVEL_COLOR_MAP[riskLevel as string] ?? 'default'
   );
 }
 

@@ -122,22 +122,25 @@ export function membershipPositionStatusToName(status: any) {
   return matchedItem ? matchedItem.label : '';
 }
 
-const MEMBERSHIP_POSITION_STATUS_COLOR_MAP: Record<string, string> = {
-  PROBATION: '#4096FF',
-  ACTIVE: '#00B42A',
-  LEAVE: '#FF9A2E',
-  RESIGNED: '#F56C6C',
-  TERMINATED: '#F53F3F',
-  EXPIRED: '#909399',
-  DEFAULT: '#C9CDD4',
+// 状态色使用 antd 预设状态名（由主题 token 驱动）。
+// 语义：ACTIVE=success，LEAVE/PROBATION=warning，其余/default=default。
+const MEMBERSHIP_POSITION_STATUS_COLOR_MAP: Record<
+  string,
+  'success' | 'warning' | 'default'
+> = {
+  PROBATION: 'warning',
+  ACTIVE: 'success',
+  LEAVE: 'warning',
+  RESIGNED: 'default',
+  TERMINATED: 'default',
+  EXPIRED: 'default',
+  DEFAULT: 'default',
 };
 
-export function membershipPositionStatusToColor(status: Position_Status) {
-  return (
-    MEMBERSHIP_POSITION_STATUS_COLOR_MAP[status as string] ??
-    MEMBERSHIP_POSITION_STATUS_COLOR_MAP.DEFAULT ??
-    '#C9CDD4'
-  );
+export function membershipPositionStatusToColor(
+  status: Position_Status,
+): 'success' | 'warning' | 'default' {
+  return MEMBERSHIP_POSITION_STATUS_COLOR_MAP[status as string] ?? 'default';
 }
 
 export const positionTypeList = computed(() => [
@@ -155,33 +158,24 @@ export function positionTypeToName(status: Position_Status) {
   return matchedItem ? matchedItem.label : '';
 }
 
-const POSITION_TYPE_COLOR_THEME: Record<string, Record<string, string>> = {
-  light: {
-    REGULAR: '#165DFF',
-    LEADER: '#722ED1',
-    MANAGER: '#FF7D00',
-    INTERN: '#52C41A',
-    CONTRACT: '#14C9C9',
-    OTHER: '#86909C',
-    DEFAULT: '#C9CDD4',
-  },
-  dark: {
-    REGULAR: '#2F77FF',
-    LEADER: '#8542E7',
-    MANAGER: '#FF9529',
-    INTERN: '#67E037',
-    CONTRACT: '#20E0E0',
-    OTHER: '#9BA3AD',
-    DEFAULT: '#DCE0E6',
-  },
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换），
+// 不再需要 light/dark 双套调色板。theme 参数保留以维持调用签名兼容，但不再生效。
+const POSITION_TYPE_COLOR_MAP: Record<
+  string,
+  'blue' | 'purple' | 'orange' | 'green' | 'cyan' | 'default'
+> = {
+  REGULAR: 'blue',
+  LEADER: 'purple',
+  MANAGER: 'orange',
+  INTERN: 'green',
+  CONTRACT: 'cyan',
+  OTHER: 'default',
+  DEFAULT: 'default',
 };
 
 export function positionTypeToColor(
   positionType: Position_Type,
-  theme: 'dark' | 'light' = 'light',
-): string {
-  const colorMap = POSITION_TYPE_COLOR_THEME[theme] ?? {
-    DEFAULT: '#C9CDD4',
-  };
-  return colorMap[positionType as string] ?? colorMap.DEFAULT ?? '#C9CDD4';
+  _theme: 'dark' | 'light' = 'light',
+): 'blue' | 'purple' | 'orange' | 'green' | 'cyan' | 'default' {
+  return POSITION_TYPE_COLOR_MAP[positionType as string] ?? 'default';
 }

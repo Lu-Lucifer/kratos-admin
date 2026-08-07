@@ -119,21 +119,23 @@ export const roleDataScopeList = computed(() => [
   { label: t('enum.role.dataScope.SELF'), value: 'SELF' },
 ]);
 
-const DATA_SCOPE_COLOR_MAP: Record<string, string> = {
-  ALL: '#F53F3F',
-  UNIT_AND_CHILD: '#165DFF',
-  UNIT_ONLY: '#FF7D00',
-  SELECTED_UNITS: '#722ED1',
-  SELF: '#86909C',
-  DEFAULT: '#C9CDD4',
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换）。
+const DATA_SCOPE_COLOR_MAP: Record<
+  string,
+  'red' | 'blue' | 'orange' | 'purple' | 'default'
+> = {
+  ALL: 'red',
+  UNIT_AND_CHILD: 'blue',
+  UNIT_ONLY: 'orange',
+  SELECTED_UNITS: 'purple',
+  SELF: 'default',
+  DEFAULT: 'default',
 };
 
-export function dataScopeToColor(dataScope: any): string {
-  return (
-    DATA_SCOPE_COLOR_MAP[dataScope as string] ??
-    DATA_SCOPE_COLOR_MAP.DEFAULT ??
-    '#C9CDD4'
-  );
+export function dataScopeToColor(
+  dataScope: any,
+): 'red' | 'blue' | 'orange' | 'purple' | 'default' {
+  return DATA_SCOPE_COLOR_MAP[dataScope as string] ?? 'default';
 }
 
 export function roleDataScopeToName(dataScope: any) {

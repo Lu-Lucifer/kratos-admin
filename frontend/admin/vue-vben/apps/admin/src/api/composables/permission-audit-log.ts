@@ -82,30 +82,38 @@ export const permissionAuditLogActionList = computed(() => [
   { value: 'OTHER', label: t('enum.permissionAuditLog.action.OTHER') },
 ]);
 
-const PERMISSION_AUDIT_LOG_ACTION_COLOR_MAP: Record<string, string> = {
-  GRANT: '#1677FF',
-  REVOKE: '#FF4D4F',
-  UPDATE: '#597EF7',
-  RESET: '#6B7280',
-  CREATE: '#722ED1',
-  DELETE: '#FF4D4F',
-  ASSIGN: '#00B42A',
-  UNASSIGN: '#FF7875',
-  BULK_GRANT: '#36CFC9',
-  BULK_REVOKE: '#FFC0C2',
-  EXPIRE: '#FF4D4F',
-  RESUME: '#00B42A',
-  ROLLBACK: '#597EF7',
-  OTHER: '#86909C',
-  DEFAULT: '#86909C',
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换）。
+const PERMISSION_AUDIT_LOG_ACTION_COLOR_MAP: Record<
+  string,
+  | 'green'
+  | 'red'
+  | 'orange'
+  | 'blue'
+  | 'geekblue'
+  | 'default'
+> = {
+  GRANT: 'green',
+  REVOKE: 'red',
+  UPDATE: 'orange',
+  RESET: 'geekblue',
+  CREATE: 'blue',
+  DELETE: 'red',
+  ASSIGN: 'green',
+  UNASSIGN: 'red',
+  BULK_GRANT: 'green',
+  BULK_REVOKE: 'red',
+  EXPIRE: 'red',
+  RESUME: 'green',
+  ROLLBACK: 'orange',
+  OTHER: 'default',
+  DEFAULT: 'default',
 };
 
 export function permissionAuditLogActionToColor(
   action: PermissionAuditActionType,
-) {
+): 'green' | 'red' | 'orange' | 'blue' | 'geekblue' | 'default' {
   return (
-    PERMISSION_AUDIT_LOG_ACTION_COLOR_MAP[action as string] ||
-    PERMISSION_AUDIT_LOG_ACTION_COLOR_MAP.DEFAULT
+    PERMISSION_AUDIT_LOG_ACTION_COLOR_MAP[action as string] ?? 'default'
   );
 }
 

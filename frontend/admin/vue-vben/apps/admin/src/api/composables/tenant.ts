@@ -159,25 +159,28 @@ export function tenantTypeToName(tenantType: Tenant_Type) {
   return matchedItem ? matchedItem.label : '';
 }
 
-export function tenantTypeToColor(tenantType: Tenant_Type) {
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换）。
+export function tenantTypeToColor(
+  tenantType: Tenant_Type,
+): 'blue' | 'green' | 'purple' | 'orange' | 'default' {
   switch (tenantType) {
     case 'CUSTOM': {
-      return '#0050B3';
+      return 'blue';
     }
     case 'INTERNAL': {
-      return '#1890FF';
+      return 'blue';
     }
     case 'PAID': {
-      return '#52C41A';
+      return 'green';
     }
     case 'PARTNER': {
-      return '#722ED1';
+      return 'purple';
     }
     case 'TRIAL': {
-      return '#FF7D00';
+      return 'orange';
     }
     default: {
-      return '#8C8C8C';
+      return 'default';
     }
   }
 }
@@ -195,22 +198,20 @@ export function tenantStatusToName(tenantStatus: Tenant_Status) {
   return matchedItem ? matchedItem.label : '';
 }
 
-export function tenantStatusToColor(tenantStatus: Tenant_Status) {
+// 状态色使用 antd 预设状态名（由主题 token 驱动）。
+// 语义：ON=success，FREEZE=warning，EXPIRED/OFF/default=default。
+export function tenantStatusToColor(
+  tenantStatus: Tenant_Status,
+): 'success' | 'warning' | 'default' {
   switch (tenantStatus) {
-    case 'EXPIRED': {
-      return '#F5222D';
-    }
     case 'FREEZE': {
-      return '#FAAD14';
-    }
-    case 'OFF': {
-      return '#8C8C8C';
+      return 'warning';
     }
     case 'ON': {
-      return '#52C41A';
+      return 'success';
     }
     default: {
-      return '#8C8C8C';
+      return 'default';
     }
   }
 }
@@ -227,21 +228,23 @@ export function tenantAuditStatusToName(tenantAuditStatus: Tenant_AuditStatus) {
   return matchedItem ? matchedItem.label : '';
 }
 
+// 审核状态色使用 antd 预设状态名（由主题 token 驱动）。
+// 语义：APPROVED=success，PENDING=warning，REJECTED=error，default=default。
 export function tenantAuditStatusToColor(
   tenantAuditStatus: Tenant_AuditStatus,
-) {
+): 'success' | 'warning' | 'error' | 'default' {
   switch (tenantAuditStatus) {
     case 'APPROVED': {
-      return '#52C41A';
+      return 'success';
     }
     case 'PENDING': {
-      return '#1890FF';
+      return 'warning';
     }
     case 'REJECTED': {
-      return '#F5222D';
+      return 'error';
     }
     default: {
-      return '#8C8C8C';
+      return 'default';
     }
   }
 }

@@ -95,30 +95,51 @@ export const dataAccessAuditLogAccessTypeList = computed(() => [
   { value: 'OTHER', label: t('enum.dataAccessAuditLog.accessType.OTHER') },
 ]);
 
-const DATA_ACCESS_AUDIT_LOG_ACCESS_TYPE_COLOR_MAP: Record<string, string> = {
-  SELECT: '#1677FF',
-  INSERT: '#597EF7',
-  UPDATE: '#597EF7',
-  DELETE: '#FF4D4F',
-  VIEW: '#6B7280',
-  BULK_READ: '#6B7280',
-  EXPORT: '#00B42A',
-  IMPORT: '#36CFC9',
-  DDL_CREATE: '#722ED1',
-  DDL_ALTER: '#A855F7',
-  DDL_DROP: '#FF4D4F',
-  METADATA_READ: '#86909C',
-  SCAN: '#86909C',
-  ADMIN_OPERATION: '#722ED1',
-  OTHER: '#86909C',
-  DEFAULT: '#86909C',
+// 类型分类色使用 antd 预设调色板名（由主题 token 驱动，亮/暗自动切换），
+// 保留各访问类型区分度，避免硬编码 hex 在暗黑下产生刺眼浅色块。
+const DATA_ACCESS_AUDIT_LOG_ACCESS_TYPE_COLOR_MAP: Record<
+  string,
+  | 'blue'
+  | 'geekblue'
+  | 'red'
+  | 'green'
+  | 'cyan'
+  | 'purple'
+  | 'magenta'
+  | 'default'
+> = {
+  SELECT: 'blue',
+  INSERT: 'geekblue',
+  UPDATE: 'geekblue',
+  DELETE: 'red',
+  VIEW: 'default',
+  BULK_READ: 'default',
+  EXPORT: 'green',
+  IMPORT: 'cyan',
+  DDL_CREATE: 'purple',
+  DDL_ALTER: 'magenta',
+  DDL_DROP: 'red',
+  METADATA_READ: 'default',
+  SCAN: 'default',
+  ADMIN_OPERATION: 'purple',
+  OTHER: 'default',
+  DEFAULT: 'default',
 };
 
-export function dataAccessAuditLogAccessTypeToColor(accessType: AccessType) {
+export function dataAccessAuditLogAccessTypeToColor(
+  accessType: AccessType,
+):
+  | 'blue'
+  | 'geekblue'
+  | 'red'
+  | 'green'
+  | 'cyan'
+  | 'purple'
+  | 'magenta'
+  | 'default' {
   return (
     DATA_ACCESS_AUDIT_LOG_ACCESS_TYPE_COLOR_MAP[accessType as string] ??
-    DATA_ACCESS_AUDIT_LOG_ACCESS_TYPE_COLOR_MAP.DEFAULT ??
-    '#86909C'
+    'default'
   );
 }
 

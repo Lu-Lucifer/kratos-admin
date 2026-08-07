@@ -100,91 +100,62 @@
 
 /* ========== Brisk 风格 ========== */
 /* 轻快风格，底部线条指示 */
+/* 颜色统一使用 antd 主题 token，亮/暗模式自动切换，避免硬编码导致暗黑模式下不可见 */
 .tabsbar-brisk {
   .ant-tabs-nav {
     margin-bottom: 0;
-    
+
     .ant-tabs-tab {
       margin: 0 12px;
       padding: 8px 4px;
-      color: rgba(0, 0, 0, 0.65);
+      color: var(--ant-color-text-secondary);
       transition: all 0.2s ease;
-      
+
       &:hover {
-        color: rgba(0, 0, 0, 0.85);
+        color: var(--ant-color-text);
       }
-      
+
       &.ant-tabs-tab-active {
-        color: #1677ff;
+        color: var(--ant-color-primary);
         font-weight: 500;
       }
     }
-    
+
     .ant-tabs-ink-bar {
       height: 2px;
-      background: #1677ff;
+      background: var(--ant-color-primary);
       border-radius: 2px 2px 0 0;
     }
-  }
-  
-  /* 暗色模式适配 */
-  .ant-tabs-tab {
-    color: rgba(255, 255, 255, 0.65);
-    
-    &:hover {
-      color: rgba(255, 255, 255, 0.85);
-    }
-    
-    &.ant-tabs-tab-active {
-      color: #4096ff;
-    }
-  }
-  
-  .ant-tabs-ink-bar {
-    background: #4096ff;
   }
 }
 
 /* ========== Plain 风格 ========== */
 /* 简洁风格，类似 brisk 但更简约 */
+/* 颜色统一使用 antd 主题 token，亮/暗模式自动切换 */
 .tabsbar-plain {
   .ant-tabs-nav {
     margin-bottom: 0;
-    
+
     .ant-tabs-tab {
       margin: 0 8px;
       padding: 8px 2px;
-      color: rgba(0, 0, 0, 0.65);
+      color: var(--ant-color-text-secondary);
       transition: all 0.2s ease;
       border-bottom: 2px solid transparent;
-      
+
       &:hover {
-        color: rgba(0, 0, 0, 0.85);
+        color: var(--ant-color-text);
       }
-      
+
       &.ant-tabs-tab-active {
-        color: #1677ff;
+        color: var(--ant-color-primary);
         font-weight: 500;
-        border-bottom-color: #1677ff;
+        border-bottom-color: var(--ant-color-primary);
       }
     }
-    
+
     .ant-tabs-ink-bar {
       display: none;
-    }
-  }
-  
-  /* 暗色模式适配 */
-  .ant-tabs-tab {
-    color: rgba(255, 255, 255, 0.65);
-    
-    &:hover {
-      color: rgba(255, 255, 255, 0.85);
-    }
-    
-    &.ant-tabs-tab-active {
-      color: #4096ff;
-      border-bottom-color: #4096ff;
     }
   }
 }

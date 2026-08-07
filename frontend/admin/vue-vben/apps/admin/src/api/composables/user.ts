@@ -173,23 +173,26 @@ export const userStatusList = computed(() => [
   { value: 'CLOSED', label: t('enum.user.status.CLOSED') },
 ]);
 
-const USER_STATUS_COLOR_MAP: Record<string, string> = {
-  NORMAL: '#4096FF',
-  DISABLED: '#909399',
-  PENDING: '#FF9A2E',
-  LOCKED: '#F56C6C',
-  TERMINATED: '#F53F3F',
-  EXPIRED: '#C9CDD4',
-  CLOSED: '#86909C',
-  DEFAULT: '#86909C',
+// 状态色使用 antd 预设状态名（由主题 token 驱动，亮/暗自动切换）。
+// 语义：NORMAL=success，PENDING=warning，LOCKED=error，其余/default=default。
+const USER_STATUS_COLOR_MAP: Record<
+  string,
+  'success' | 'warning' | 'error' | 'default'
+> = {
+  NORMAL: 'success',
+  DISABLED: 'default',
+  PENDING: 'warning',
+  LOCKED: 'error',
+  TERMINATED: 'default',
+  EXPIRED: 'default',
+  CLOSED: 'default',
+  DEFAULT: 'default',
 };
 
-export function userStatusToColor(status: User_Status) {
-  return (
-    USER_STATUS_COLOR_MAP[status as string] ??
-    USER_STATUS_COLOR_MAP.DEFAULT ??
-    '#86909C'
-  );
+export function userStatusToColor(
+  status: User_Status,
+): 'success' | 'warning' | 'error' | 'default' {
+  return USER_STATUS_COLOR_MAP[status as string] ?? 'default';
 }
 
 export function userStatusToName(status?: User_Status) {
@@ -210,19 +213,19 @@ export function genderToName(gender?: User_Gender) {
   return matchedItem ? matchedItem.label : '';
 }
 
-export function genderToColor(gender?: User_Gender) {
+// 性别为无敏感语义的二元分类，使用 antd 预设调色板名（由主题 token 驱动）。
+export function genderToColor(
+  gender?: User_Gender,
+): 'magenta' | 'blue' | 'default' {
   switch (gender) {
     case 'FEMALE': {
-      return '#F77272';
+      return 'magenta';
     }
     case 'MALE': {
-      return '#4096FF';
-    }
-    case 'SECRET': {
-      return '#86909C';
+      return 'blue';
     }
     default: {
-      return '#C9CDD4';
+      return 'default';
     }
   }
 }
