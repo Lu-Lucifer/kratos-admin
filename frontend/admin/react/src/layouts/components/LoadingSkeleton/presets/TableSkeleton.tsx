@@ -60,7 +60,7 @@ export const TableSkeleton = ({
   return (
     <div className={`table-skeleton ${className}`.trim()}>
       {/* 表头 */}
-      <div className="flex items-center p-3 border-b bg-gray-50 dark:bg-gray-800">
+      <div className="flex items-center p-3 border-b bg-[var(--ant-color-fill-tertiary)]">
         {colConfigs.map((col, i) => (
           <Skeleton
             key={`header-${i}`}

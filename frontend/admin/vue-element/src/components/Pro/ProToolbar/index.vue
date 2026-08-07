@@ -291,54 +291,54 @@ defineExpose({
       }
     }
 
-    // ======== 危险按钮（danger）—— 柔和红色 ========
+    // ======== 危险按钮（danger）—— 柔和红色，使用 Element Plus 主题 danger 色阶（亮/暗自动切换） ========
     &.el-button--danger {
-      background-color: rgba(245, 63, 63, 0.1);
-      border-color: rgba(245, 63, 63, 0.25);
-      color: #f53f3f;
+      background-color: var(--el-color-danger-light-9);
+      border-color: var(--el-color-danger-light-5);
+      color: var(--el-color-danger);
 
       &:hover,
       &:focus {
-        background-color: rgba(245, 63, 63, 0.18);
-        border-color: rgba(245, 63, 63, 0.4);
-        color: #f53f3f;
+        background-color: var(--el-color-danger-light-7);
+        border-color: var(--el-color-danger-light-3);
+        color: var(--el-color-danger);
       }
 
       &:active {
-        background-color: rgba(245, 63, 63, 0.22);
+        background-color: var(--el-color-danger-light-5);
       }
     }
 
-    // ======== 成功按钮（success）—— 柔和绿色 ========
+    // ======== 成功按钮（success）—— 柔和绿色，使用 Element Plus 主题 success 色阶（亮/暗自动切换） ========
     &.el-button--success {
-      background-color: rgba(82, 196, 26, 0.1);
-      border-color: rgba(82, 196, 26, 0.3);
-      color: #52c41a;
+      background-color: var(--el-color-success-light-9);
+      border-color: var(--el-color-success-light-5);
+      color: var(--el-color-success);
 
       &:hover,
       &:focus {
-        background-color: rgba(82, 196, 26, 0.18);
-        border-color: rgba(82, 196, 26, 0.5);
-        color: #52c41a;
+        background-color: var(--el-color-success-light-7);
+        border-color: var(--el-color-success-light-3);
+        color: var(--el-color-success);
       }
 
       &:active {
-        background-color: rgba(82, 196, 26, 0.22);
+        background-color: var(--el-color-success-light-5);
       }
     }
 
-    // ======== 普通按钮（default）—— 中性灰 ========
+    // ======== 普通按钮（default）—— 中性灰，使用 Element Plus 按钮主题变量（亮/暗自动切换） ========
     // stylelint-disable-next-line selector-max-universal
     &:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.el-button--info):not(.is-circle) {
-      background-color: rgba(0, 0, 0, 0.04);
-      border-color: #dcdfe6;
-      color: var(--el-text-color-regular);
+      background-color: var(--el-button-bg-color);
+      border-color: var(--el-button-border-color);
+      color: var(--el-button-text-color);
 
       &:hover,
       &:focus {
-        background-color: rgba(0, 0, 0, 0.08);
-        border-color: #c0c4cc;
-        color: var(--el-text-color-primary);
+        background-color: var(--el-button-hover-bg-color);
+        border-color: var(--el-button-hover-border-color);
+        color: var(--el-button-hover-text-color);
       }
     }
   }
@@ -356,7 +356,7 @@ defineExpose({
     border-radius: 50%;
     background-color: transparent;
     border: none;
-    color: #6B7280;
+    color: var(--el-text-color-secondary);
     transition: all 0.2s ease;
     font-size: 16px;
 
@@ -376,86 +376,7 @@ defineExpose({
   }
 }
 
-// ======== 暗色模式适配 ========
-:global(html.dark) {
-  .toolbar-left,
-  .toolbar-right {
-    :deep(.el-button) {
-      // 主按钮（暗色模式：柔和风格，与其他按钮统一）
-      &.el-button--primary {
-        background-color: var(--el-color-primary-light-9);
-        border-color: var(--el-color-primary-light-5);
-        color: var(--el-color-primary-light-3);
-
-        &:hover,
-        &:focus {
-          background-color: var(--el-color-primary-light-8);
-          border-color: var(--el-color-primary-light-3);
-        }
-      }
-
-      // 危险按钮
-      &.el-button--danger {
-        background-color: rgba(245, 63, 63, 0.15);
-        border-color: rgba(245, 63, 63, 0.35);
-
-        &:hover,
-        &:focus {
-          background-color: rgba(245, 63, 63, 0.25);
-          border-color: rgba(245, 63, 63, 0.5);
-        }
-      }
-
-      // 成功按钮
-      &.el-button--success {
-        background-color: rgba(82, 196, 26, 0.15);
-        border-color: rgba(82, 196, 26, 0.4);
-
-        &:hover,
-        &:focus {
-          background-color: rgba(82, 196, 26, 0.25);
-          border-color: rgba(82, 196, 26, 0.6);
-        }
-      }
-
-      // 普通按钮
-      // 同时覆盖 EP CSS 变量 + 直接属性，确保不被全局暗色主题覆盖
-      // stylelint-disable-next-line selector-max-universal
-      &:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.el-button--info):not(.is-circle) {
-        --el-button-bg-color: rgba(255, 255, 255, 0.06);
-        --el-button-border-color: rgba(255, 255, 255, 0.15);
-        --el-button-text-color: var(--el-text-color-regular);
-        --el-button-hover-bg-color: rgba(255, 255, 255, 0.1);
-        --el-button-hover-border-color: rgba(255, 255, 255, 0.25);
-        --el-button-hover-text-color: var(--el-text-color-primary);
-
-        background-color: rgba(255, 255, 255, 0.06) !important;
-        border-color: rgba(255, 255, 255, 0.15) !important;
-        color: var(--el-text-color-regular) !important;
-
-        &:hover,
-        &:focus {
-          background-color: rgba(255, 255, 255, 0.1) !important;
-          border-color: rgba(255, 255, 255, 0.25) !important;
-          color: var(--el-text-color-primary) !important;
-        }
-      }
-    }
-  }
-
-  .toolbar-right {
-    :deep(.el-button.is-circle) {
-      color: var(--el-text-color-secondary);
-
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.08);
-        color: var(--el-text-color-primary);
-      }
-
-      &:active {
-        background-color: rgba(255, 255, 255, 0.12);
-      }
-    }
-  }
-}
+// 注：亮色分支已全部使用 Element Plus 主题变量（var(--el-*)），这些变量在
+// 暗黑模式下由 element-plus/theme-chalk/dark/css-vars.css 自动提供对应暗色值，
+// 因此不再需要 :global(html.dark) 覆盖块，避免双分支硬编码色值不一致。
 </style>

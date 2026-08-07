@@ -13,7 +13,7 @@ interface AccountBindItem {
   description: string; // 动态生成建议：根据 status + boundTime + isPrimary
   extra: string; // 按钮文案（绑定/解绑/管理）
   avatar: string; // Iconify 格式图标
-  color: string; // 品牌主色（用于图标/边框）
+  color: string; // 图标颜色，统一使用主题感知前景色，避免硬编码品牌色在暗黑下不可见
   status: 'bound' | 'pending' | 'unbound'; // 核心状态
   boundTime?: string; // ISO 8601 格式，如 '2024-01-15T08:30:00Z'
   isPrimary?: boolean; // 是否主账号（仅 status='bound' 时有效）
@@ -21,6 +21,10 @@ interface AccountBindItem {
   platform?: string; // 平台英文标识（便于后端识别）
   required?: boolean; // 是否必填项（如手机号/邮箱）
 }
+
+// 图标颜色统一使用主题感知前景色（亮/暗模式自动切换），不再使用各平台硬编码品牌色。
+// 平台识别由 title 文字提供，图标同色不影响信息传达。
+const ICON_COLOR = 'hsl(var(--foreground))';
 
 const accountBindList: AccountBindItem[] = [
   // ========== 核心绑定项（必填）==========
@@ -30,7 +34,7 @@ const accountBindList: AccountBindItem[] = [
     description: '已绑定 · 用于接收通知和找回密码',
     extra: '修改',
     avatar: 'ri:mail-fill',
-    color: '#5470c6',
+    color: ICON_COLOR,
     status: 'bound',
     boundTime: '2023-09-01T10:00:00Z',
     isPrimary: true,
@@ -43,7 +47,7 @@ const accountBindList: AccountBindItem[] = [
     description: '已绑定 · 138****5678（用于安全验证）',
     extra: '修改',
     avatar: 'ri:smartphone-fill',
-    color: '#722ed1',
+    color: ICON_COLOR,
     status: 'bound',
     boundTime: '2023-09-01T10:05:00Z',
     isPrimary: true,
@@ -58,7 +62,7 @@ const accountBindList: AccountBindItem[] = [
     description: '已绑定（主账号）· 绑定时间：2023-10-15',
     extra: '管理',
     avatar: 'fa-brands:github',
-    color: '#333',
+    color: ICON_COLOR,
     status: 'bound',
     boundTime: '2023-10-15T09:20:00Z',
     isPrimary: true,
@@ -71,7 +75,7 @@ const accountBindList: AccountBindItem[] = [
     description: '已绑定 · 绑定时间：2024-01-20',
     extra: '解绑',
     avatar: 'ri:wechat-fill',
-    color: '#2dc26b',
+    color: ICON_COLOR,
     status: 'bound',
     boundTime: '2024-01-20T14:35:00Z',
     isPrimary: false,
@@ -83,7 +87,7 @@ const accountBindList: AccountBindItem[] = [
     description: '未绑定账号，绑定后可快速登录',
     extra: '立即绑定',
     avatar: 'ri:weibo-fill',
-    color: '#e6162d',
+    color: ICON_COLOR,
     status: 'unbound',
     platform: 'weibo',
   },
@@ -93,7 +97,7 @@ const accountBindList: AccountBindItem[] = [
     description: '未绑定账号，企业协作更便捷',
     extra: '绑定',
     avatar: 'ri:dingding-fill',
-    color: '#2eabff',
+    color: ICON_COLOR,
     status: 'unbound',
     platform: 'dingtalk',
   },
@@ -102,10 +106,10 @@ const accountBindList: AccountBindItem[] = [
   {
     key: 'qq',
     title: 'QQ 账号',
-    description: '未绑定账号，支持 QQ 快捷登录',
+    description: '未绑定账号，支持 QQ 快速登录',
     extra: '绑定',
     avatar: 'ri:qq-fill',
-    color: '#12b7f5',
+    color: ICON_COLOR,
     status: 'unbound',
     platform: 'qq',
   },
@@ -115,7 +119,7 @@ const accountBindList: AccountBindItem[] = [
     description: '未绑定账号，支付验证更安全',
     extra: '绑定',
     avatar: 'ri:alipay-fill',
-    color: '#1677ff',
+    color: ICON_COLOR,
     status: 'unbound',
     platform: 'alipay',
   },
@@ -125,7 +129,7 @@ const accountBindList: AccountBindItem[] = [
     description: '未绑定账号，国际服务支持',
     extra: '绑定',
     avatar: 'ri:google-fill',
-    color: '#4285f4',
+    color: ICON_COLOR,
     status: 'unbound',
     platform: 'google',
   },
@@ -135,7 +139,7 @@ const accountBindList: AccountBindItem[] = [
     description: '未绑定账号，iOS/macOS 设备同步',
     extra: '绑定',
     avatar: 'ri:apple-fill',
-    color: '#000',
+    color: ICON_COLOR,
     status: 'unbound',
     platform: 'apple',
   },
@@ -147,7 +151,7 @@ const accountBindList: AccountBindItem[] = [
     description: '绑定申请审核中...',
     extra: '审核中',
     avatar: 'ri:twitter-fill',
-    color: '#1da1f2',
+    color: ICON_COLOR,
     status: 'pending',
     disabled: true,
     platform: 'twitter',

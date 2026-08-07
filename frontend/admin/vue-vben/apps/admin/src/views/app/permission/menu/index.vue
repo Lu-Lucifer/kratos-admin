@@ -299,11 +299,7 @@ function normalizeAuthority(authority: unknown): string[] {
           v-for="auth in normalizeAuthority(row.meta?.authority)"
           :key="auth"
           class="mb-1 mr-1"
-          :style="{
-            backgroundColor: getRandomColor(auth),
-            color: '#333',
-            border: 'none',
-          }"
+          :color="getRandomColor(auth)"
         >
           {{ auth }}
         </a-tag>

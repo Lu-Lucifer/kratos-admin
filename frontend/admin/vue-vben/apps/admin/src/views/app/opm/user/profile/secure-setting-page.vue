@@ -68,7 +68,7 @@ const secureSettingList = [
   margin-top: 10px;
   margin-right: 30px;
   font-weight: normal;
-  color: #1890ff;
+  color: var(--primary);
   cursor: pointer;
 }
 </style>

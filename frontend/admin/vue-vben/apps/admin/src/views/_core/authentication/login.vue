@@ -52,8 +52,8 @@ const renderCaptchaImage = () =>
         cursor: 'pointer',
         borderRadius: '6px',
         overflow: 'hidden',
-        border: '1px solid #d9d9d9',
-        background: '#f5f5f5',
+        border: '1px solid var(--border)',
+        background: 'var(--input)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -74,7 +74,7 @@ const renderCaptchaImage = () =>
       : [
           h(
             'span',
-            { style: { color: '#999', fontSize: '12px' } },
+            { style: { color: 'var(--muted-foreground)', fontSize: '12px' } },
             captchaLoading.value ? '...' : $t('authentication.captchaRefresh'),
           ),
         ],

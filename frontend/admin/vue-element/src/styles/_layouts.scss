@@ -53,35 +53,14 @@
   }
 }
 
-// 混合布局左侧菜单 hover 样式（与 LayoutSidebar 统一规范）
+// 混合布局左侧菜单 hover/active 样式
+// 颜色统一使用 Element Plus 主题变量（含 dark/css-vars.css），亮/暗模式自动切换，
+// 不再用硬编码 rgba/#hex 双分支。
 .layout-mix .layout__sidebar--left .el-menu {
   .el-menu-item:hover,
   .el-sub-menu__title:hover {
-    background-color: rgba(0, 0, 0, 0.04) !important;
-    color: #1d2129 !important;
-  }
-
-  .el-menu-item.is-active {
-    background-color: var(--el-color-primary-light-9) !important;
-    color: var(--el-color-primary) !important;
-    font-weight: 500 !important;
-
-    .el-icon {
-      color: var(--el-color-primary) !important;
-    }
-  }
-}
-
-// 暗黑模式混合布局侧边栏
-html.dark .layout-mix .layout__sidebar--left .el-menu {
-  .el-menu-item,
-  .el-sub-menu__title {
-    color: #94a3b8 !important;
-
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.05) !important;
-      color: #cbd5e1 !important;
-    }
+    background-color: var(--el-menu-hover-bg-color) !important;
+    color: var(--el-menu-hover-text-color) !important;
   }
 
   .el-menu-item.is-active {
@@ -306,9 +285,10 @@ html.sidebar-color-blue .layout-mix .layout__sidebar--left .el-menu {
 }
 
 // ---- 暗色模式适配 ----
+// hover 背景使用 Element Plus 主题填充变量，亮/暗模式自动切换。
 html.dark .table-icon-btn {
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--el-fill-color-light);
   }
 
   &--primary {
@@ -379,14 +359,14 @@ html.dark .table-icon-btn {
 // 状态标签文字对比度增强（亮色模式 WCAG AA）
 // ============================================
 
-// 信息态标签：文字加深至 #6B7280，提升灰色标签在白底上的辨识度
+// 信息态标签：文字色使用 Element Plus 主题 info 色（亮/暗模式自动切换）
 .el-tag--plain.el-tag--info {
-  --el-tag-text-color: #6B7280;
+  --el-tag-text-color: var(--el-color-info);
 }
 
-// 成功态标签：文字加深至 #529B2E，满足 WCAG AA 对比度
+// 成功态标签：文字色使用 Element Plus 主题 success 色（亮/暗模式自动切换）
 .el-tag--plain.el-tag--success {
-  --el-tag-text-color: #529B2E;
+  --el-tag-text-color: var(--el-color-success);
 }
 
 // 主色调标签：文字加深至 primary-dark-2，自适应主题色

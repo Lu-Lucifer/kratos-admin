@@ -165,7 +165,7 @@ const slowLogColumns = [
 }
 .toggle-hint {
   font-size: 12px;
-  color: var(--text-color-secondary, #999);
+  color: var(--muted-foreground);
   margin-left: auto;
 }
 .entry-value {
@@ -174,6 +174,6 @@ const slowLogColumns = [
 .disclaimer {
   margin-top: 16px;
   font-size: 12px;
-  color: var(--text-color-secondary, #999);
+  color: var(--muted-foreground);
 }
 </style>

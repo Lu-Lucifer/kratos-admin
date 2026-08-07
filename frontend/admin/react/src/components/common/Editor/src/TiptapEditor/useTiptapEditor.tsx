@@ -69,7 +69,7 @@ export const useTiptapEditor = ({
       editable: !disabled,
       autofocus: 'end' as const,
       editorProps: {
-        attributes: { class: 'prose dark:prose-invert focus:outline-none min-h-full' },
+        attributes: { class: 'focus:outline-none min-h-full' },
       },
       onCreate: ({ editor: e }: { editor: any }) => {
         onReady?.(e);

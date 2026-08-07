@@ -142,7 +142,7 @@ const IFrameLayout = () => {
   }
 
   return (
-    <div className={`iframe-layout-wrapper ${isDark ? 'dark' : 'light'}`}>
+    <div className="iframe-layout-wrapper">
       {loading && (
         <div className="iframe-layout-loading">
           <Spin size="large" description={t('iframe.loading')} />

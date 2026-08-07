@@ -351,11 +351,7 @@ watch(
           v-for="role in row.roleNames"
           :key="role"
           class="mb-1 mr-1"
-          :style="{
-            backgroundColor: getRandomColor(role), // 随机背景色
-            color: '#333', // 深色文字（适配浅色背景）
-            border: 'none', // 可选：去掉边框更美观
-          }"
+          :color="getRandomColor(role)"
         >
           {{ role }}
         </a-tag>
@@ -367,11 +363,7 @@ watch(
           v-for="orgUnit in row.orgUnitNames"
           :key="orgUnit"
           class="mb-1 mr-1"
-          :style="{
-            backgroundColor: getRandomColor(orgUnit), // 随机背景色
-            color: '#333', // 深色文字（适配浅色背景）
-            border: 'none', // 可选：去掉边框更美观
-          }"
+          :color="getRandomColor(orgUnit)"
         >
           {{ orgUnit }}
         </a-tag>
@@ -383,11 +375,7 @@ watch(
           v-for="position in row.positionNames"
           :key="position"
           class="mb-1 mr-1"
-          :style="{
-            backgroundColor: getRandomColor(position), // 随机背景色
-            color: '#333', // 深色文字（适配浅色背景）
-            border: 'none', // 可选：去掉边框更美观
-          }"
+          :color="getRandomColor(position)"
         >
           {{ position }}
         </a-tag>

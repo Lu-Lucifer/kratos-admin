@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { $t } from '@vben/locales';
@@ -9,24 +9,13 @@ import { Avatar, Descriptions, DescriptionsItem } from 'ant-design-vue';
 
 import { type identityservicev1_User as User } from '#/api';
 import { fetchUser, genderToColor, genderToName } from '#/api';
-import { getCharColor, getRandomColor } from '#/utils/color';
+import { getRandomColor } from '#/utils/color';
 
 const props = defineProps({
   userId: { type: Number, default: undefined },
 });
 
 const data = ref<User>();
-
-// 获取首字母（默认用'?'）
-const getFirstChar = computed(() => {
-  if (!data.value?.username) return '?';
-  return data.value.username.slice(0, 1).toUpperCase();
-});
-
-// 根据首字母生成固定随机色
-const getAvatarColor = () => {
-  return getCharColor(getFirstChar.value);
-};
 
 /**
  * 重新加载用户信息
@@ -46,12 +35,8 @@ reload();
     <div class="basic-info-container">
       <!-- 头像与状态 -->
       <div class="avatar-section">
-        <Avatar
-          :src="data?.avatar ?? ''"
-          class="avatar"
-          :style="!data?.avatar ? { backgroundColor: getAvatarColor() } : {}"
-        >
-          <!-- 头像加载失败/无头像时显示姓名首字母，添加占位样式 -->
+        <Avatar :src="data?.avatar ?? ''" class="avatar">
+          <!-- 头像加载失败/无头像时显示姓名首字母，占位背景由 antd 主题 token 提供 -->
           <span class="avatar-placeholder">
             {{ data?.username?.substring(0, 1) || '?' }}
           </span>
@@ -79,11 +64,7 @@ reload();
             v-for="role in data?.roleNames"
             :key="role"
             class="mb-1 mr-1"
-            :style="{
-              backgroundColor: getRandomColor(role), // 随机背景色
-              color: '#333', // 深色文字（适配浅色背景）
-              border: 'none', // 可选：去掉边框更美观
-            }"
+            :color="getRandomColor(role)"
           >
             {{ role }}
           </a-tag>
@@ -108,11 +89,7 @@ reload();
             v-for="orgUnit in data?.orgUnitNames"
             :key="orgUnit"
             class="mb-1 mr-1"
-            :style="{
-              backgroundColor: getRandomColor(orgUnit), // 随机背景色
-              color: '#333', // 深色文字（适配浅色背景）
-              border: 'none', // 可选：去掉边框更美观
-            }"
+            :color="getRandomColor(orgUnit)"
           >
             {{ orgUnit }}
           </a-tag>
@@ -122,11 +99,7 @@ reload();
             v-for="position in data?.positionNames"
             :key="position"
             class="mb-1 mr-1"
-            :style="{
-              backgroundColor: getRandomColor(position), // 随机背景色
-              color: '#333', // 深色文字（适配浅色背景）
-              border: 'none', // 可选：去掉边框更美观
-            }"
+            :color="getRandomColor(position)"
           >
             {{ position }}
           </a-tag>

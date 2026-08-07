@@ -295,7 +295,7 @@ onMounted(async () => {
       <template #title="{ title }">
         <span v-if="title.indexOf(searchValue) > -1">
           {{ title.substring(0, title.indexOf(searchValue)) }}
-          <span style="color: #f50">{{ searchValue }}</span>
+          <span style="color: var(--primary)">{{ searchValue }}</span>
           {{ title.substring(title.indexOf(searchValue) + searchValue.length) }}
         </span>
         <span v-else>{{ title }}</span>
@@ -341,9 +341,9 @@ onMounted(async () => {
   width: 100%;
   flex: 0 0 auto;
   box-sizing: border-box;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
   overflow: hidden;
   padding: 8px;
 }

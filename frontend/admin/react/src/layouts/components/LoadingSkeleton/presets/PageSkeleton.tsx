@@ -50,7 +50,7 @@ export const PageSkeleton = ({
         {/* 表格/列表区域 */}
         <div className="border rounded-lg overflow-hidden">
           {/* 表头 */}
-          <div className="flex p-3 border-b bg-gray-50 dark:bg-gray-800">
+          <div className="flex p-3 border-b bg-[var(--ant-color-fill-tertiary)]">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton
                 key={i}

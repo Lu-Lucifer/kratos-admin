@@ -1,4 +1,4 @@
-/* 自定义滚动条 */
+/* 自定义滚动条 —— 颜色跟随 antd 主题 token，亮/暗模式自动切换 */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -9,36 +9,24 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--ant-color-fill-secondary);
     border-radius: 3px;
 }
 
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* 菜单项悬停效果 */
+/* 菜单项悬停效果 —— 使用 primary 背景 token，亮/暗模式自动切换 */
 .ant-pro-menu-item:hover {
-    background: rgba(22, 119, 255, 0.08) !important;
+    background: var(--ant-color-primary-bg) !important;
 }
 
-.dark .ant-pro-menu-item:hover {
-    background: rgba(22, 119, 255, 0.15) !important;
-}
-
-/* 选中菜单项 */
+/* 选中菜单项 —— 使用 primary 背景/边框 token，亮/暗模式自动切换 */
 .ant-pro-menu-item-selected {
-    background: rgba(22, 119, 255, 0.1) !important;
-    border-right: 3px solid #1677ff !important;
+    background: var(--ant-color-primary-bg-hover) !important;
+    border-right: 3px solid var(--ant-color-primary) !important;
 }
 
-.dark .ant-pro-menu-item-selected {
-    background: rgba(22, 119, 255, 0.2) !important;
-}
-
-/* 顶栏阴影 */
+/* 顶栏阴影 —— 使用 antd 阴影 token，亮/暗模式自动切换 */
 .ant-pro-top-nav-header {
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+    box-shadow: var(--ant-box-shadow) !important;
 }
 
 /* 移动端适配 */

@@ -294,7 +294,7 @@ defineExpose({
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 5%);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 // === Grid 布局模式（参考 Vben） ===
@@ -435,18 +435,18 @@ defineExpose({
       }
     }
 
-    // 重置按钮（default）—— 中性灰
+    // 重置按钮（default）—— 中性灰，使用 Element Plus 按钮主题变量（亮/暗自动切换）
     // stylelint-disable-next-line selector-max-universal
     &:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.el-button--info) {
-      background-color: rgba(0, 0, 0, 0.04);
-      border-color: #dcdfe6;
-      color: var(--el-text-color-regular);
+      background-color: var(--el-button-bg-color);
+      border-color: var(--el-button-border-color);
+      color: var(--el-button-text-color);
 
       &:hover,
       &:focus {
-        background-color: rgba(0, 0, 0, 0.08);
-        border-color: #c0c4cc;
-        color: var(--el-text-color-primary);
+        background-color: var(--el-button-hover-bg-color);
+        border-color: var(--el-button-hover-border-color);
+        color: var(--el-button-hover-text-color);
       }
     }
   }
@@ -462,14 +462,5 @@ defineExpose({
 
 :deep(.el-input-number .el-input__inner) {
   text-align: left;
-}
-
-// ======== 暗色模式适配 ========
-:global(html.dark) {
-  .pro-search {
-    background-color: #14171C; // 比页面底色 #0C0E13 亮一个色阶，建立层级
-    border-color: #23272F;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 20%);
-  }
 }
 </style>

@@ -63,21 +63,14 @@
 
 $border: 1px solid var(--el-border-color-light);
 
-/* ---------- 表格 hover 颜色跟随主色调 ---------- */
+/* ---------- 表格变量 ---------- */
+/* 表格的 --el-table-* 变量由 Element Plus 主题系统（含 dark/css-vars.css）
+   按亮/暗模式自动提供，此处不再硬编码覆盖，避免亮/暗覆盖不全导致暗黑下出现
+   浅色表头或边框。 */
 :root {
-  --el-table-row-hover-bg-color: #f5f8ff;
-  --el-table-header-text-color: #1d2129;
-  --el-table-header-bg-color: #f0f2f5;
-  --el-table-border-color: #e5e6eb;
-
   /* ---------- GoWind 全局组件变量 ---------- */
   --gowind-drawer-width: 480px;
   --gowind-form-item-margin-bottom: 24px;
-}
-
-html.dark {
-  --el-table-row-hover-bg-color: #252a37;
-  --el-table-header-bg-color: #1f232b;
 }
 
 /* ---------- el-dialog ---------- */
@@ -112,8 +105,8 @@ html.dark {
   flex-direction: column;
 
   // 亮色模式：赋予立体层级感，左侧精细分割线 + 温润漫反射投影
-  border-left: 1px solid #e2e8f0 !important;
-  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.05) !important;
+  border-left: 1px solid var(--el-border-color) !important;
+  box-shadow: var(--el-box-shadow-dark) !important;
 
   .el-drawer__header {
     flex-shrink: 0; // 不被压缩
@@ -134,8 +127,8 @@ html.dark {
   .el-drawer__footer {
     flex-shrink: 0; // 不被压缩
     padding: 16px 20px;
-    border-top: 1px solid #f1f5f9;
-    background: #ffffff;
+    border-top: 1px solid var(--el-border-color);
+    background: var(--el-bg-color);
   }
 }
 
@@ -273,14 +266,14 @@ body,
   transition: all 0.25s ease;
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--el-box-shadow-base);
   }
 }
 
 /* ---------- 卡片精致化 ---------- */
 .el-card {
   border-radius: 12px;
-  border: 1px solid var(--el-border-color-lighter, #EBEDF0);
+  border: 1px solid var(--el-border-color-lighter);
   box-shadow: var(--el-box-shadow-light);
   transition: box-shadow 0.25s ease;
 
@@ -290,8 +283,9 @@ body,
 }
 
 /* ---------- 表格高级感 ---------- */
+/* 表格边框/表头背景/边框使用 Element Plus 主题变量（含 dark/css-vars.css），
+   亮/暗模式自动切换，不再硬编码浅色值。 */
 .el-table {
-  --el-table-border-color: #e5e6eb;
   border-radius: 8px;
   overflow: hidden;
 
@@ -301,10 +295,9 @@ body,
     font-size: 13px;
     padding-top: 3px;
     padding-bottom: 3px;
-    // 加深表头背景，和数据区形成对比
-    background-color: #F0F2F5 !important;
-    // 底部加一条深灰色实线，明确切分标题和数据
-    border-bottom: 1px solid #D9DDE3 !important;
+    // 表头背景与边框跟随主题变量
+    background-color: var(--el-table-header-bg-color) !important;
+    border-bottom: 1px solid var(--el-table-border-color) !important;
   }
 
   // 内容区紧凑
@@ -367,7 +360,7 @@ body,
 .el-select-dropdown,
 .el-popper.is-light {
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 /* ---------- 标签精致化 ---------- */
@@ -389,7 +382,7 @@ body,
 /* ---------- 通知精致化 ---------- */
 .el-notification {
   border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 /* ---------- 分页精致化 ---------- */
