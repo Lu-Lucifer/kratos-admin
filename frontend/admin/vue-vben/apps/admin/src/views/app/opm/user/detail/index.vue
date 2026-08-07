@@ -134,13 +134,13 @@ function handleEditPassword() {
     </template>
 
     <a-card v-show="activeTab === TabEnum.BASIC_INFO">
-      <BasicInfoPage :user-id="userId" />
+      <BasicInfoPage :key="userId" :user-id="userId" />
     </a-card>
     <a-card v-show="activeTab === TabEnum.API_AUDIT_LOG">
-      <ApiLogPage :user-id="userId" />
+      <ApiLogPage :key="userId" :user-id="userId" />
     </a-card>
     <a-card v-show="activeTab === TabEnum.INTERNAL_MESSAGE">
-      <InternalMessagePage :user-id="userId" />
+      <InternalMessagePage :key="userId" :user-id="userId" />
     </a-card>
 
     <Modal />

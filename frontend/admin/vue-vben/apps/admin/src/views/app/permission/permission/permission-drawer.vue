@@ -19,12 +19,17 @@ import {
   useCreatePermission,
   useUpdatePermission,
 } from '#/api';
-import { deepClone, filterNumbers } from '#/utils';
+import { deepClone, extractLeafIds } from '#/utils';
 
 const { mutateAsync: createPermission } = useCreatePermission();
 const { mutateAsync: updatePermission } = useUpdatePermission();
 
 const data = ref();
+
+// 保存两个树当前的 treeData，供提交时用 extractLeafIds 做叶子交集过滤，
+// 剥离父节点（菜单目录/API 模块分组）的 ID，避免父子联动下父 ID 混入提交。
+const menuTreeData = ref<any[]>([]);
+const apiTreeData = ref<any[]>([]);
 
 const getTitle = computed(() =>
   data.value?.create
@@ -137,7 +142,10 @@ const [BaseForm, baseFormApi] = useVbenForm({
           );
         },
         afterFetch: (data: any) => {
-          return buildMenuTree(data.items);
+          const tree = buildMenuTree(data.items);
+          // 保存当前 treeData，供提交时用 extractLeafIds 做叶子交集过滤
+          menuTreeData.value = tree;
+          return tree;
         },
       },
     },
@@ -156,7 +164,10 @@ const [BaseForm, baseFormApi] = useVbenForm({
         valueField: 'key',
         api: async () => {
           const data = await fetchListApis(new PaginationQuery({}));
-          return convertApiToTree(data.items ?? []);
+          const tree = convertApiToTree(data.items ?? []);
+          // 保存当前 treeData，供提交时用 extractLeafIds 做叶子交集过滤
+          apiTreeData.value = tree;
+          return tree;
         },
       },
     },
@@ -190,7 +201,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
       Array.isArray(finalValues.apiIds) &&
       finalValues.apiIds.length > 0
     ) {
-      finalValues.apiIds = filterNumbers(values.apiIds);
+      // 用叶子交集剥离父节点（API 模块分组）ID：父子联动下勾选父分组下全部子 API
+      // 会使父分组被自动勾选，其 key（分组 ID，数字）混入 checkedKeys，
+      // filterNumbers 无法过滤数字父 key，会被后端当作 API ID 处理。
+      finalValues.apiIds = extractLeafIds(values.apiIds, apiTreeData.value);
     }
 
     if (
@@ -198,7 +212,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
       Array.isArray(finalValues.menuIds) &&
       finalValues.menuIds.length > 0
     ) {
-      finalValues.menuIds = filterNumbers(values.menuIds);
+      // 同上，剥离菜单目录父节点 ID
+      finalValues.menuIds = extractLeafIds(values.menuIds, menuTreeData.value);
     }
 
     console.log(getTitle.value, finalValues);

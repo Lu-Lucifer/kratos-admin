@@ -1,7 +1,7 @@
 ﻿<script lang="ts" setup>
 import type { NotificationItem } from '@vben/layouts';
 
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 
 import { AuthenticationLoginExpiredModal } from '@vben/common-ui';
 import { useWatermark } from '@vben/hooks';
@@ -77,8 +77,23 @@ async function reloadMessages() {
     }),
   );
 
-  for (const item of resp.items ?? []) {
-    notifications.value.push(convertInternalMessageRecipient(item));
+  // 整体替换而非 push，避免重复挂载/多次调用时同一批消息被累积进列表。
+  notifications.value = (resp.items ?? []).map(
+    convertInternalMessageRecipient,
+  );
+}
+
+/**
+ * 把富文本 HTML 去标签转为纯文本摘要。
+ * 用 DOMParser 而非 innerHTML，避免设置 innerHTML 时执行 <img onerror> 等脚本。
+ * 用于通知面板的预览摘要（无需保留富文本格式，纯文本即可）。
+ */
+function htmlToText(html: string): string {
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || '';
+  } catch {
+    return '';
   }
 }
 
@@ -94,7 +109,9 @@ function convertInternalMessageRecipient(item: InternalMessageRecipient) {
     avatar: preferences.app.defaultAvatar,
     date,
     isRead: item.status === 'READ',
-    message: item.content || '',
+    // item.content 是不可信富文本 HTML，通知面板只需纯文本摘要。
+    // 用 DOMParser 去标签，避免 XSS（不执行脚本）且避免显示原始标签文本。
+    message: htmlToText(item.content || ''),
     title: item.title || '',
   };
 }
@@ -206,6 +223,14 @@ function initSseClient() {
 
 initSseClient();
 reloadMessages();
+
+// 必须在卸载时注销 SSE 监听器，否则 globalSSEClient.handlers 会持续累加：
+// basicLayout 在登录态切换（登出再登入、登录过期 modal 流程）时会被反复挂载，
+// 若不 off，同一 SSE 推送会触发 N 次回调（N=累计挂载次数），通知项重复出现，
+// 且旧组件闭包引用旧 ref 造成内存泄漏。
+onUnmounted(() => {
+  globalSSEClient.off('notification', handleSseNotification);
+});
 
 watch(
   () => preferences.app.watermark,

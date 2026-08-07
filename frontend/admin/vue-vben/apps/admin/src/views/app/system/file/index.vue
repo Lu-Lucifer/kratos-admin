@@ -106,7 +106,7 @@ const gridOptions: VxeGridProps<File> = {
       width: 90,
     },
     {
-      title: $t('page.file.createdAt'),
+      title: $t('ui.table.action'),
       field: 'action',
       fixed: 'right',
       slots: { default: 'action' },

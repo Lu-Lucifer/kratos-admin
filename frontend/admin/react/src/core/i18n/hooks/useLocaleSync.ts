@@ -20,6 +20,13 @@ export const useLocaleSync = () => {
         console.error('Failed to switch language:', error);
       });
     }
+    // 同步 <html lang/dir>：切换语言后必须更新，否则屏幕阅读器/浏览器翻译/a11y
+    // 仍按旧语言工作。此前 react 端缺失这一步（vue-element 在 setI18nLanguage 有做）。
+    // locale 取值仅 'zh-CN'/'en-US'，均为 LTR，dir 始终为 'ltr'。
+    if (locale) {
+      document.documentElement.lang = locale;
+      document.documentElement.dir = 'ltr';
+    }
   }, [locale]);
 
   // i18n 初始化后，只在第一次反向同步到 store

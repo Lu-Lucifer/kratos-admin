@@ -114,8 +114,7 @@ function handleClick(item: NotificationItem) {
                 <p class="font-semibold">{{ item.title }}</p>
                 <p
                   class="text-muted-foreground my-1 line-clamp-2 text-xs"
-                  v-html="item.message"
-                ></p>
+                >{{ item.message }}</p>
                 <p class="text-muted-foreground line-clamp-2 text-xs">
                   {{ item.date }}
                 </p>

@@ -147,6 +147,8 @@ if (typeof window !== 'undefined') {
 const editorContainer = ref<HTMLDivElement | null>(null);
 let editor: monaco.editor.IStandaloneCodeEditor | null = null;
 let editorModel: monaco.editor.ITextModel | null = null; // 单独管理model，避免内存泄漏
+// 防抖定时器提升为组件级，以便 onBeforeUnmount 能清理，避免卸载后仍触发 emit
+let changeTimeout: null | number = null;
 const isUpdatingFromProp = ref(false); // 改为响应式，避免闭包问题
 
 // 计算编辑器高度（增加容错和最小高度）
@@ -296,8 +298,7 @@ onMounted(async () => {
       },
     });
 
-    // 监听编辑器内容变化（防抖处理）
-    let changeTimeout: null | number = null;
+    // 监听编辑器内容变化（防抖处理，changeTimeout 为组件级变量）
     editor.onDidChangeModelContent(() => {
       if (isUpdatingFromProp.value || !editor) return;
 
@@ -348,6 +349,12 @@ onMounted(async () => {
 
 // 清理编辑器实例（彻底避免内存泄漏）
 onBeforeUnmount(() => {
+  // 清理防抖定时器，避免组件卸载后定时器仍触发 emit('update:modelValue')，
+  // 向已卸载的父组件回传值（卸载后 setState）。
+  if (changeTimeout) {
+    clearTimeout(changeTimeout);
+    changeTimeout = null;
+  }
   if (editor) {
     editor.dispose();
     editor = null;

@@ -164,8 +164,10 @@ export function useCommandPalette() {
           name: typeof route.name === "string" ? route.name : undefined,
           icon: typeof route.meta.icon === "string" ? route.meta.icon : undefined,
           redirect: typeof route.redirect === "string" ? route.redirect : undefined,
-          params: route.meta.params
-            ? JSON.parse(JSON.stringify(toRaw(route.meta.params)))
+          // RouteMeta 的字段是 query（非 params），此前读 route.meta.params 恒为 undefined，
+          // 导致路由预设的 meta.query 在 router.push 时丢失。
+          params: route.meta.query
+            ? JSON.parse(JSON.stringify(toRaw(route.meta.query)))
             : undefined,
         });
       }

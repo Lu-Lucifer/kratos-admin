@@ -8,6 +8,29 @@ import { useI18n } from '@/core/i18n';
 import './iframe-layout.less';
 
 /**
+ * 校验 iframe src 是否安全。
+ * 允许：同源相对路径（以 / 开头且不以 // 开头），或 https 绝对 URL。
+ * 拒绝：http、//、javascript:、data:、及其他任意 scheme（防 iframe 注入/钓鱼）。
+ * 返回安全后的 src，不安全返回空串。
+ */
+function sanitizeIframeSrc(raw: string | undefined | null): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  // 同源相对路径
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return trimmed;
+  }
+  // 仅允许 https 绝对 URL
+  try {
+    const u = new URL(trimmed);
+    if (u.protocol === 'https:') return trimmed;
+  } catch {
+    // 非合法 URL
+  }
+  return '';
+}
+
+/**
  * Iframe 布局：嵌入外部系统（如报表、文档等）
  * 支持：自动高度、加载状态、跨域通信
  */
@@ -19,21 +42,27 @@ const IFrameLayout = () => {
   const { isDark } = usePreferences();
   const { t } = useI18n('common');
 
-  // 从路由 state 或 query 获取 iframe URL
+  // 从路由 state 或 query 获取 iframe URL（经安全校验）
   const iframeSrc = useMemo(() => {
-    // 优先使用路由 state 中的 url
-    if (location.state?.url) {
-      return location.state.url as string;
-    }
-    // 其次从 query 参数获取
-    const searchParams = new URLSearchParams(location.search);
-    const url = searchParams.get('url');
-    if (url) {
-      return url;
-    }
-    // 兜底：当前路径可能是 iframe 标识，需要从菜单配置映射
-    return '';
+    const candidate =
+      (location.state?.url as string | undefined) ??
+      new URLSearchParams(location.search).get('url') ??
+      '';
+    // 无论是路由 state 还是 query，都需校验，避免注入任意 url（如 ?url=https://evil.com）
+    return sanitizeIframeSrc(candidate);
   }, [location.state, location.search]);
+
+  // 计算 iframe src 的 origin，用于校验 postMessage 来源/目标
+  const iframeOrigin = useMemo(() => {
+    if (!iframeSrc) return '';
+    try {
+      // 同源相对路径时 origin 即当前页 origin
+      if (iframeSrc.startsWith('/')) return window.location.origin;
+      return new URL(iframeSrc).origin;
+    } catch {
+      return '';
+    }
+  }, [iframeSrc]);
 
   // iframe 加载完成
   const handleLoad = useCallback(() => {
@@ -50,9 +79,10 @@ const IFrameLayout = () => {
   // 跨域通信：监听 iframe 发来的消息
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // 可根据 origin 校验来源安全性
-      // const allowedOrigins = ['https://example.com'];
-      // if (!allowedOrigins.includes(event.origin)) return;
+      // 校验来源 origin：只接受当前 iframe src 对应 origin 的消息，
+      // 防止任意页面（包括其他标签页/弹窗）发 {type:'ready'} 隐藏 loading
+      // 或 {type:'resize'} 篡改高度。
+      if (!iframeOrigin || event.origin !== iframeOrigin) return;
 
       const { type, data } = event.data || {};
 
@@ -78,13 +108,17 @@ const IFrameLayout = () => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [iframeOrigin]);
 
   // 向 iframe 发送消息（跨域通信）
-  const postMessageToIframe = useCallback((type: string, data?: any) => {
-    if (!iframeRef.current?.contentWindow) return;
-    iframeRef.current.contentWindow.postMessage({ type, data }, '*');
-  }, []);
+  const postMessageToIframe = useCallback(
+    (type: string, data?: any) => {
+      if (!iframeRef.current?.contentWindow || !iframeOrigin) return;
+      // targetOrigin 指定具体 origin 而非 '*'，避免把主题模式等信息泄露给任意监听者
+      iframeRef.current.contentWindow.postMessage({ type, data }, iframeOrigin);
+    },
+    [iframeOrigin],
+  );
 
   // 主题切换时通知 iframe
   useEffect(() => {

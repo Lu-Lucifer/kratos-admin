@@ -99,14 +99,16 @@
       </div>
 
       <div class="max-h-60vh pt-16px mb-24px overflow-y-auto border-t border-solid border-color">
-        <div v-html="detail.content"></div>
+        <div v-html="sanitizedDetailContent"></div>
       </div>
     </div>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { Bell, UserFilled } from "@element-plus/icons-vue";
+import DOMPurify from "dompurify";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 import defaultAvatar from "@/assets/images/default-avatar.png";
 import { useNotice } from "./useNotice";
@@ -114,12 +116,22 @@ import { useNotice } from "./useNotice";
 const { t } = useI18n();
 const { list, unreadTotal, detail, dialogVisible, read, readAll, clearAll, goMore } = useNotice();
 
+// detail.content 是后端返回的不可信富文本，必须经 DOMPurify 净化后再 v-html，
+// 否则正文中注入的 <img onerror=...> / <script> 会在管理后台域内执行（存储型 XSS）。
+// 与 inbox/index.vue 的净化方式保持一致。
+const sanitizedDetailContent = computed(() => {
+  const raw = detail.value?.content;
+  return raw ? DOMPurify.sanitize(String(raw)) : "";
+});
+
 /**
  * 去除 HTML 标签，获取纯文本摘要
  */
 function stripHtml(html: string): string {
+  // 先净化再取纯文本，避免 innerHTML 设置时执行注入的脚本（如 img onerror）
+  const purified = DOMPurify.sanitize(html);
   const tmp = document.createElement("div");
-  tmp.innerHTML = html;
+  tmp.innerHTML = purified;
   const text = tmp.textContent || tmp.innerText || "";
   // 限制长度为 50 个字符
   return text.length > 50 ? text.substring(0, 50) + "..." : text;
