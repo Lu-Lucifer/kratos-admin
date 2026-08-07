@@ -599,8 +599,8 @@ export const Index = () => {
       className={tabbarClassName}
       style={{
         height: tabbarConfig.height,
-        borderBottom: `1px solid ${isDark ? '#303030' : '#e5e7eb'}`,
-        backgroundColor: isDark ? '#141414' : '#ffffff',
+        borderBottom: '1px solid var(--ant-color-border)',
+        backgroundColor: 'var(--ant-color-bg-container)',
         display: 'flex',
         alignItems: 'center',
         padding: '0 8px',
@@ -636,7 +636,7 @@ export const Index = () => {
               size="small"
               icon={<DownOutlined />}
               style={{
-                color: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+                color: 'var(--ant-color-text-secondary)',
               }}
             />
           </Dropdown>
@@ -650,7 +650,7 @@ export const Index = () => {
             icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
             onClick={toggleFullscreen}
             style={{
-              color: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+              color: 'var(--ant-color-text-secondary)',
             }}
             title={isFullscreen ? t('tabs.exitMaximize') : t('tabs.maximize')}
           />

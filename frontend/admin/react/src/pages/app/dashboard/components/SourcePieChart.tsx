@@ -1,13 +1,12 @@
-import { Card } from 'antd';
+import { Card, theme } from 'antd';
 import ReactECharts from 'echarts-for-react';
-import { usePreferences } from '@/core/preferences';
 import { useI18n } from '@/core/i18n';
 
 /**
  * 访问来源饼图组件
  */
 export const SourcePieChart = () => {
-  const { isDark } = usePreferences();
+  const { token } = theme.useToken();
   const { t } = useI18n('dashboard');
 
   const option = {
@@ -24,15 +23,15 @@ export const SourcePieChart = () => {
         roseType: 'area',
         itemStyle: {
           borderRadius: 8,
-          borderColor: isDark ? '#1f1f1f' : '#ffffff',
+          borderColor: token.colorBgContainer,
           borderWidth: 2,
         },
         label: {
-          color: isDark ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.85)',
+          color: token.colorText,
         },
         labelLine: {
           lineStyle: {
-            color: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.45)',
+            color: token.colorTextSecondary,
           },
         },
         data: [

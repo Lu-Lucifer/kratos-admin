@@ -1,12 +1,12 @@
 import ReactECharts from 'echarts-for-react';
-import { usePreferences } from '@/core/preferences';
+import { theme } from 'antd';
 import { useI18n } from '@/core/i18n';
 
 /**
  * 月访问量柱状图组件
  */
 export const BarChart = () => {
-  const { isDark } = usePreferences();
+  const { token } = theme.useToken();
   const { t } = useI18n('dashboard');
 
   const option = {
@@ -37,7 +37,7 @@ export const BarChart = () => {
       ],
       axisLine: {
         lineStyle: {
-          color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+          color: token.colorBorderSecondary,
         },
       },
     },
@@ -45,12 +45,12 @@ export const BarChart = () => {
       type: 'value',
       axisLine: {
         lineStyle: {
-          color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+          color: token.colorBorderSecondary,
         },
       },
       splitLine: {
         lineStyle: {
-          color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+          color: token.colorSplit,
         },
       },
     },
@@ -59,7 +59,7 @@ export const BarChart = () => {
         name: t('data.monthlyVisitCount'),
         type: 'bar',
         itemStyle: {
-          color: '#1677ff',
+          color: token.colorPrimary,
         },
         data: [3000, 2000, 3300, 5000, 3200, 4200, 3200, 2100, 3000, 5100, 6000, 3200],
       },

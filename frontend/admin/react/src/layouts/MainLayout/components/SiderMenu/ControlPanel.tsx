@@ -27,7 +27,7 @@ export const ControlPanel = ({
   return (
     <div
       style={{
-        borderTop: `1px solid ${isDark ? '#303030' : '#e5e7eb'}`,
+        borderTop: '1px solid var(--ant-color-border)',
         padding: '8px 4px',
         display: 'flex',
         justifyContent: 'space-between',
@@ -43,7 +43,7 @@ export const ControlPanel = ({
           onClick={onToggleCollapse}
           size="small"
           style={{
-            color: isDark ? '#a6a6a6' : '#595959',
+            color: 'var(--ant-color-text-secondary)',
             width: 32,
             height: 32,
             display: 'flex',
@@ -63,7 +63,7 @@ export const ControlPanel = ({
           onClick={onToggleExpandOnHover}
           size="small"
           style={{
-            color: isDark ? '#a6a6a6' : '#595959',
+            color: 'var(--ant-color-text-secondary)',
             width: 32,
             height: 32,
             display: 'flex',

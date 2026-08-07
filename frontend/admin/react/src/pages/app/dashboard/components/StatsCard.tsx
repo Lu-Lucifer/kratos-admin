@@ -1,5 +1,4 @@
 import { Card } from 'antd';
-import { usePreferences } from '@/core/preferences';
 import type { ReactNode } from 'react';
 
 interface StatsCardProps {
@@ -14,8 +13,6 @@ interface StatsCardProps {
  * 统计卡片组件
  */
 export const StatsCard = ({ title, value, total, totalValue, icon }: StatsCardProps) => {
-  const { isDark } = usePreferences();
-
   return (
     <Card style={{ height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -23,7 +20,7 @@ export const StatsCard = ({ title, value, total, totalValue, icon }: StatsCardPr
           <div
             style={{
               fontSize: 14,
-              color: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+              color: 'var(--ant-color-text-secondary)',
               marginBottom: 8,
             }}
           >
@@ -31,10 +28,10 @@ export const StatsCard = ({ title, value, total, totalValue, icon }: StatsCardPr
           </div>
           <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16 }}>{value}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-            <span style={{ color: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.45)' }}>
+            <span style={{ color: 'var(--ant-color-text-tertiary)' }}>
               {total}
             </span>
-            <span style={{ color: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)' }}>
+            <span style={{ color: 'var(--ant-color-text-secondary)' }}>
               {totalValue}
             </span>
           </div>

@@ -196,7 +196,7 @@ export const HeaderContent = ({
 
   // 通用按钮样式
   const btnStyle: React.CSSProperties = {
-    color: isDark ? '#a6a6a6' : '#595959',
+    color: 'var(--ant-color-text-secondary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -239,7 +239,7 @@ export const HeaderContent = ({
                     </span>
                   }
                   description={
-                    <span style={{ fontSize: 12, color: isDark ? '#8c8c8c' : '#8c8c8c' }}>
+                    <span style={{ fontSize: 12, color: 'var(--ant-color-text-secondary)' }}>
                       {item.createdAt}
                     </span>
                   }
@@ -257,7 +257,7 @@ export const HeaderContent = ({
       </Spin>
       <div
         style={{
-          borderTop: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`,
+          borderTop: '1px solid var(--ant-color-border)',
           textAlign: 'center',
           padding: '8px 0 0',
           marginTop: 4,
@@ -317,7 +317,7 @@ export const HeaderContent = ({
           style={{
             width: 1,
             height: 20,
-            backgroundColor: isDark ? '#303030' : '#e5e7eb',
+            backgroundColor: 'var(--ant-color-bg-container)',
             margin: '0 8px',
           }}
         />
@@ -330,7 +330,7 @@ export const HeaderContent = ({
               ? {
                   padding: '4px 8px',
                   borderRadius: 6,
-                  backgroundColor: isDark ? '#1f1f1f' : '#f5f5f5',
+                  backgroundColor: 'var(--ant-color-bg-container)',
                 }
               : undefined
           }
@@ -343,7 +343,7 @@ export const HeaderContent = ({
                   item.onClick?.();
                 }}
                 style={{
-                  color: isDark ? '#a6a6a6' : '#595959',
+                  color: 'var(--ant-color-text-secondary)',
                   fontSize: 13,
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -352,8 +352,8 @@ export const HeaderContent = ({
                     ? {
                         padding: '4px 8px',
                         borderRadius: 4,
-                        backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
-                        border: `1px solid ${isDark ? '#303030' : '#e5e7eb'}`,
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                        border: '1px solid var(--ant-color-border)',
                       }
                     : {}),
                 }}
@@ -364,7 +364,7 @@ export const HeaderContent = ({
             ) : (
               <span
                 style={{
-                  color: isDark ? '#ffffff' : '#262626',
+                  color: 'var(--ant-color-text)',
                   fontSize: 13,
                   fontWeight: 500,
                   display: 'inline-flex',
@@ -374,8 +374,8 @@ export const HeaderContent = ({
                     ? {
                         padding: '4px 8px',
                         borderRadius: 4,
-                        backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
-                        border: `1px solid ${isDark ? '#303030' : '#e5e7eb'}`,
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                        border: '1px solid var(--ant-color-border)',
                       }
                     : {}),
                 }}
@@ -417,27 +417,27 @@ export const HeaderContent = ({
                 gap: 8,
                 padding: '6px 12px',
                 borderRadius: 20,
-                backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
-                border: `1px solid ${isDark ? '#404040' : '#d9d9d9'}`,
+                backgroundColor: 'var(--ant-color-bg-container)',
+                border: '1px solid var(--ant-color-border)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isDark ? '#363636' : '#e8e8e8';
+                e.currentTarget.style.backgroundColor = 'var(--ant-color-fill-tertiary)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = isDark ? '#2a2a2a' : '#f5f5f5';
+                e.currentTarget.style.backgroundColor = 'var(--ant-color-bg-container)';
               }}
             >
               <SearchOutlined
                 style={{
-                  color: isDark ? '#a6a6a6' : '#8c8c8c',
+                  color: 'var(--ant-color-text-secondary)',
                   fontSize: 14,
                 }}
               />
               <span
                 style={{
-                  color: isDark ? '#a6a6a6' : '#8c8c8c',
+                  color: 'var(--ant-color-text-secondary)',
                   fontSize: 13,
                 }}
               >
@@ -450,9 +450,9 @@ export const HeaderContent = ({
                   fontSize: 11,
                   fontFamily: 'monospace',
                   lineHeight: 1.4,
-                  color: isDark ? '#8c8c8c' : '#595959',
-                  backgroundColor: isDark ? '#1f1f1f' : '#e8e8e8',
-                  border: `1px solid ${isDark ? '#404040' : '#d9d9d9'}`,
+                  color: 'var(--ant-color-text-secondary)',
+                  backgroundColor: 'var(--ant-color-bg-container)',
+                  border: '1px solid var(--ant-color-border)',
                   borderRadius: 3,
                 }}
               >
@@ -538,7 +538,7 @@ export const HeaderContent = ({
               transition: 'background-color 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = isDark ? '#1f1f1f' : '#f5f5f5';
+              e.currentTarget.style.backgroundColor = 'var(--ant-color-bg-container)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
@@ -550,7 +550,7 @@ export const HeaderContent = ({
               style={{
                 fontSize: 13,
                 fontWeight: 500,
-                color: isDark ? '#ffffff' : '#262626',
+                color: 'var(--ant-color-text)',
                 maxWidth: 100,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',

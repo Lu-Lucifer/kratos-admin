@@ -346,7 +346,7 @@ html.dark
   .md-editor.md-editor-dark
   .md-editor-toolbar-wrapper {
   background-color: hsl(var(--accent-lighter)) !important;
-  border-bottom-color: hsl(0deg 0% 100% / 8%) !important;
+  border-bottom-color: hsl(var(--accent-lighter)) !important;
 }
 
 /* 工具栏按钮颜色 */
@@ -365,7 +365,7 @@ html.dark
   .md-editor-toolbar
   .md-editor-toolbar-item:not([disabled]):hover {
   color: hsl(var(--foreground)) !important;
-  background-color: hsl(0deg 0% 100% / 8%) !important;
+  background-color: hsl(var(--accent-lighter)) !important;
 }
 
 /* CodeMirror 编辑区 */

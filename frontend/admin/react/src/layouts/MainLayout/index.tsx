@@ -261,7 +261,7 @@ export const MainLayout = ({ routes: dynamicRoutes }: MainLayoutProps) => {
         style={{
           height: '100vh',
           display: 'flex',
-          background: isDark ? '#000000' : '#f5f5f5',
+          background: 'var(--ant-color-bg-layout)',
         }}
       >
         {/* ===== 左侧：侧边栏 ===== */}
@@ -287,8 +287,8 @@ export const MainLayout = ({ routes: dynamicRoutes }: MainLayoutProps) => {
           <div
             style={{
               height: 56,
-              backgroundColor: isDark ? '#141414' : '#ffffff',
-              borderBottom: `1px solid ${isDark ? '#303030' : '#e5e7eb'}`,
+              backgroundColor: 'var(--ant-color-bg-container)',
+              borderBottom: '1px solid var(--ant-color-border)',
               padding: '0 12px',
               flexShrink: 0,
               zIndex: 100,
@@ -305,7 +305,7 @@ export const MainLayout = ({ routes: dynamicRoutes }: MainLayoutProps) => {
             style={{
               flex: 1,
               overflow: 'hidden', // 禁止外层滚动，让内容区域自己管理滚动
-              backgroundColor: isDark ? '#000000' : '#f5f5f5',
+              backgroundColor: 'var(--ant-color-bg-layout)',
               // padding: '8px', // 移除 padding，让内容占满整个区域
               display: 'flex',
               flexDirection: 'column',

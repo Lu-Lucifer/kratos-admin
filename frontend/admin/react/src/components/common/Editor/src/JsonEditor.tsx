@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import i18next from 'i18next';
 
-import { isDarkMode } from './utils';
-
 // We need to handle the CSS import separately
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -38,7 +36,6 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
 }) => {
   const { mode = 'text', search = true } = propOptions || {};
 
-  const [isDark, setIsDark] = useState(isDarkMode());
   const [parseError, setParseError] = useState('');
   const [jsonData, setJsonData] = useState<any>(null);
   const localValueRef = useRef(value);
@@ -146,26 +143,13 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
     [onChange, onError, validateAndFormat],
   );
 
-  // Dark mode tracking
-  useEffect(() => {
-    const checkDark = () => setIsDark(isDarkMode());
-    checkDark();
-
-    const observer = new MutationObserver(checkDark);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class', 'data-theme'],
-    });
-    return () => observer.disconnect();
-  }, []);
-
   // Ready event
   useEffect(() => {
     onReady?.();
   }, []);
 
   return (
-    <div className={`json-editor-container${isDark ? ' json-editor-dark' : ''}`}>
+    <div className="json-editor-container">
       {parseError && <div className="error-message">{parseError}</div>}
       <div
         ref={containerRef}
@@ -179,7 +163,6 @@ const JsonEditor: React.FC<JsonEditorProps> = ({
           disabled={disabled}
           search={search}
           onChange={handleEditorChange}
-          isDark={isDark}
         />
       </div>
     </div>
@@ -197,8 +180,7 @@ const JsonJsonEditorFallback: React.FC<{
   disabled: boolean;
   search: boolean;
   onChange: (value: any) => void;
-  isDark: boolean;
-}> = ({ jsonData, disabled, onChange, isDark }) => {
+}> = ({ jsonData, disabled, onChange }) => {
   const [text, setText] = useState(() => {
     try {
       return jsonData ? JSON.stringify(jsonData, null, 2) : '';
@@ -239,8 +221,8 @@ const JsonJsonEditorFallback: React.FC<{
         resize: 'none',
         border: 'none',
         outline: 'none',
-        backgroundColor: isDark ? '#0f172a' : '#fff',
-        color: isDark ? '#f1f5f9' : '#1f2937',
+        backgroundColor: 'var(--ant-color-bg-container)',
+        color: 'var(--ant-color-text)',
         boxSizing: 'border-box',
       }}
     />

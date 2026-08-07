@@ -77,7 +77,6 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ title, description, children, f
             type="text"
             icon={<GlobalOutlined />}
             onClick={handleToggleLanguage}
-            className={isLightMode ? 'auth-toolbar-btn-light' : 'auth-toolbar-btn-dark'}
           >
             {locale === 'zh-CN' ? t('langZhCN') : t('langEnUS')}
           </Button>
@@ -89,7 +88,6 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ title, description, children, f
             type="text"
             icon={theme.mode === 'light' ? <MoonOutlined /> : <SunOutlined />}
             onClick={handleToggleTheme}
-            className={isLightMode ? 'auth-toolbar-btn-light' : 'auth-toolbar-btn-dark'}
           />
         </Tooltip>
       </div>

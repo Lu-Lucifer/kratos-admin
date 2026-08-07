@@ -1,5 +1,7 @@
 /* ============================================
    认证页面表单样式（登录/注册）
+   颜色统一使用 antd 主题 token（经 <AntdApp> 注入的 CSS 变量继承），
+   自动跟随明暗主题，无需 light-mode/:not(.light-mode) 双分支。
    ============================================ */
 
 /* 表单容器 */
@@ -19,27 +21,13 @@
     font-weight: 800;
     margin-bottom: 10px;
     letter-spacing: -0.5px;
-
-    .auth-layout-wrapper.light-mode & {
-      color: #1f1f1f;
-    }
-
-    .auth-layout-wrapper:not(.light-mode) & {
-      color: #fff !important;
-    }
+    color: var(--ant-color-text);
   }
 
   .auth-form-description {
     font-size: 15px;
     line-height: 1.6;
-
-    .auth-layout-wrapper.light-mode & {
-      color: rgba(0, 0, 0, 0.7);
-    }
-
-    .auth-layout-wrapper:not(.light-mode) & {
-      color: rgba(255, 255, 255, 0.65) !important;
-    }
+    color: var(--ant-color-text-secondary);
   }
 }
 
@@ -53,7 +41,8 @@
     border-radius: 6px;
     transition: all 0.3s ease;
 
-    /* 覆盖Chrome自动填充的背景色 */
+    /* 覆盖 Chrome 自动填充的背景色。
+       transparent 在明暗双主题下均可生效，无需按主题分支。 */
     input:-webkit-autofill,
     input:-webkit-autofill:hover,
     input:-webkit-autofill:focus,
@@ -63,91 +52,10 @@
       transition: background-color 5000s ease-in-out 0s;
       box-shadow: inset 0 0 0 1000px transparent;
     }
-
-    .auth-layout-wrapper.light-mode & {
-      background: #fafafa;
-      border-color: #e8e8e8;
-
-      /* 亮色模式自动填充背景 */
-      input:-webkit-autofill,
-      input:-webkit-autofill:hover,
-      input:-webkit-autofill:focus,
-      input:-webkit-autofill:active {
-        box-shadow: inset 0 0 0 1000px #fafafa;
-      }
-
-      &:hover,
-      &:focus,
-      &.ant-input-affix-wrapper-focused {
-        background: #fff;
-        border-color: #1677ff;
-        box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
-
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-          box-shadow: inset 0 0 0 1000px #fff;
-        }
-      }
-    }
-
-    .auth-layout-wrapper:not(.light-mode) & {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: rgba(255, 255, 255, 0.15);
-      color: rgba(255, 255, 255, 0.9);
-
-      /* 暗黑模式自动填充背景 */
-      input:-webkit-autofill,
-      input:-webkit-autofill:hover,
-      input:-webkit-autofill:focus,
-      input:-webkit-autofill:active {
-        box-shadow: inset 0 0 0 1000px rgba(255, 255, 255, 0.06);
-        -webkit-text-fill-color: rgba(255, 255, 255, 0.9);
-      }
-
-      &:hover,
-      &:focus,
-      &.ant-input-affix-wrapper-focused {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: #1677ff;
-        box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.25);
-
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-          box-shadow: inset 0 0 0 1000px rgba(255, 255, 255, 0.1);
-        }
-      }
-
-      .ant-input {
-        background: transparent;
-        color: rgba(255, 255, 255, 0.9);
-
-        &::placeholder {
-          color: rgba(255, 255, 255, 0.55);
-        }
-      }
-
-      .anticon {
-        color: rgba(255, 255, 255, 0.55);
-      }
-    }
   }
 
   .ant-input {
     font-size: 14px;
-
-    &::placeholder {
-      .auth-layout-wrapper.light-mode & {
-        color: rgba(0, 0, 0, 0.35);
-      }
-
-      .auth-layout-wrapper:not(.light-mode) & {
-        color: rgba(255, 255, 255, 0.55);
-      }
-    }
   }
 }
 
@@ -155,14 +63,6 @@
 .auth-remember-checkbox {
   .ant-checkbox-wrapper {
     font-size: 13px;
-
-    .auth-layout-wrapper.light-mode & {
-      color: rgba(0, 0, 0, 0.7);
-    }
-
-    .auth-layout-wrapper:not(.light-mode) & {
-      color: rgba(255, 255, 255, 0.75);
-    }
   }
 }
 
@@ -178,7 +78,7 @@
 
   &:not(:disabled):hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3) !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--ant-color-primary) 30%, transparent) !important;
   }
 }
 
@@ -189,33 +89,16 @@
   font-size: 13px;
 
   .auth-footer-text {
-    .auth-layout-wrapper.light-mode & {
-      color: rgba(0, 0, 0, 0.7);
-    }
-
-    .auth-layout-wrapper:not(.light-mode) & {
-      color: rgba(255, 255, 255, 0.75);
-    }
+    color: var(--ant-color-text-secondary);
   }
 
   .auth-footer-anchor {
     text-decoration: none;
     transition: color 0.3s ease;
+    color: var(--ant-color-primary);
 
-    .auth-layout-wrapper.light-mode & {
-      color: #0066ff !important;
-
-      &:hover {
-        color: #0052cc !important;
-      }
-    }
-
-    .auth-layout-wrapper:not(.light-mode) & {
-      color: #4096ff !important;
-
-      &:hover {
-        color: #69b1ff !important;
-      }
+    &:hover {
+      color: var(--ant-color-primary-hover);
     }
   }
 }

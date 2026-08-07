@@ -7,7 +7,6 @@ export * from './date';
 export * from './color';
 export * from './url';
 export * from './diff';
-export * from './theme';
 export * from './tree.ts';
 
 export {default as cloneDeep} from "lodash.clonedeep";

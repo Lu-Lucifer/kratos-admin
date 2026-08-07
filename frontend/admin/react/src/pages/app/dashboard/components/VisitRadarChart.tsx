@@ -1,13 +1,12 @@
-import { Card } from 'antd';
+import { Card, theme } from 'antd';
 import ReactECharts from 'echarts-for-react';
-import { usePreferences } from '@/core/preferences';
 import { useI18n } from '@/core/i18n';
 
 /**
  * 访问数量雷达图组件
  */
 export const VisitRadarChart = () => {
-  const { isDark } = usePreferences();
+  const { token } = theme.useToken();
   const { t } = useI18n('dashboard');
 
   const option = {
@@ -18,7 +17,7 @@ export const VisitRadarChart = () => {
       data: [t('data.visit'), t('data.trend')],
       bottom: 0,
       textStyle: {
-        color: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+        color: token.colorTextSecondary,
       },
     },
     radar: {
@@ -31,11 +30,11 @@ export const VisitRadarChart = () => {
         { name: t('devices.mobile'), max: 100 },
       ],
       axisName: {
-        color: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+        color: token.colorTextSecondary,
       },
       splitLine: {
         lineStyle: {
-          color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          color: token.colorSplit,
         },
       },
       splitArea: {
@@ -43,7 +42,7 @@ export const VisitRadarChart = () => {
       },
       axisLine: {
         lineStyle: {
-          color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+          color: token.colorBorderSecondary,
         },
       },
     },

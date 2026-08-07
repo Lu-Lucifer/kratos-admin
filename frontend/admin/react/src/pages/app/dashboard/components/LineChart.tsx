@@ -1,12 +1,12 @@
 import ReactECharts from 'echarts-for-react';
-import { usePreferences } from '@/core/preferences';
+import { theme } from 'antd';
 import { useI18n } from '@/core/i18n';
 
 /**
  * 访问趋势折线图组件
  */
 export const LineChart = () => {
-  const { isDark } = usePreferences();
+  const { token } = theme.useToken();
   const { t } = useI18n('dashboard');
 
   const option = {
@@ -44,7 +44,7 @@ export const LineChart = () => {
       ],
       axisLine: {
         lineStyle: {
-          color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+          color: token.colorBorderSecondary,
         },
       },
     },
@@ -52,12 +52,12 @@ export const LineChart = () => {
       type: 'value',
       axisLine: {
         lineStyle: {
-          color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+          color: token.colorBorderSecondary,
         },
       },
       splitLine: {
         lineStyle: {
-          color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+          color: token.colorSplit,
         },
       },
     },
@@ -68,14 +68,14 @@ export const LineChart = () => {
         smooth: true,
         areaStyle: {
           opacity: 0.3,
-          color: '#1677ff',
+          color: token.colorPrimary,
         },
         lineStyle: {
           width: 2,
-          color: '#1677ff',
+          color: token.colorPrimary,
         },
         itemStyle: {
-          color: '#1677ff',
+          color: token.colorPrimary,
         },
         data: [
           0, 5000, 15000, 25000, 40000, 55000, 65000, 45000, 20000, 35000, 50000, 70000, 45000,
@@ -88,14 +88,14 @@ export const LineChart = () => {
         smooth: true,
         areaStyle: {
           opacity: 0.3,
-          color: '#52c41a',
+          color: token.colorSuccess,
         },
         lineStyle: {
           width: 2,
-          color: '#52c41a',
+          color: token.colorSuccess,
         },
         itemStyle: {
-          color: '#52c41a',
+          color: token.colorSuccess,
         },
         data: [
           0, 1000, 3000, 8000, 15000, 20000, 22000, 15000, 8000, 12000, 18000, 23000, 15000, 8000,

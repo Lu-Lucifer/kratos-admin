@@ -1,13 +1,12 @@
-import { Card } from 'antd';
+import { Card, theme } from 'antd';
 import ReactECharts from 'echarts-for-react';
-import { usePreferences } from '@/core/preferences';
 import { useI18n } from '@/core/i18n';
 
 /**
  * 访问来源环形图组件
  */
 export const SourceDonutChart = () => {
-  const { isDark } = usePreferences();
+  const { token } = theme.useToken();
   const { t } = useI18n('dashboard');
 
   const option = {
@@ -25,7 +24,7 @@ export const SourceDonutChart = () => {
         t('sources.allianceAdvertising'),
       ],
       textStyle: {
-        color: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+        color: token.colorTextSecondary,
       },
     },
     series: [
@@ -36,7 +35,7 @@ export const SourceDonutChart = () => {
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 10,
-          borderColor: isDark ? '#1f1f1f' : '#ffffff',
+          borderColor: token.colorBgContainer,
           borderWidth: 2,
         },
         label: {
