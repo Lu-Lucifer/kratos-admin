@@ -25,28 +25,28 @@ const Dashboard = () => {
       value: '2,000',
       total: t('stats.totalUsers'),
       totalValue: '120,000',
-      icon: <UserOutlined style={{ fontSize: 24, color: '#1677ff' }} />,
+      icon: <UserOutlined style={{ fontSize: 24, color: 'var(--ant-color-primary)' }} />,
     },
     {
       title: t('stats.visits'),
       value: '20,000',
       total: t('stats.totalVisits'),
       totalValue: '500,000',
-      icon: <EyeOutlined style={{ fontSize: 24, color: '#ff7a45' }} />,
+      icon: <EyeOutlined style={{ fontSize: 24, color: 'var(--ant-color-warning)' }} />,
     },
     {
       title: t('stats.downloads'),
       value: '8,000',
       total: t('stats.totalDownloads'),
       totalValue: '120,000',
-      icon: <DownloadOutlined style={{ fontSize: 24, color: '#faad14' }} />,
+      icon: <DownloadOutlined style={{ fontSize: 24, color: 'var(--ant-color-warning)' }} />,
     },
     {
       title: t('stats.usage'),
       value: '5,000',
       total: t('stats.totalUsage'),
       totalValue: '50,000',
-      icon: <ClockCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />,
+      icon: <ClockCircleOutlined style={{ fontSize: 24, color: 'var(--ant-color-success)' }} />,
     },
   ];
 

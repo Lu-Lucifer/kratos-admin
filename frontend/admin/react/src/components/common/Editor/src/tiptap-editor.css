@@ -278,6 +278,13 @@
   border-radius: 3px;
 }
 
+/* 暗黑模式：内联 code 使用 --tte-code-* 变量（在 .tiptap-editor-dark 下定义），
+   避免亮色浅灰块在暗黑编辑器背景中突兀。 */
+.tiptap-editor-dark .ProseMirror code {
+  color: var(--tte-code-text) !important;
+  background-color: var(--tte-code-bg) !important;
+}
+
 .tiptap-editor-wrapper .ProseMirror pre {
   position: relative;
   padding: 12px;
@@ -502,7 +509,7 @@
 .field-label {
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--ant-color-text);
 }
 
 .code-textarea {

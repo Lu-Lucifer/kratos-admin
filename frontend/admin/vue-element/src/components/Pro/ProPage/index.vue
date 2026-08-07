@@ -499,7 +499,7 @@ defineExpose({
     background: var(--el-bg-color);
     border: 1px solid var(--el-border-color-lighter);
     border-radius: 8px;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 5%);
+    box-shadow: var(--el-box-shadow-light);
   }
 }
 </style>

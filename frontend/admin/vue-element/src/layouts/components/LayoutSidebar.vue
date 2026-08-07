@@ -360,8 +360,10 @@ onMounted(() => {
       }
 
       // 选中菜单：品牌色透明度背景 + 左侧竖条 + 纯白文字
+      // 背景使用 --el-color-primary-light-9（主色极浅版，主题感知），与 box-shadow 的
+      // var(--el-color-primary) 保持同源，避免旧 Ant 蓝 #1890ff 与配置主色不同步。
       .el-menu-item.is-active {
-        background-color: rgba(24, 144, 255, 0.15) !important;
+        background-color: var(--el-color-primary-light-9) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
         box-shadow: inset 3px 0 0 0 var(--el-color-primary) !important;
@@ -373,7 +375,7 @@ onMounted(() => {
 
       // rounded 风格暗黑模式
       &.nav-style--rounded .el-menu-item.is-active {
-        background-color: rgba(24, 144, 255, 0.15) !important;
+        background-color: var(--el-color-primary-light-9) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
         box-shadow: inset 3px 0 0 0 var(--el-color-primary) !important;

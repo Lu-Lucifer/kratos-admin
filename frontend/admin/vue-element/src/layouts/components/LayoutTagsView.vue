@@ -820,7 +820,7 @@ $chrome-radius: 7px;
     transition: all 0.2s ease;
     flex-shrink: 0;
     height: 100%;
-    color: #606266;
+    color: var(--el-text-color-regular);
 
     &.is-active {
       color: var(--el-color-primary);
@@ -829,7 +829,7 @@ $chrome-radius: 7px;
 
     // 亮/暗模式通用：hover 文字提亮
     &:not(.is-active):hover {
-      color: #1d2129;
+      color: var(--tabs-bar-hover-color);
     }
 
     // ---- Plain 样式 ----
@@ -1052,13 +1052,13 @@ $chrome-radius: 7px;
   }
 
   &__close {
-    color: #94a3b8;
+    color: var(--el-text-color-placeholder);
     opacity: 0;
     transition: all 0.2s ease;
 
     .tabs-bar__item:hover & {
       opacity: 1;
-      color: #666e7d;
+      color: var(--el-text-color-secondary);
     }
 
     .tabs-bar__item.is-active & {

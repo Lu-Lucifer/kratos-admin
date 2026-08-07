@@ -199,7 +199,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, isActive, actions, isF
           <button
             type="button"
             className="toolbar-btn"
-            style={{ color: '#ef4444' }}
+            style={{ color: 'var(--ant-color-error)' }}
             onClick={actions.deleteTable}
             title={t('editor:deleteTable', '删除表格')}
           >
@@ -406,7 +406,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, isActive, actions, isF
         <button
           type="button"
           className="toolbar-btn"
-          style={{ color: '#ef4444' }}
+          style={{ color: 'var(--ant-color-error)' }}
           onClick={actions.clearContent}
           title={t('editor:clearContent', '清空内容')}
         >

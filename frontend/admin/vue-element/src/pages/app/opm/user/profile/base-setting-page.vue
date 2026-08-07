@@ -92,7 +92,7 @@
           <div class="avatar-label">{{ $t("pages.user.table.avatar") }}</div>
           <!-- 头像显示区域（可根据需要添加上传功能） -->
           <div class="avatar-placeholder">
-            <ElIcon :size="64" color="#909399">
+            <ElIcon :size="64" color="var(--el-text-color-placeholder)">
               <UserFilled />
             </ElIcon>
           </div>
