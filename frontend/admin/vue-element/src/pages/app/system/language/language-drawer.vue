@@ -48,11 +48,19 @@
       </ElFormItem>
 
       <ElFormItem :label="$t('pages.language.isEnabled')" prop="isEnabled">
-        <ElSwitch v-model="formData.isEnabled" />
+        <ElSwitch
+          v-model="formData.isEnabled"
+          :active-text="$t('common.status.enabled')"
+          :inactive-text="$t('common.status.disabled')"
+        />
       </ElFormItem>
 
       <ElFormItem :label="$t('pages.language.isDefault')" prop="isDefault">
-        <ElSwitch v-model="formData.isDefault" />
+        <ElSwitch
+          v-model="formData.isDefault"
+          :active-text="$t('common.status.enabled')"
+          :inactive-text="$t('common.status.disabled')"
+        />
       </ElFormItem>
     </ElForm>
 
