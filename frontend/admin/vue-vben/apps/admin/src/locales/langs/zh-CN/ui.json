@@ -181,7 +181,7 @@
     "splitCell": "分割单元格",
     "toggleHeaderRow": "切换表头行",
     "toggleHeaderColumn": "切换表头列",
-    "toggleHeaderCell": "",
+    "toggleHeaderCell": "切换表头单元格",
     "insertHorizontalRule": "插入水平线",
     "paragraph": "段落",
     "justify": "两端对齐",
