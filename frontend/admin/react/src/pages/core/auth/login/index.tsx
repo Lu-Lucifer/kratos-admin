@@ -100,12 +100,12 @@ const Login: React.FC = () => {
   };
 
   /**
-   * 验证码图片组件，作为输入框的 addonAfter 承载。
-   * 点击刷新验证码，与输入框视觉融为一体。
+   * 验证码图片组件，与输入框水平对齐（flex items-center space-x-2）。
+   * 点击刷新验证码。高度与输入框统一（h-11）。
    */
-  const captchaAddon = (
+  const captchaImageEl = (
     <div
-      className="flex items-center justify-center overflow-hidden w-[110px] h-9 rounded cursor-pointer border border-solid bg-[#f5f5f5] dark:border-zinc-700 dark:bg-zinc-800"
+      className="flex items-center justify-center overflow-hidden w-[110px] h-11 shrink-0 rounded-xl cursor-pointer border border-solid bg-white/5 border-white/10 light:bg-black/5 light:border-black/10"
       title={t('captchaRefresh')}
       onClick={() => !captchaLoading && refreshCaptcha()}
     >
@@ -116,7 +116,7 @@ const Login: React.FC = () => {
           className="h-full w-full object-cover"
         />
       ) : (
-        <span className="text-[#999] text-xs dark:text-zinc-300">
+        <span className="text-slate-400 text-xs">
           {captchaLoading ? '...' : t('captchaRefresh')}
         </span>
       )}
@@ -186,7 +186,7 @@ const Login: React.FC = () => {
             />
           </Form.Item>
 
-          {/* 验证码 —— 融入输入框 addonAfter */}
+          {/* 验证码 —— 输入框与图片水平对齐，等高 h-11，flex 布局 */}
           <Form.Item
             name="captcha"
             className="login-form-item"
@@ -197,12 +197,15 @@ const Login: React.FC = () => {
               },
             ]}
           >
-            <Input
-              prefix={<SafetyOutlined />}
-              placeholder={t('captchaPlaceholder')}
-              autoComplete="off"
-              addonAfter={captchaAddon}
-            />
+            <div className="flex items-center space-x-2">
+              <Input
+                prefix={<SafetyOutlined />}
+                placeholder={t('captchaPlaceholder')}
+                autoComplete="off"
+                className="flex-1"
+              />
+              {captchaImageEl}
+            </div>
           </Form.Item>
 
           <Form.Item className="login-remember-item">
@@ -219,7 +222,7 @@ const Login: React.FC = () => {
               htmlType="submit"
               loading={loginLoading}
               block
-              className="login-submit-btn h-11 rounded-lg"
+              className="login-submit-btn h-11 rounded-xl"
             >
               {loginLoading ? t('loggingIn') : t('loginButton')}
             </Button>

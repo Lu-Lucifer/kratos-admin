@@ -1,3 +1,7 @@
+/* reset 放进 base 层，使其低于 Tailwind utilities 层，
+   否则无层 *{padding:0} 会压过 utilities 层的 p-* 类（CSS cascade：
+   无层样式永远优先于有层样式，与 specificity 无关）。 */
+@layer base {
 * {
     margin: 0;
     padding: 0;
@@ -26,6 +30,7 @@ body {
 .ant-pro-layout {
     height: 100% !important;
     min-height: auto !important;
+}
 }
 
 /* 内容区域滚动条样式 —— 跟随 antd 主题 token，亮/暗模式自动切换 */

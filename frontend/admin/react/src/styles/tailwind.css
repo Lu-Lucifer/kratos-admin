@@ -37,18 +37,46 @@
 
 /* ============================================
    登录表单输入控件统一化
-   仅作用于 .login-form 内的 antd 输入控件，
-   统一高度 h-11、圆角 rounded-lg，
+   仅作用于 .login-form 内的 antd 输入控件。
+   统一高度 h-11、圆角 rounded-xl（与卡片/按钮一致）。
+   背景/边框用半透明灰覆盖 antd darkAlgorithm 的过深底色，
+   使 placeholder 与输入文字清晰可读。
    focus 时叠加主色 ring 发光（token 色，跟随主题）。
    ============================================ */
 .login-form .ant-input-affix-wrapper,
 .login-form .ant-input-password {
   height: 2.75rem;
-  border-radius: 0.5rem;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  border-radius: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.login-form .ant-input-affix-wrapper:hover {
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .login-form .ant-input-affix-wrapper:focus-within {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 45%, transparent);
+  border-color: var(--ant-color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 35%, transparent);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* placeholder 浅灰，保证暗色下可读 */
+.login-form .ant-input::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1;
+}
+
+/* 输入文字色跟随主题 token */
+.login-form .ant-input {
+  color: var(--ant-color-text);
+  background: transparent;
+}
+
+/* 登录按钮：统一高度 h-11、圆角 rounded-xl（与卡片一致） */
+.login-form .login-submit-btn {
+  height: 2.75rem !important;
+  border-radius: 0.75rem !important;
 }
 
