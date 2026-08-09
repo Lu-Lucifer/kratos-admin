@@ -77,8 +77,17 @@
       </template>
       <template #empty>
         <div class="pro-table__empty">
-          <IconifyIcon icon="lucide:inbox" class="pro-table__empty-icon" />
-          <span>{{ t(tableConfig.emptyText ?? "common.table.noData") }}</span>
+          <ElEmpty
+            :description="t(tableConfig.emptyText ?? 'common.table.noData')"
+            :image-size="120"
+          />
+          <ElButton
+            v-if="tableConfig.emptyActionText"
+            type="primary"
+            @click="emit('empty-action')"
+          >
+            {{ t(tableConfig.emptyActionText) }}
+          </ElButton>
         </div>
       </template>
     </vxe-table>
@@ -151,8 +160,17 @@
       </template>
       <template #empty>
         <div class="pro-table__empty">
-          <IconifyIcon icon="lucide:inbox" class="pro-table__empty-icon" />
-          <span>{{ t(tableConfig.emptyText ?? "common.table.noData") }}</span>
+          <ElEmpty
+            :description="t(tableConfig.emptyText ?? 'common.table.noData')"
+            :image-size="120"
+          />
+          <ElButton
+            v-if="tableConfig.emptyActionText"
+            type="primary"
+            @click="emit('empty-action')"
+          >
+            {{ t(tableConfig.emptyActionText) }}
+          </ElButton>
         </div>
       </template>
     </ElTable>
@@ -175,7 +193,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { Icon as IconifyIcon } from "@iconify/vue";
-import { ElTable, ElTableColumn } from "element-plus";
+import { ElTable, ElTableColumn, ElEmpty, ElButton } from "element-plus";
 import ProPagination from "../ProPagination/index.vue";
 import ProTableCellContent from "./ProTableCellContent.vue";
 import { proTableGlobalConfig, mergeTableConfig } from "./proTableConfig";
@@ -199,6 +217,7 @@ const emit = defineEmits<{
   "size-change": [pageSize: number];
   "row-click": [row: T];
   "sort-change": [data: { prop: string; order: string | null }];
+  "empty-action": [];
 }>();
 
 const tableRef = ref<any>(null);

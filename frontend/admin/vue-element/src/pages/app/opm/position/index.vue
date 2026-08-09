@@ -127,6 +127,7 @@ const pageConfig = computed<ProPageConfig>(() => ({
     toolbarRight: ["add"],
     defaultToolbar: ["refresh", "filter"],
     tableAttrs: { border: true, stripe: true },
+    emptyActionText: "common.button.add",
     columns: [
       { type: "index", label: $t("common.table.seq"), width: 60 },
       { prop: "name", label: $t("pages.position.name"), minWidth: 120 },

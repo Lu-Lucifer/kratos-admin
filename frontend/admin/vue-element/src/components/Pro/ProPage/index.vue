@@ -55,6 +55,7 @@
         :loading="tableState.loading.value"
         :row-key="rowKey"
         :table="config.table.tableAttrs"
+        :config="{ emptyActionText: config.table.emptyActionText }"
         :pagination="tableState.showPagination"
         :total="tableState.pagination.total"
         :current-page="tableState.pagination.currentPage"
@@ -66,6 +67,7 @@
         @current-change="handlePageChange"
         @size-change="handleSizeChange"
         @row-click="handleRowClick"
+        @empty-action="handleEmptyAction"
       >
         <!-- 透传自定义列插槽 -->
         <template v-for="(_, name) in $slots" :key="name" #[name]="slotProps">
@@ -291,6 +293,12 @@ function toggleSearch() {
 function handleFilterChange() {
   // 列配置已通过响应式更新，这里可以做额外处理
   // 比如保存到 localStorage 或后端
+}
+
+// === 空态引导按钮 ===
+// ProTable 空态的「立即新增」按钮触发，复用工具栏 add 路径。
+function handleEmptyAction() {
+  handleToolbarClick("add");
 }
 
 // === 工具栏事件 ===
