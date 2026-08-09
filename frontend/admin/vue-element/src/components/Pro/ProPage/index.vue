@@ -55,7 +55,7 @@
         :loading="tableState.loading.value"
         :row-key="rowKey"
         :table="config.table.tableAttrs"
-        :config="{ emptyActionText: config.table.emptyActionText }"
+        :empty-action-text="config.table.emptyActionText"
         :pagination="tableState.showPagination"
         :total="tableState.pagination.total"
         :current-page="tableState.pagination.currentPage"

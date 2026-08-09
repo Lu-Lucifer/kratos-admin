@@ -82,11 +82,11 @@
             :image-size="120"
           />
           <ElButton
-            v-if="tableConfig.emptyActionText"
+            v-if="emptyActionText"
             type="primary"
             @click="emit('empty-action')"
           >
-            {{ t(tableConfig.emptyActionText) }}
+            {{ t(emptyActionText) }}
           </ElButton>
         </div>
       </template>
@@ -165,11 +165,11 @@
             :image-size="120"
           />
           <ElButton
-            v-if="tableConfig.emptyActionText"
+            v-if="emptyActionText"
             type="primary"
             @click="emit('empty-action')"
           >
-            {{ t(tableConfig.emptyActionText) }}
+            {{ t(emptyActionText) }}
           </ElButton>
         </div>
       </template>

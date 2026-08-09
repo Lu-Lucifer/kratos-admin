@@ -11,12 +11,6 @@ export interface ProTableConfig {
   borderRadius?: number;
   fontSize?: number;
   emptyText?: string;
-  /**
-   * 空态引导按钮文案。配置后空态将渲染 el-empty + 引导按钮，
-   * 按钮点击触发 empty-action 事件，由 ProPage 转发为 add。
-   * 不配置则仅显示空态文案，无按钮。
-   */
-  emptyActionText?: string;
 
   pagination?: {
     show?: boolean;
@@ -119,6 +113,11 @@ export interface ProTableProps<T = any> {
   tableId?: string;
   table?: Record<string, any>;
   config?: Partial<ProTableConfig>;
+  /**
+   * 空态引导按钮文案 i18n key。独立 prop 传递，避免并入 config 对象
+   * 导致 tableConfig computed 依赖上层 pageConfig 而引发递归更新。
+   */
+  emptyActionText?: string;
 
   pagination?: boolean;
   total?: number;
