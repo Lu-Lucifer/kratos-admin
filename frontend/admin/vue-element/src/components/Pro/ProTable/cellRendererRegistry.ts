@@ -1,7 +1,7 @@
 import { defineComponent, h } from "vue";
 import type { Component, FunctionalComponent } from "vue";
 import { useDateFormat } from "@vueuse/core";
-import { ElImage, ElTag, ElSwitch, ElLink, ElIcon, ElTooltip, ElButton } from "element-plus";
+import { ElImage, ElTag, ElSwitch, ElLink, ElIcon, ElButton, ElSpace } from "element-plus";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 import { AccessControl } from "@/core/access";
 import type { ProTableColumn } from "./types";
@@ -120,33 +120,30 @@ const ToolCell = defineComponent({
   setup(props, { emit }) {
     return () => {
       const buttons = props.col.buttons ?? [];
-      return h("div", { class: "flex items-center justify-center gap-3" }, [
-        buttons.map((btn: any) => {
-          const codes = btn.auth ? (Array.isArray(btn.auth) ? btn.auth : [btn.auth]) : undefined;
-          const visible = btn.visible?.(props.row) ?? true;
-          if (!visible) return null;
+      const items = buttons.map((btn: any) => {
+        const codes = btn.auth ? (Array.isArray(btn.auth) ? btn.auth : [btn.auth]) : undefined;
+        const visible = btn.visible?.(props.row) ?? true;
+        if (!visible) return null;
 
-          // 获取按钮颜色类型（优先使用 btn.type，其次使用 btn.attrs.type，默认为 primary）
-          const btnType = btn.type ?? btn.attrs?.type ?? "primary";
-          const iconBtnClass = btn.icon ? `table-icon-btn table-icon-btn--${btnType}` : "table-icon-btn";
-
-          const el = h(ElTooltip, { content: btn.label ?? btn.name, placement: "top" }, () =>
-            btn.icon
-              ? h(
-                  "div",
-                  {
-                    class: iconBtnClass,
-                    onClick: () =>
-                      emit("operate", { name: btn.name, row: props.row, $index: props.rowIndex }),
-                  },
-                  h(SvgIcon, { icon: btn.icon, size: 16 })
-                )
-              : h(ElButton, { size: "small", link: true, ...btn.attrs }, () => btn.label)
-          );
-
-          return h(AccessControl, { codes }, () => el);
-        }),
-      ]);
+        // 统一为 link 文本按钮：type=primary（编辑）/ danger（删除），link 弱化视觉。
+        // 图标 + 文字形式，比纯图标更直观，避免暗色下高亮图标凌乱。
+        const btnType = btn.type ?? btn.attrs?.type ?? "primary";
+        const label = btn.label ?? btn.name;
+        const iconNode = btn.icon ? h(SvgIcon, { icon: btn.icon, size: 14 }) : null;
+        const el = h(
+          ElButton,
+          {
+            link: true,
+            type: btnType,
+            size: "small",
+            onClick: () =>
+              emit("operate", { name: btn.name, row: props.row, $index: props.rowIndex }),
+          },
+          () => [iconNode, label]
+        );
+        return h(AccessControl, { codes }, () => el);
+      });
+      return h(ElSpace, { class: "pro-table__tool-cell" }, () => items);
     };
   },
 });
