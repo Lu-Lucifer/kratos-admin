@@ -166,27 +166,6 @@ function stagger(delay: number) {
   }
 }
 
-// 暗黑模式微光调整
-:global(html.dark) {
-  .ts-bar,
-  .ts-field__input,
-  .ts-field__label,
-  .ts-btn,
-  .ts-btn-circle,
-  .ts-pagi-btn {
-    &::after {
-      background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.06) 40%,
-        rgba(255, 255, 255, 0.1) 60%,
-        transparent 100%
-      );
-      background-size: 300% 100%;
-    }
-  }
-}
-
 // --- 骨架条 ---
 .ts-bar {
   @include skeleton-pulse;
@@ -331,14 +310,7 @@ function stagger(delay: number) {
   background: var(--el-bg-color);
   border-radius: 8px;
   border: 1px solid var(--el-border-color-lighter);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-:global(html.dark) {
-  .ts-search {
-    background-color: #14171c;
-    border-color: #23272f;
-  }
+  box-shadow: var(--el-box-shadow-light);
 }
 
 .ts-field {
@@ -378,14 +350,8 @@ function stagger(delay: number) {
   border-radius: 8px;
   border: 1px solid var(--el-border-color-lighter);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--el-box-shadow-light);
   flex: 1;
-}
-
-:global(html.dark) {
-  .ts-table-card {
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  }
 }
 
 // 表头
