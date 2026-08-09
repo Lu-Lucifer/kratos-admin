@@ -100,8 +100,8 @@ html.dark {
       border-color: transparent !important;
 
       .el-form-item__label {
-        color: var(--dark-text-primary) !important;
-        font-weight: 550 !important; // 与亮色模式保持一致
+        color: var(--dark-text-secondary) !important; // 柔和次要文字色，避免纯白过亮
+        font-weight: 500 !important; // 与 EP --el-font-weight-primary 对齐
       }
 
       // 输入框和选择器
@@ -263,8 +263,8 @@ html.dark {
 
     // 表单标签
     .el-form-item__label {
-      color: var(--dark-text-primary) !important;
-      font-weight: 550 !important; // 与亮色模式保持一致
+      color: var(--dark-text-secondary) !important; // 柔和次要文字色，避免纯白过亮
+      font-weight: 500 !important; // 与 EP --el-font-weight-primary 对齐
 
       // 必填项标签增加轻微高亮，强化核心字段的视觉权重
       &.is-required::before {
