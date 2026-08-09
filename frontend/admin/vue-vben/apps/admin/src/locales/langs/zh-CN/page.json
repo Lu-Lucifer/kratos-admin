@@ -30,7 +30,14 @@
     "monthAccessCount": "月访问量",
     "accessSource": "访问来源",
     "trafficTrend": "访问趋势",
-    "month": "月"
+    "month": "月",
+    "userCount": "用户总数",
+    "roleCount": "角色总数",
+    "todayLoginCount": "今日登录次数",
+    "todayOperationCount": "今日操作审计条数",
+    "loginTrend": "登录趋势",
+    "operationActionDistribution": "操作类型分布",
+    "loginStatusDistribution": "登录成功/失败占比"
   },
   "user": {
     "moduleName": "用户",

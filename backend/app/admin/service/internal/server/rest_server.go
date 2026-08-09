@@ -119,6 +119,7 @@ func NewRestServer(
 	operationAuditLogService *service.OperationAuditLogService,
 	dataAccessAuditLogService *service.DataAccessAuditLogService,
 	redisCacheMonitorService *service.RedisCacheMonitorService,
+	dashboardService *service.DashboardService,
 
 	internalMessageService *service.InternalMessageService,
 	internalMessageCategoryService *service.InternalMessageCategoryService,
@@ -170,6 +171,7 @@ func NewRestServer(
 	adminV1.RegisterOperationAuditLogServiceHTTPServer(srv, operationAuditLogService)
 	adminV1.RegisterDataAccessAuditLogServiceHTTPServer(srv, dataAccessAuditLogService)
 	adminV1.RegisterRedisCacheMonitorServiceHTTPServer(srv, redisCacheMonitorService)
+	adminV1.RegisterDashboardServiceHTTPServer(srv, dashboardService)
 
 	adminV1.RegisterFileServiceHTTPServer(srv, fileService)
 

@@ -1,6 +1,9 @@
 ﻿<script lang="ts" setup>
-import { onMounted, ref, watch } from 'vue';
+import type { ActionDistributionResponse } from '#/api/generated/admin/service/v1';
 
+import { computed, ref, watch } from 'vue';
+
+import { $t } from '@vben/locales';
 import { usePreferences } from '@vben/preferences';
 import {
   EchartsUI,
@@ -8,83 +11,78 @@ import {
   useEcharts,
 } from '@vben/plugins/echarts';
 
-import { getAccentColor } from './chart-theme';
+import { getSeriesColors } from './chart-theme';
+
+const props = defineProps<{
+  data?: ActionDistributionResponse;
+}>();
 
 const chartRef = ref<EchartsUIType>();
 const { renderEcharts } = useEcharts(chartRef);
 const { isDark } = usePreferences();
 
-// 图表色随主题切换：每次渲染从 <html> 上的主题 CSS 变量读取。
-const buildOption = (): any => ({
-  legend: {
-    bottom: 0,
-    data: ['访问', '趋势'],
-  },
-  radar: {
-    indicator: [
+// 操作类型分布环形图。后端返回 action 枚举名（大写，如 CREATE/UPDATE），
+// legend 直接展示枚举名；具体本地化由 i18n 步骤统一补 key 后再接入。
+const buildOption = (): any => {
+  const items = props.data?.items ?? [];
+  return {
+    legend: {
+      bottom: '2%',
+      left: 'center',
+    },
+    series: [
       {
-        name: '网页',
-      },
-      {
-        name: '移动端',
-      },
-      {
-        name: 'Ipad',
-      },
-      {
-        name: '客户端',
-      },
-      {
-        name: '第三方',
-      },
-      {
-        name: '其它',
+        animationDelay() {
+          return Math.random() * 100;
+        },
+        animationEasing: 'exponentialInOut',
+        animationType: 'scale',
+        avoidLabelOverlap: false,
+        color: getSeriesColors(),
+        data: items.map((it) => ({
+          name: it.label,
+          value: it.count,
+        })),
+        emphasis: {
+          label: {
+            fontSize: '12',
+            fontWeight: 'bold',
+            show: true,
+          },
+        },
+        itemStyle: {
+          borderRadius: 10,
+          borderWidth: 2,
+        },
+        label: {
+          position: 'center',
+          show: false,
+        },
+        labelLine: {
+          show: false,
+        },
+        name: $t('page.analytics.operationActionDistribution'),
+        radius: ['40%', '65%'],
+        type: 'pie',
       },
     ],
-    radius: '60%',
-    splitNumber: 8,
-  },
-  series: [
-    {
-      areaStyle: {
-        opacity: 1,
-        shadowBlur: 0,
-        shadowColor: 'transparent',
-        shadowOffsetX: 0,
-        shadowOffsetY: 10,
-      },
-      data: [
-        {
-          itemStyle: {
-            color: getAccentColor(0),
-          },
-          name: '访问',
-          value: [90, 50, 86, 40, 50, 20],
-        },
-        {
-          itemStyle: {
-            color: getAccentColor(1),
-          },
-          name: '趋势',
-          value: [70, 75, 70, 76, 20, 85],
-        },
-      ],
-      itemStyle: {
-        // borderColor: '#fff',
-        borderRadius: 10,
-        borderWidth: 2,
-      },
-      symbolSize: 0,
-      type: 'radar',
+    tooltip: {
+      trigger: 'item',
     },
-  ],
-  tooltip: {},
-});
+  };
+};
 
-const render = () => renderEcharts(buildOption());
+const option = computed(() => buildOption());
 
-onMounted(render);
-watch(isDark, render);
+watch(
+  option,
+  (val) => {
+    renderEcharts(val);
+  },
+  { immediate: true, deep: true },
+);
+
+watch(isDark, () => renderEcharts(option.value));
 </script>
 
 <template>

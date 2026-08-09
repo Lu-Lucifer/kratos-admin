@@ -1,65 +1,83 @@
 ﻿<script lang="ts" setup>
 import type { AnalysisOverviewItem } from '@vben/common-ui';
-import type { TabOption } from '@vben/types';
 
 import {
   AnalysisChartCard,
   AnalysisChartsTabs,
   AnalysisOverview,
 } from '@vben/common-ui';
-import {
-  SvgBellIcon,
-  SvgCakeIcon,
-  SvgCardIcon,
-  SvgDownloadIcon,
-} from '@vben/icons';
+import { SvgBellIcon, SvgCakeIcon, SvgCardIcon, SvgDownloadIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
 
+import { computed } from 'vue';
+
+import {
+  useDashboardOverview,
+  useLoginStatusDistribution,
+  useLoginTrend,
+  useOperationActionDistribution,
+} from '#/api/composables/dashboard';
+
 import AnalyticsTrends from './analytics-trends.vue';
-import AnalyticsVisits from './analytics-visits.vue';
 import AnalyticsVisitsData from './analytics-visits-data.vue';
-import AnalyticsVisitsSales from './analytics-visits-sales.vue';
 import AnalyticsVisitsSource from './analytics-visits-source.vue';
 
-const overviewItems: AnalysisOverviewItem[] = [
-  {
-    icon: SvgCardIcon,
-    title: $t('page.analytics.currentUserCount'),
-    totalTitle: $t('page.analytics.totalUserCount'),
-    totalValue: 120_000,
-    value: 2000,
-  },
-  {
-    icon: SvgCakeIcon,
-    title: $t('page.analytics.currentAccessCount'),
-    totalTitle: $t('page.analytics.totalAccessCount'),
-    totalValue: 500_000,
-    value: 20_000,
-  },
-  {
-    icon: SvgDownloadIcon,
-    title: $t('page.analytics.currentDownloadCount'),
-    totalTitle: $t('page.analytics.totalDownloadCount'),
-    totalValue: 120_000,
-    value: 8000,
-  },
-  {
-    icon: SvgBellIcon,
-    title: $t('page.analytics.currentUsageCount'),
-    totalTitle: $t('page.analytics.totalUsageCount'),
-    totalValue: 50_000,
-    value: 5000,
-  },
-];
+// 概览卡：图标在前端按固定顺序映射，数值来自后端 GetOverview。
+// totalValue 字段在本场景无独立"总量"语义，与 value 同值以避免通用组件渲染空。
+// 数据未就绪（加载/出错）时返回空数组，待数据到达后由 computed 自动填充。
+const overviewQuery = useDashboardOverview();
 
-const chartTabs: TabOption[] = [
+const overviewItems = computed<AnalysisOverviewItem[]>(() => {
+  const d = overviewQuery.data.value;
+  if (!d) {
+    return [];
+  }
+  const items: AnalysisOverviewItem[] = [
+    {
+      icon: SvgCardIcon,
+      title: $t('page.analytics.userCount'),
+      totalTitle: $t('page.analytics.userCount'),
+      totalValue: d.userCount ?? 0,
+      value: d.userCount ?? 0,
+    },
+    {
+      icon: SvgCakeIcon,
+      title: $t('page.analytics.roleCount'),
+      totalTitle: $t('page.analytics.roleCount'),
+      totalValue: d.roleCount ?? 0,
+      value: d.roleCount ?? 0,
+    },
+    {
+      icon: SvgDownloadIcon,
+      title: $t('page.analytics.todayLoginCount'),
+      totalTitle: $t('page.analytics.todayLoginCount'),
+      totalValue: d.todayLoginCount ?? 0,
+      value: d.todayLoginCount ?? 0,
+    },
+    {
+      icon: SvgBellIcon,
+      title: $t('page.analytics.todayOperationCount'),
+      totalTitle: $t('page.analytics.todayOperationCount'),
+      totalValue: d.todayOperationCount ?? 0,
+      value: d.todayOperationCount ?? 0,
+    },
+  ];
+  return items;
+});
+
+// 登录趋势：近 7 天每日登录次数。后端已按日补零、升序返回。
+const trendQuery = useLoginTrend(7);
+
+// 操作审计按 action 分布。
+const actionDistQuery = useOperationActionDistribution();
+
+// 登录审计按 status 分布。
+const statusDistQuery = useLoginStatusDistribution();
+
+const chartTabs = [
   {
-    label: $t('page.analytics.trafficTrend'),
+    label: $t('page.analytics.loginTrend'),
     value: 'trends',
-  },
-  {
-    label: $t('page.analytics.monthAccessCount'),
-    value: 'visits',
   },
 ];
 </script>
@@ -69,31 +87,22 @@ const chartTabs: TabOption[] = [
     <AnalysisOverview :items="overviewItems" />
     <AnalysisChartsTabs :tabs="chartTabs" class="mt-5">
       <template #trends>
-        <AnalyticsTrends />
-      </template>
-      <template #visits>
-        <AnalyticsVisits />
+        <AnalyticsTrends :data="trendQuery.data.value" />
       </template>
     </AnalysisChartsTabs>
 
     <div class="mt-5 w-full md:flex">
       <AnalysisChartCard
-        class="mt-5 md:mr-4 md:mt-0 md:w-1/3"
-        :title="$t('page.analytics.accessCount')"
+        class="mt-5 md:mr-4 md:mt-0 md:w-1/2"
+        :title="$t('page.analytics.operationActionDistribution')"
       >
-        <AnalyticsVisitsData />
+        <AnalyticsVisitsData :data="actionDistQuery.data.value" />
       </AnalysisChartCard>
       <AnalysisChartCard
-        class="mt-5 md:mr-4 md:mt-0 md:w-1/3"
-        :title="$t('page.analytics.accessSource')"
+        class="mt-5 md:mt-0 md:w-1/2"
+        :title="$t('page.analytics.loginStatusDistribution')"
       >
-        <AnalyticsVisitsSource />
-      </AnalysisChartCard>
-      <AnalysisChartCard
-        class="mt-5 md:mt-0 md:w-1/3"
-        :title="$t('page.analytics.accessSource')"
-      >
-        <AnalyticsVisitsSales />
+        <AnalyticsVisitsSource :data="statusDistQuery.data.value" />
       </AnalysisChartCard>
     </div>
   </div>

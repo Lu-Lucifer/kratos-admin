@@ -16,6 +16,7 @@ export * from './auth';
 export * from './data-access-audit-log';
 
 export * from './dict';
+export * from './dashboard';
 
 export * from './file';
 export * from './file-transfer';

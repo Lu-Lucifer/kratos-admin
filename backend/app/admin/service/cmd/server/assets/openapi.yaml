@@ -336,6 +336,64 @@ paths:
                                 $ref: '#/components/schemas/VerifyCaptchaResponse'
             security:
                 - {}
+    /admin/v1/dashboard/login-status-distribution:
+        get:
+            tags:
+                - DashboardService
+            description: 登录审计按 status 分布
+            operationId: DashboardService_GetLoginStatusDistribution
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StatusDistributionResponse'
+    /admin/v1/dashboard/login-trend:
+        get:
+            tags:
+                - DashboardService
+            description: 获取近 N 天每日登录次数趋势
+            operationId: DashboardService_GetLoginTrend
+            parameters:
+                - name: days
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LoginTrendResponse'
+    /admin/v1/dashboard/operation-action-distribution:
+        get:
+            tags:
+                - DashboardService
+            description: 操作审计按 action 分布
+            operationId: DashboardService_GetOperationActionDistribution
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ActionDistributionResponse'
+    /admin/v1/dashboard/overview:
+        get:
+            tags:
+                - DashboardService
+            description: 获取概览统计（用户总数 / 角色总数 / 今日登录次数 / 今日操作审计条数）
+            operationId: DashboardService_GetOverview
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DashboardOverviewResponse'
     /admin/v1/data-access-audit-logs:
         get:
             tags:
@@ -4179,6 +4237,14 @@ paths:
                                 $ref: '#/components/schemas/UserExistsResponse'
 components:
     schemas:
+        ActionDistributionResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/DistributionItem'
+            description: 操作类型分布 - 回应
         Api:
             type: object
             properties:
@@ -4507,6 +4573,22 @@ components:
                     type: string
                     description: 用户登录密码
             description: 创建用户 - 请求
+        DashboardOverviewResponse:
+            type: object
+            properties:
+                userCount:
+                    type: integer
+                    format: uint32
+                roleCount:
+                    type: integer
+                    format: uint32
+                todayLoginCount:
+                    type: integer
+                    format: uint32
+                todayOperationCount:
+                    type: integer
+                    format: uint32
+            description: 概览统计 - 回应
         DataAccessAuditLog:
             type: object
             properties:
@@ -4852,6 +4934,15 @@ components:
                     description: 删除时间
                     format: date-time
             description: 字典类型
+        DistributionItem:
+            type: object
+            properties:
+                label:
+                    type: string
+                count:
+                    type: integer
+                    format: uint32
+            description: 分布数据项
         DownloadFileResponse:
             type: object
             properties:
@@ -5871,6 +5962,14 @@ components:
                     type: string
                     description: ID 令牌，OpenID Connect 扩展中定义的 JWT 格式令牌
             description: 用户后台登录 - 回应
+        LoginTrendResponse:
+            type: object
+            properties:
+                points:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/TrendPoint'
+            description: 登录趋势 - 回应
         MarkNotificationAsReadRequest:
             type: object
             properties:
@@ -6933,6 +7032,14 @@ components:
                 clientName:
                     type: string
             description: SLOWLOG GET 返回的单条慢日志
+        StatusDistributionResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/DistributionItem'
+            description: 登录状态分布 - 回应
         StorageObject:
             type: object
             properties:
@@ -7165,6 +7272,15 @@ components:
                 exist:
                     type: boolean
             description: 租户是否存在 - 答复
+        TrendPoint:
+            type: object
+            properties:
+                date:
+                    type: string
+                count:
+                    type: integer
+                    format: uint32
+            description: 趋势数据点
         UpdateApiRequest:
             type: object
             properties:
@@ -7718,6 +7834,8 @@ tags:
       description: API资源管理服务
     - name: AuthenticationService
       description: 用户后台登录认证服务
+    - name: DashboardService
+      description: 后台首页分析概览服务（只读聚合）
     - name: DataAccessAuditLogService
       description: 数据访问审计日志管理服务
     - name: DictEntryService

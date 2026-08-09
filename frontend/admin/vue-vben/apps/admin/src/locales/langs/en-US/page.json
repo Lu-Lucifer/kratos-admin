@@ -30,7 +30,14 @@
     "monthAccessCount": "Monthly Access",
     "accessSource": "Access Source",
     "trafficTrend": "Traffic Trend",
-    "month": "M"
+    "month": "M",
+    "userCount": "Total Users",
+    "roleCount": "Total Roles",
+    "todayLoginCount": "Today's Logins",
+    "todayOperationCount": "Today's Operation Audits",
+    "loginTrend": "Login Trend",
+    "operationActionDistribution": "Operation Action Distribution",
+    "loginStatusDistribution": "Login Success/Failure Ratio"
   },
   "user": {
     "moduleName": "User",

@@ -1132,6 +1132,114 @@ export type authenticationservicev1_VerifyCaptchaResponse = {
   valid: boolean | undefined;
 };
 
+// 概览统计 - 回应
+export type DashboardOverviewResponse = {
+  roleCount: number | undefined;
+  todayLoginCount: number | undefined;
+  todayOperationCount: number | undefined;
+  userCount: number | undefined;
+};
+
+// 登录趋势 - 请求
+export type GetLoginTrendRequest = {
+  days?: number;
+};
+
+// 登录趋势 - 回应
+export type LoginTrendResponse = {
+  points: TrendPoint[] | undefined;
+};
+
+// 趋势数据点
+export type TrendPoint = {
+  count: number | undefined;
+  date: string | undefined;
+};
+
+// 操作类型分布 - 回应
+export type ActionDistributionResponse = {
+  items: DistributionItem[] | undefined;
+};
+
+// 分布数据项
+export type DistributionItem = {
+  count: number | undefined;
+  label: string | undefined;
+};
+
+// 登录状态分布 - 回应
+export type StatusDistributionResponse = {
+  items: DistributionItem[] | undefined;
+};
+
+// 后台首页分析概览服务（只读聚合）
+export interface DashboardService {
+  // 获取概览统计（用户总数 / 角色总数 / 今日登录次数 / 今日操作审计条数）
+  GetOverview(
+    request: wellKnownEmpty,
+  ): Promise<DashboardOverviewResponse>;
+  // 获取近 N 天每日登录次数趋势
+  GetLoginTrend(
+    request: GetLoginTrendRequest,
+  ): Promise<LoginTrendResponse>;
+  // 操作审计按 action 分布
+  GetOperationActionDistribution(
+    request: wellKnownEmpty,
+  ): Promise<ActionDistributionResponse>;
+  // 登录审计按 status 分布
+  GetLoginStatusDistribution(
+    request: wellKnownEmpty,
+  ): Promise<StatusDistributionResponse>;
+}
+
+export function createDashboardServiceClient(
+  transport: ClientTransport,
+): DashboardService {
+  return {
+    GetOverview(_request) {
+      const path = `admin/v1/dashboard/overview`;
+      const body = null;
+      return transport.unary(path, 'GET', body, {
+        service: 'DashboardService',
+        method: 'GetOverview',
+      }) as Promise<DashboardOverviewResponse>;
+    },
+    GetLoginTrend(request) {
+      const path = `admin/v1/dashboard/login-trend`;
+      const body = null;
+      const queryParams: string[] = [];
+      if (request.days) {
+        queryParams.push(
+          `days=${encodeURIComponent(request.days.toString())}`,
+        );
+      }
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join('&')}`;
+      }
+      return transport.unary(uri, 'GET', body, {
+        service: 'DashboardService',
+        method: 'GetLoginTrend',
+      }) as Promise<LoginTrendResponse>;
+    },
+    GetOperationActionDistribution(_request) {
+      const path = `admin/v1/dashboard/operation-action-distribution`;
+      const body = null;
+      return transport.unary(path, 'GET', body, {
+        service: 'DashboardService',
+        method: 'GetOperationActionDistribution',
+      }) as Promise<ActionDistributionResponse>;
+    },
+    GetLoginStatusDistribution(_request) {
+      const path = `admin/v1/dashboard/login-status-distribution`;
+      const body = null;
+      return transport.unary(path, 'GET', body, {
+        service: 'DashboardService',
+        method: 'GetLoginStatusDistribution',
+      }) as Promise<StatusDistributionResponse>;
+    },
+  };
+}
 // 数据访问审计日志管理服务
 export interface DataAccessAuditLogService {
   // 查询数据访问审计日志列表
@@ -7345,6 +7453,7 @@ export class ApiClient {
   private _apiAuditLogService?: ApiAuditLogService;
   private _apiService?: ApiService;
   private _authenticationService?: AuthenticationService;
+  private _dashboardService?: DashboardService;
   private _dataAccessAuditLogService?: DataAccessAuditLogService;
   private _dictEntryService?: DictEntryService;
   private _dictTypeService?: DictTypeService;
@@ -7390,6 +7499,10 @@ export class ApiClient {
 
   get authenticationService(): AuthenticationService {
     return this._authenticationService ??= createAuthenticationServiceClient(this._transport);
+  }
+
+  get dashboardService(): DashboardService {
+    return this._dashboardService ??= createDashboardServiceClient(this._transport);
   }
 
   get dataAccessAuditLogService(): DataAccessAuditLogService {
