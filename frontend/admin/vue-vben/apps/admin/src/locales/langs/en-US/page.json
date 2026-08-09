@@ -327,8 +327,10 @@
     "senderName": "Sender",
     "categoryId": "Category",
     "readAt": "Read At",
+    "detail": "Message Detail",
     "button": {
-      "create": "Publish Message"
+      "create": "Publish Message",
+      "markAsRead": "Mark as Read"
     },
     "drawer": {
       "create": "Publish Message",

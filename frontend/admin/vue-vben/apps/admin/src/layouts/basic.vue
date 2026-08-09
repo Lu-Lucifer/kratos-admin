@@ -194,6 +194,13 @@ async function handleMakeAll() {
   }
 }
 
+/**
+ * 查看所有消息，跳转至收件箱
+ */
+function handleViewAllNotifications() {
+  router.push('/inbox');
+}
+
 function hasMessage(data: InternalMessageRecipient): boolean {
   for (const item of notifications.value) {
     if (item.messageId === data.messageId) {
@@ -267,6 +274,7 @@ watch(
         @clear="handleNoticeClear"
         @make-all="handleMakeAll"
         @read="handleMarkAsRead"
+        @view-all="handleViewAllNotifications"
       />
     </template>
     <template #extra>

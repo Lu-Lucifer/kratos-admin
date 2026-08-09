@@ -63,6 +63,7 @@
     "crypto-js": "^4.2.0",
     "dayjs": "catalog:",
     "defu": "catalog:",
+    "dompurify": "3.2.7",
     "highlight.js": "^11.11.1",
     "json-editor-vue": "^0.18.1",
     "jsoneditor": "^10.4.2",

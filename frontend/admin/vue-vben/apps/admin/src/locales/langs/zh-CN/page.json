@@ -327,8 +327,10 @@
     "senderName": "发送者",
     "categoryId": "消息分类",
     "readAt": "读取时间",
+    "detail": "消息详情",
     "button": {
-      "create": "发布消息"
+      "create": "发布消息",
+      "markAsRead": "标记为已读"
     },
     "drawer": {
       "create": "发布消息",
