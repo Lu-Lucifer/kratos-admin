@@ -77,7 +77,9 @@
       "editPassword": "Change Password",
       "banAccount": "Disable Account",
       "updateUserInfo": "Update Profile",
-      "updatePassword": "Change Password"
+      "updatePassword": "Change Password",
+      "uploadAvatar": "Upload Avatar",
+      "deleteAvatar": "Delete Avatar"
     },
     "profile": {
       "tab": {

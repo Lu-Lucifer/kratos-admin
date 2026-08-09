@@ -6,12 +6,20 @@ import { ref } from 'vue';
 import { Page } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { Col, notification, Row } from 'ant-design-vue';
+import { Avatar, Col, notification, Row, Upload } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import { genderList, getMe, useUpdateUserProfile } from '#/api';
+import {
+  genderList,
+  getMe,
+  useDeleteAvatar,
+  useUpdateUserProfile,
+  useUploadAvatar,
+} from '#/api';
 
 const { mutateAsync: updateUserProfile } = useUpdateUserProfile();
+const { mutateAsync: uploadAvatar } = useUploadAvatar();
+const { mutateAsync: deleteAvatar } = useDeleteAvatar();
 
 const data = ref<null | User>();
 
@@ -108,6 +116,77 @@ async function handleSubmit() {
   }
 }
 
+/**
+ * 头像上传前置校验：仅允许图片，且不超过 5MB（后端上限 50MB，此处更严格以避免无谓的 base64 转换开销）
+ */
+function beforeAvatarUpload(file: File): boolean {
+  const isImage = file.type.startsWith('image/');
+  const withinSize = file.size / 1024 / 1024 < 5;
+  if (!isImage || !withinSize) {
+    notification.error({
+      message: $t('ui.notification.upload_failed'),
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * 头像上传：将选中文件转为 base64（剥离 dataURL 前缀），调用 UploadAvatar，成功后刷新预览。
+ * 后端用 base64.StdEncoding.DecodeString 解码，不识别 dataURL 前缀，故必须传纯 base64。
+ */
+function handleUploadAvatar(options: any) {
+  const { file, onSuccess, onError } = options;
+
+  const reader = new FileReader();
+  reader.addEventListener('load', async (e) => {
+    try {
+      const dataUrl = e.target?.result as string;
+      // 剥离 "data:image/...;base64," 前缀，得到纯 base64
+      const base64 = dataUrl.replace(/^data:[^;]+;base64,/, '');
+      await uploadAvatar({ imageBase64: base64 });
+      await reload();
+      onSuccess?.({}, file);
+      notification.success({
+        message: $t('ui.notification.upload_success'),
+      });
+    } catch (error) {
+      try {
+        onError?.(error, file);
+      } catch {}
+      notification.error({
+        message: $t('ui.notification.upload_failed'),
+      });
+    }
+  });
+  reader.addEventListener('error', () => {
+    try {
+      onError?.(reader.error, file);
+    } catch {}
+    notification.error({
+      message: $t('ui.notification.upload_failed'),
+    });
+  });
+  reader.readAsDataURL(file);
+}
+
+/**
+ * 删除头像：调用 DeleteAvatar，成功后刷新预览。
+ */
+async function handleDeleteAvatar() {
+  try {
+    await deleteAvatar();
+    await reload();
+    notification.success({
+      message: $t('ui.notification.delete_success'),
+    });
+  } catch {
+    notification.error({
+      message: $t('ui.notification.delete_failed'),
+    });
+  }
+}
+
 function setLoading(_loading: boolean) {}
 
 /**
@@ -133,8 +212,27 @@ reload();
         <BaseForm />
       </Col>
       <Col :span="10">
-        <div class="change-avatar">
-          <div class="mb-2">{{ $t('page.user.table.avatar') }}</div>
+        <div class="mb-2">{{ $t('page.user.table.avatar') }}</div>
+        <Avatar :src="data?.avatar ?? ''" class="avatar-preview">
+          <span class="avatar-placeholder">
+            {{ data?.username?.substring(0, 1) || '?' }}
+          </span>
+        </Avatar>
+        <div class="avatar-actions">
+          <Upload
+            :custom-request="handleUploadAvatar"
+            :before-upload="beforeAvatarUpload"
+            :show-upload-list="false"
+            :multiple="false"
+            accept="image/*"
+          >
+            <a-button type="primary">
+              {{ $t('page.user.button.uploadAvatar') }}
+            </a-button>
+          </Upload>
+          <a-button v-if="data?.avatar" danger @click="handleDeleteAvatar">
+            {{ $t('page.user.button.deleteAvatar') }}
+          </a-button>
         </div>
       </Col>
     </Row>
@@ -145,12 +243,17 @@ reload();
 </template>
 
 <style lang="less" scoped>
-.change-avatar {
-  img {
-    display: block;
-    margin-bottom: 15px;
-    border-radius: 50%;
-  }
+.avatar-preview {
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+}
+
+.avatar-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .edge-card {

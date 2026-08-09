@@ -77,7 +77,9 @@
       "editPassword": "修改密码",
       "banAccount": "禁用账号",
       "updateUserInfo": "更新基本信息",
-      "updatePassword": "更新密码"
+      "updatePassword": "更新密码",
+      "uploadAvatar": "上传头像",
+      "deleteAvatar": "删除头像"
     },
     "profile": {
       "tab": {
