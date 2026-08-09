@@ -307,7 +307,7 @@ html.dark {
       border-color: var(--dark-drawer-input-border) !important;
       box-shadow: 0 0 0 1px var(--dark-drawer-input-border) inset !important;
       border-radius: 6px !important;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease !important;
 
       // 占位符
       input::placeholder,
@@ -320,11 +320,11 @@ html.dark {
         border-color: rgba(255, 255, 255, 0.2) !important;
       }
 
-      // 聚焦态：呼吸灯外发光
+      // 聚焦态：主色边框 + 减弱外发光（alpha 0.08，柔和反馈）
       &.is-focus {
         border-color: var(--dark-primary) !important;
         box-shadow: 0 0 0 1px var(--dark-primary) inset,
-                    0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+                    0 0 0 3px rgba(59, 130, 246, 0.08) !important;
       }
 
       // 错误态
@@ -352,7 +352,7 @@ html.dark {
       .el-input__wrapper.is-focus {
         border-color: var(--dark-primary) !important;
         box-shadow: 0 0 0 1px var(--dark-primary) inset,
-                    0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+                    0 0 0 3px rgba(59, 130, 246, 0.08) !important;
       }
     }
 

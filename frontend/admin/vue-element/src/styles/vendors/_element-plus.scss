@@ -344,6 +344,18 @@ body,
   }
 }
 
+/* ---------- 抽屉/对话框表单内输入控件统一撑满 ---------- */
+/* ElInput/ElInputNumber 默认带固定宽度（160px/150px），导致抽屉表单中各输入
+   控件长短不一。此处限定 drawer/dialog 内的表单输入控件撑满 content 区，
+   与同表单其他控件宽度一致，消除长短不一。亮暗通用（仅涉 width）。 */
+.el-drawer .el-form .el-input,
+.el-drawer .el-form .el-input-number,
+.el-dialog .el-form .el-input,
+.el-dialog .el-form .el-input-number {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 /* ---------- Select / Textarea 聚焦态外发光 ---------- */
 .el-select .el-input__wrapper.is-focus,
 .el-date-editor .el-input__wrapper.is-focus {
