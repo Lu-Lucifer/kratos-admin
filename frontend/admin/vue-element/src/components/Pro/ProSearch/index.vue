@@ -76,7 +76,7 @@
             {{ searchButtonText || t("common.button.search") }}
           </ElButton>
 
-          <ElButton v-if="showResetButton" :icon="Refresh" @click="handleReset">
+          <ElButton v-if="showResetButton" text :icon="Refresh" @click="handleReset">
             {{ resetButtonText || t("common.button.reset") }}
           </ElButton>
 
@@ -415,39 +415,35 @@ defineExpose({
     transition: all 0.2s ease;
     cursor: pointer;
 
-    // 搜索按钮（primary）—— 标准 Element Plus 主色
-    &.el-button--primary {
+    // 搜索按钮（primary，非 plain）—— 标准 Element Plus 主色实心主操作。
+    // plain+primary 由 Element Plus 内置镂空样式接管，此处用 :not(.is-plain) 排除。
+    &.el-button--primary:not(.is-plain) {
       background-color: var(--el-color-primary);
       border-color: var(--el-color-primary);
-      color: #fff;
+      color: var(--el-color-white);
 
       &:hover,
       &:focus {
         background-color: var(--el-color-primary-light-3);
         border-color: var(--el-color-primary-light-3);
-        color: #fff;
+        color: var(--el-color-white);
       }
 
       &:active {
         background-color: var(--el-color-primary-dark-2);
         border-color: var(--el-color-primary-dark-2);
-        color: #fff;
+        color: var(--el-color-white);
       }
     }
 
-    // 重置按钮（default）—— 中性灰，使用 Element Plus 按钮主题变量（亮/暗自动切换）
-    // stylelint-disable-next-line selector-max-universal
-    &:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.el-button--info) {
-      background-color: var(--el-button-bg-color);
-      border-color: var(--el-button-border-color);
-      color: var(--el-button-text-color);
-
-      &:hover,
-      &:focus {
-        background-color: var(--el-button-hover-bg-color);
-        border-color: var(--el-button-hover-border-color);
-        color: var(--el-button-hover-text-color);
-      }
+    // 重置按钮（text）—— 由 Element Plus text 按钮样式接管（透明背景、无边框），
+    // 此处仅保留尺寸规范，不覆盖其颜色/背景，确保 text 语义在亮/暗模式下都正确。
+    &.is-text {
+      height: 32px;
+      border-radius: 6px;
+      padding: 0 16px;
+      font-size: 14px;
+      line-height: normal;
     }
   }
 }

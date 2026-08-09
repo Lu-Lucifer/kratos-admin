@@ -272,22 +272,24 @@ defineExpose({
     cursor: pointer;
 
     // ======== 主按钮（primary）—— 标准 Element Plus 主色 ========
-    &.el-button--primary {
+    // 注意：plain+primary（镂空次要主按钮）由 Element Plus 内置样式接管，
+    // 此处用 :not(.is-plain) 排除，避免实心样式覆盖镂空语义。
+    &.el-button--primary:not(.is-plain) {
       background-color: var(--el-color-primary);
       border-color: var(--el-color-primary);
-      color: #fff;
+      color: var(--el-color-white);
 
       &:hover,
       &:focus {
         background-color: var(--el-color-primary-light-3);
         border-color: var(--el-color-primary-light-3);
-        color: #fff;
+        color: var(--el-color-white);
       }
 
       &:active {
         background-color: var(--el-color-primary-dark-2);
         border-color: var(--el-color-primary-dark-2);
-        color: #fff;
+        color: var(--el-color-white);
       }
     }
 
