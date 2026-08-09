@@ -237,7 +237,7 @@ function updateTableHeight() {
   if (wrapperHeight <= 0) return;
   // 减去分页器高度（如果存在）
   const pagerEl = tableWrapperRef.value.querySelector(".pro-pagination") as HTMLElement | null;
-  const pagerHeight = pagerEl ? pagerEl.offsetHeight + 12 : 0; // 12 = margin/gap
+    const pagerHeight = pagerEl ? pagerEl.offsetHeight + 20 : 0; // 20 = 表格与分页器之间的间距
   vxeTableHeight.value = wrapperHeight - pagerHeight;
 }
 
