@@ -95,6 +95,8 @@ const Login: React.FC = () => {
     } catch (error: any) {
       // 登录失败后刷新验证码
       refreshCaptcha();
+      // 弹出错误提示（与 CRUD 页面统一模式：优先用后端 message，兜底走 i18n）
+      message.error(error?.message || t('loginFailed'));
     }
   };
 
