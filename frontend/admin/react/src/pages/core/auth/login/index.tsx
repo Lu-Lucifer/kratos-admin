@@ -113,7 +113,7 @@ const Login: React.FC = () => {
         <img
           src={captchaImage}
           alt="captcha"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
         />
       ) : (
         <span className="text-slate-400 text-xs">
