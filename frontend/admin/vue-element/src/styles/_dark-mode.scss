@@ -174,7 +174,7 @@ html.dark {
 
     .el-drawer__header {
       background-color: var(--dark-bg-drawer-header) !important;
-      border-bottom: 1px solid var(--dark-drawer-border) !important;
+      border-bottom: 1px solid var(--dark-border) !important;
       // 微弱底部分割线渐变，增强边界柔和感
       background-image: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.15)) !important;
       
@@ -221,7 +221,9 @@ html.dark {
 
     .el-drawer__footer {
       background-color: var(--dark-bg-drawer-footer) !important;
-      border-top: 1px solid var(--dark-drawer-border) !important;
+      border-top: 1px solid var(--dark-border) !important;
+      // 与亮色模式统一的内边距，确保按钮区与表单内容有足够间距
+      padding: 16px 20px !important;
       // 微弱顶部分割线渐变，增强边界柔和感
       background-image: linear-gradient(to top, transparent, rgba(0, 0, 0, 0.15)) !important;
     }
@@ -237,8 +239,8 @@ html.dark {
 
     .el-dialog__header {
       background-color: var(--dark-bg-drawer-header) !important;
-      border-bottom: 1px solid var(--dark-drawer-border) !important;
-      
+      border-bottom: 1px solid var(--dark-border) !important;
+
       .el-dialog__title {
         color: var(--dark-text-primary) !important;
         font-size: 18px !important;
@@ -252,7 +254,7 @@ html.dark {
 
     .el-dialog__footer {
       background-color: var(--dark-bg-drawer-footer) !important;
-      border-top: 1px solid var(--dark-drawer-border) !important;
+      border-top: 1px solid var(--dark-border) !important;
     }
   }
 
