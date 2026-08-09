@@ -396,7 +396,9 @@ defineExpose({
       top: 25%;
       width: 1px;
       height: 50%;
-      background-color: var(--el-border-color-lighter);
+      // 用 --el-border-color（亮 #dcdfe6 / 暗 --dark-border #3a3f4a）而非
+      // --el-border-color-lighter（亮 #ebeef5，与表头 #EBEDF0 几乎同色，不可见）。
+      background-color: var(--el-border-color);
     }
   }
 
