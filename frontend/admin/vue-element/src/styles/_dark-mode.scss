@@ -531,9 +531,11 @@ html.dark {
   }
 
   // 按钮样式优化（Pro 组件区域单独处理，不覆盖其柔和风格）
+  // 注意：is-link / is-text 是 Element Plus 的弱化按钮（透明背景、主色文字），
+  // 实心样式会破坏其语义，故用 :not() 排除，交由 Element Plus 内置样式接管。
   .el-button:not(.pro-toolbar .el-button):not(.pro-search__actions .el-button) {
     // 主按钮
-    &.el-button--primary {
+    &.el-button--primary:not(.is-link):not(.is-text) {
       background-color: var(--dark-primary) !important;
       border-color: var(--dark-primary) !important;
       color: #fff !important;
@@ -545,7 +547,7 @@ html.dark {
     }
 
     // 成功按钮
-    &.el-button--success {
+    &.el-button--success:not(.is-link):not(.is-text) {
       background-color: var(--dark-success) !important;
       border-color: var(--dark-success) !important;
       color: #fff !important;
@@ -556,7 +558,7 @@ html.dark {
     }
 
     // 警告按钮
-    &.el-button--warning {
+    &.el-button--warning:not(.is-link):not(.is-text) {
       background-color: var(--dark-accent) !important;
       border-color: var(--dark-accent) !important;
       color: #fff !important;
@@ -567,7 +569,7 @@ html.dark {
     }
 
     // 危险按钮
-    &.el-button--danger {
+    &.el-button--danger:not(.is-link):not(.is-text) {
       background-color: var(--dark-error) !important;
       border-color: var(--dark-error) !important;
       color: #fff !important;
