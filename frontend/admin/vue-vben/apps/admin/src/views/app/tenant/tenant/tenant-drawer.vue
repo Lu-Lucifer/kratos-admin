@@ -350,7 +350,19 @@ async function updateTenant(values: any) {
   console.log('updateTenant', values);
 
   try {
-    await doUpdateTenant({ id: data.value.row.id, values });
+    // 仅透传有效的 Tenant 字段，剔除 divider1/user/password 等纯 UI 或子对象字段，
+    // 避免其进入 updateMask 导致后端 field mask 校验失败
+    await doUpdateTenant({
+      id: data.value.row.id,
+      values: {
+        name: values.name,
+        code: values.code,
+        type: values.type,
+        auditStatus: values.auditStatus,
+        status: values.status,
+        remark: values.remark,
+      },
+    });
 
     notification.success({
       message: $t('ui.notification.update_success'),
