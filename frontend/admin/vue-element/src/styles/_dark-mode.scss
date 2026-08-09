@@ -26,9 +26,10 @@ html.dark {
   // 移除：与亮色模式不一致，且 letter-spacing 差异会导致宽度偏移
   // letter-spacing: 0.02em !important;
   
-  // 1. 核心对比度优化(先解决“看得见”的问题)
+  // 1. 核心对比度优化(先解决”看得见”的问题)
   --dark-bg-primary: #0C0E13;      // 页面主背景(微压暗基底,暗黑质感更高级)
-  --dark-bg-table: #14171C;         // 表格容器/输入框背景(比背景亮 2 个灰度层级,模块边界瞬间清晰)
+  --dark-bg-page: #14171C;          // 内容区画布底色(比侧边栏亮 2 个灰度层级，拉开视觉层次)
+  --dark-bg-table: #14171C;         // 表格容器/输入框背景(与画布底色一致，保持统一)
   --dark-bg-hover: #1A1E26;         // 悬浮态/展开态/表头/行 hover(hover 态微高亮,给用户明确的交互反馈)
   --dark-border: #2d3139;           // 输入框边框/分割线/表格边框(提亮一阶,静止态边界感更清晰)
     
@@ -64,7 +65,7 @@ html.dark {
 
   // 3. Element Plus 组件变量覆盖
   --el-bg-color: var(--dark-bg-primary);
-  --el-bg-color-page: var(--dark-bg-primary);
+  --el-bg-color-page: var(--dark-bg-page);
   --el-bg-color-overlay: var(--dark-bg-table);
   --el-fill-color-blank: var(--dark-bg-table);
   --el-border-color: var(--dark-border);
@@ -578,70 +579,6 @@ html.dark {
   }
 
   // ============================================
-  // Pro 搜索区域按钮（ProSearch）
-  // 显式尺寸与亮色模式 scoped 样式保持一致
-  // ============================================
-  .pro-search__actions .el-button {
-    height: 32px !important;
-    border-radius: 6px !important;
-    padding: 0 16px !important;
-    font-size: 14px !important;
-    line-height: normal !important;
-
-    // 主按钮（搜索）— 白色文字确保对比度
-    &.el-button--primary {
-      color: #fff !important;
-    }
-
-    // 重置/default 按钮 — 使用亮色模式相同的设计语言，颜色适配暗色背景
-    // stylelint-disable-next-line selector-max-universal
-    &:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.el-button--info) {
-      background-color: rgba(255, 255, 255, 0.06) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
-      color: var(--el-text-color-primary) !important;
-
-      &:hover,
-      &:focus {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
-        color: var(--el-text-color-primary) !important;
-      }
-    }
-  }
-
-  // ============================================
-  // Pro 工具栏按钮（ProToolbar）
-  // 显式尺寸与亮色模式 scoped 样式保持一致
-  // ============================================
-  .pro-toolbar .toolbar-left .el-button,
-  .pro-toolbar .toolbar-right .el-button {
-    height: 32px !important;
-    border-radius: 6px !important;
-    padding: 0 16px !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    line-height: normal !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
-    text-rendering: auto !important;
-
-    // 重置/default 按钮 — 使用亮色模式相同的设计语言，颜色适配暗色背景
-    // stylelint-disable-next-line selector-max-universal
-    &:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.el-button--info):not(.is-circle) {
-      background-color: rgba(255, 255, 255, 0.06) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
-      color: var(--el-text-color-primary) !important; // 改用 primary 提高对比度
-
-      &:hover,
-      &:focus {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
-        color: var(--el-text-color-primary) !important;
-      }
-    }
-  }
-
-  // ============================================
   // 表格暗色模式专项适配
   // ============================================
 
@@ -929,23 +866,6 @@ html.dark {
   // 全页面全局 UI 审计重构
   // ============================================
 
-  // ---- 1. ProSearch 筛选区域卡片边界强化 ----
-  // ProSearch 组件 scoped 样式使用 var(--el-bg-color) / var(--el-border-color-lighter)
-  // 通过覆盖 CSS 变量来改变暗色模式表现
-  .pro-search {
-    // 赋予独立的深色底色，从页面背景中“浮”出来
-    background-color: var(--dark-bg-table) !important;
-    border-color: #262933 !important;
-    box-shadow: none !important;
-  }
-
-  // ---- 2. ProPage 内容区卡片边界强化 ----
-  .pro-page__content {
-    background-color: var(--dark-bg-table) !important;
-    border-color: #262933 !important;
-    box-shadow: none !important;
-  }
-
   // ---- 3. 表头视觉统治力重塑（vxe-table 暗色模式） ----
   // 暗色模式下表头需要更深的背景色和柔和的文字色，起到视觉锚点作用
   [data-vxe-ui-theme="dark"] {
@@ -962,56 +882,9 @@ html.dark {
     letter-spacing: 0.03em !important;
   }
 
-  // ---- 4. 操作列图标柔化降噪 ----
-  // 降低高纯度色彩的刺眼感，用柔化色彩替代
-  .table-icon-btn {
-    // Primary（编辑/查看）：降为柔和蓝
-    &--primary {
-      color: #5094ff !important; // 比原色 var(--el-color-primary) 更柔
-
-      &:hover {
-        background-color: rgba(80, 148, 255, 0.1) !important;
-      }
-    }
-
-    // Danger（删除）：降为柔粉色
-    &--danger {
-      color: #f87171 !important; // 比原色更柔和的红
-
-      &:hover {
-        background-color: rgba(248, 113, 113, 0.1) !important;
-      }
-    }
-
-    // Success（启动）：柔化绿
-    &--success {
-      color: #6ee7b7 !important;
-
-      &:hover {
-        background-color: rgba(110, 231, 183, 0.1) !important;
-      }
-    }
-
-    // Warning：柔化橙
-    &--warning {
-      color: #fbbf24 !important;
-
-      &:hover {
-        background-color: rgba(251, 191, 36, 0.1) !important;
-      }
-    }
-  }
-
   // ---- 5. vxe-table 行 hover 微亮呼吸反馈 ----
   .vxe-table--render-default .vxe-body--row.row--hover > .vxe-body--column {
     transition: background-color 0.2s ease;
-  }
-
-  // ---- 6. ProToolbar 工具栏底部分割线 ----
-  // 给 "+ 新增" 所在行增加底部分割线，锁定为表格头部工具栏边界
-  // 不加额外 margin/padding，与亮色模式高度保持一致
-  .pro-toolbar {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   }
 
   // ---- 7. Tiptap Editor disabled 状态 ----
