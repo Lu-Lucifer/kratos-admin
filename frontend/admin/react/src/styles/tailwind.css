@@ -1,0 +1,21 @@
+/* Tailwind v4 —— 关闭 Preflight（与 Antd + 项目 global.css reset 共存），
+   只导入 theme + utilities。dark: 变体重定向到 [data-theme=dark]，与
+   ThemeProvider 在 <html> 上写 data-theme 的策略一致。 */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  /* 项目唯一用到的、不在 v4 默认主题里的动画（Loading/index.tsx 使用） */
+  --animate-fade-in: fade-in 0.3s ease-out;
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+}

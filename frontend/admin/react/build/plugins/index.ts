@@ -5,7 +5,7 @@ import {nojekyllPlugin} from './nojekyll';
 import {autoImportPlugin} from './autoImport';
 import {versionUpdatePlugin} from './version';
 import react from '@vitejs/plugin-react-swc';
-import unocss from 'unocss/vite';
+import tailwindcss from '@tailwindcss/vite';
 import viteCompression from 'vite-plugin-compression';
 
 export function createVitePlugins() {
@@ -18,7 +18,7 @@ export function createVitePlugins() {
             // 确保使用正确的 JSX 运行时
             tsDecorators: false,
         }),
-        unocss(),
+        tailwindcss(),
         // 自动导入
         autoImportPlugin(),
     ];

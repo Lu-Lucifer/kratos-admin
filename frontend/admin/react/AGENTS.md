@@ -14,7 +14,7 @@ GoWind React Admin 是基于 React 19 的企业级后台管理脚手架，采用
 - **状态管理**: Zustand 5 (persist 中间件) + TanStack React Query 5 (数据请求)
 - **路由**: React Router v6
 - **国际化**: i18next + react-i18next
-- **样式**: Less + UnoCSS
+- **样式**: Less + Tailwind v4
 - **图标**: Iconify (lucide 图标集)
 - **包管理**: pnpm
 

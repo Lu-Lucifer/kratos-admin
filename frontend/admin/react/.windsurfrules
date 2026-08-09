@@ -3,7 +3,7 @@ GoWind React Admin 脚手架开发指南
 ## 技术栈
 - React 19 + TypeScript 6 + Ant Design v6 + ProComponents 2
 - Vite 8 (SWC) + Zustand 5 + TanStack React Query 5 + React Router v6
-- i18next + react-i18next + Less + UnoCSS + Iconify (lucide) + pnpm
+- i18next + react-i18next + Less + Tailwind v4 + Iconify (lucide) + pnpm
 
 ## 目录结构
 - src/api/ - API 层（generated/ 禁止手动修改, client.ts apiClient 单例, hooks/ React Query）

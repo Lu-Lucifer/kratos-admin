@@ -14,10 +14,10 @@ import { queryClient } from './core';
 import { bootstrap } from '@/bootstrap.ts';
 
 // 样式
-import 'uno.css';
 import 'nprogress/nprogress.css';
 
 import './styles/global.css';
+import './styles/tailwind.css';
 import './styles/skeleton-force-dark.css';
 import './styles/pro-layout-overrides.css';
 import './styles/pro-components-dark.css';

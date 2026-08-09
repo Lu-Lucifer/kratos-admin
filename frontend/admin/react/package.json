@@ -77,10 +77,9 @@
     "@types/nprogress": "^0.2.3",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "@unocss/preset-attributify": "66.5.12",
-    "@unocss/preset-icons": "66.5.12",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitejs/plugin-react-swc": "^4.2.2",
+    "@tailwindcss/vite": "4.3.3",
     "commitlint": "^21.0.1",
     "eslint": "^10.4.0",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -98,14 +97,13 @@
     "rollup-plugin-visualizer": "^6.0.5",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.59.4",
-    "unocss": "66.5.12",
+    "tailwindcss": "4.3.3",
     "unplugin-auto-import": "^20.3.0",
     "vite": "^8.0.13",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-mock": "^3.0.2",
     "vite-plugin-purge-icons": "^0.10.0",
     "vite-plugin-svg-icons": "^2.0.1",
-    "vite-plugin-windicss": "^1.9.4",
     "vitest": "^4.1.6"
   }
 }
