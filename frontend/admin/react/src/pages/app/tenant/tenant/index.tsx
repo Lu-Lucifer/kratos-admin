@@ -187,7 +187,7 @@ const TenantList = () => {
           okText={t('common:button.ok')}
           cancelText={t('common:button.cancel')}
         >
-          <a style={{ color: '#ff4d4f' }}>
+          <a style={{ color: 'var(--ant-color-error)' }}>
             <DeleteOutlined />
           </a>
         </Popconfirm>,

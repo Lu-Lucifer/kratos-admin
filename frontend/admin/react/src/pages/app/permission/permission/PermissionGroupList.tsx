@@ -146,7 +146,7 @@ const PermissionGroupList: React.FC<PermissionGroupListProps> = ({
           okText={t('common:button.ok')}
           cancelText={t('common:button.cancel')}
         >
-          <a style={{ color: '#ff4d4f' }} onClick={(e) => e.stopPropagation()}>
+          <a style={{ color: 'var(--ant-color-error)' }} onClick={(e) => e.stopPropagation()}>
             <DeleteOutlined />
           </a>
         </Popconfirm>,
