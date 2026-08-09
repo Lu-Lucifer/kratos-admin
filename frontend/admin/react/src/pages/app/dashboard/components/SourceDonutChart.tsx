@@ -8,20 +8,22 @@ interface SourceDonutChartProps {
   data?: ActionDistributionResponse;
 }
 
-const PALETTE = [
-  'var(--ant-color-primary)',
-  'var(--ant-color-success)',
-  'var(--ant-color-warning)',
-  'var(--ant-color-info)',
-];
-
 /**
  * 操作类型分布环形图。
- * 后端返回 action 枚举名（CREATE/UPDATE/...），legend 直接展示枚举名。
+ * 后端返回 action 枯举名（CREATE/UPDATE/...），legend 直接展示枯举名。
  */
 export const SourceDonutChart = ({ data }: SourceDonutChartProps) => {
   const { token } = theme.useToken();
   const { t } = useI18n('dashboard');
+
+  // 调色板取 antd 运行时 token 的实际颜色值。ECharts 在 canvas 上渲染，
+  // 无法解析 CSS 变量（var(--ant-color-*)），必须传入已解析的十六进制色值。
+  const palette = [
+    token.colorPrimary,
+    token.colorSuccess,
+    token.colorWarning,
+    token.colorInfo,
+  ];
 
   const option = useMemo(() => {
     const items = data?.items ?? [];
@@ -66,7 +68,7 @@ export const SourceDonutChart = ({ data }: SourceDonutChartProps) => {
           data: items.map((it, i) => ({
             value: it.count,
             name: it.label,
-            itemStyle: { color: PALETTE[i % PALETTE.length] },
+            itemStyle: { color: palette[i % palette.length] },
           })),
         },
       ],

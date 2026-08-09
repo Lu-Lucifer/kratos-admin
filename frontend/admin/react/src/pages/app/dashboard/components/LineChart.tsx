@@ -36,6 +36,14 @@ export const LineChart = ({ data }: LineChartProps) => {
             color: token.colorBorderSecondary,
           },
         },
+        axisTick: {
+          lineStyle: {
+            color: token.colorBorderSecondary,
+          },
+        },
+        axisLabel: {
+          color: token.colorTextSecondary,
+        },
       },
       yAxis: {
         type: 'value',
@@ -43,6 +51,14 @@ export const LineChart = ({ data }: LineChartProps) => {
           lineStyle: {
             color: token.colorBorderSecondary,
           },
+        },
+        axisTick: {
+          lineStyle: {
+            color: token.colorBorderSecondary,
+          },
+        },
+        axisLabel: {
+          color: token.colorTextSecondary,
         },
         splitLine: {
           lineStyle: {
