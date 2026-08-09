@@ -4,7 +4,6 @@ import { Form, Input, Button, App } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useAuthStore } from '@/stores';
 import { useNavigate } from 'react-router-dom';
-import '../auth-form.style.less';
 
 const Register: React.FC = () => {
   const { t } = useTranslation('auth');
@@ -12,10 +11,10 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const { message } = App.useApp();
 
-  const handleSubmit = async (values: { 
-    username: string; 
-    password: string; 
-    confirmPassword: string 
+  const handleSubmit = async (values: {
+    username: string;
+    password: string;
+    confirmPassword: string;
   }) => {
     // 验证密码一致性
     if (values.password !== values.confirmPassword) {
@@ -41,11 +40,13 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="auth-form-container">
+    <div className="w-full max-w-[420px]">
       {/* 标题 */}
-      <div className="auth-form-header">
-        <h2 className="auth-form-title">{t('registerTitle')}</h2>
-        <p className="auth-form-description">
+      <div className="mb-11">
+        <h2 className="text-[34px] font-extrabold tracking-[-0.5px] mb-2.5 text-[color:var(--ant-color-text)]">
+          {t('registerTitle')}
+        </h2>
+        <p className="text-[15px] leading-relaxed text-slate-400">
           {t('registerDescription')}
         </p>
       </div>
@@ -55,10 +56,11 @@ const Register: React.FC = () => {
         name="register"
         onFinish={handleSubmit}
         size="large"
+        className="login-form"
       >
         <Form.Item
           name="username"
-          className="auth-form-item"
+          className="login-form-item"
           rules={[
             {
               required: true,
@@ -75,7 +77,7 @@ const Register: React.FC = () => {
 
         <Form.Item
           name="password"
-          className="auth-form-item"
+          className="login-form-item"
           rules={[
             {
               required: true,
@@ -97,7 +99,7 @@ const Register: React.FC = () => {
         <Form.Item
           name="confirmPassword"
           dependencies={['password']}
-          className="auth-form-item"
+          className="login-form-item"
           rules={[
             {
               required: true,
@@ -126,7 +128,7 @@ const Register: React.FC = () => {
             htmlType="submit"
             loading={registerLoading}
             block
-            className="auth-submit-button"
+            className="login-submit-btn h-11 rounded-lg"
           >
             {registerLoading ? t('registering') : t('registerButton')}
           </Button>
@@ -134,11 +136,14 @@ const Register: React.FC = () => {
       </Form>
 
       {/* 底部链接 */}
-      <div className="auth-footer-link">
-        <span className="auth-footer-text">
+      <div className="mt-6 text-center text-[13px]">
+        <span className="text-[color:var(--ant-color-text-secondary)]">
           {t('hasAccount')}{' '}
         </span>
-        <a href="/auth/login" className="auth-footer-anchor">
+        <a
+          href="/auth/login"
+          className="text-[color:var(--ant-color-primary)] hover:text-[color:var(--ant-color-primary-hover)]"
+        >
           {t('backToLogin')}
         </a>
       </div>

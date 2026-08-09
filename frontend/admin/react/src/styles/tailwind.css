@@ -6,9 +6,10 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@custom-variant light (&:where([data-theme=light], [data-theme=light] *));
 
 @theme {
-  /* 项目唯一用到的、不在 v4 默认主题里的动画（Loading/index.tsx 使用） */
+  /* 项目用到的、不在 v4 默认主题里的动画 */
   --animate-fade-in: fade-in 0.3s ease-out;
   @keyframes fade-in {
     0% {
@@ -18,4 +19,36 @@
       opacity: 1;
     }
   }
+
+  /* 登录页左侧品牌区光晕的缓慢呼吸 */
+  --animate-breathe: breathe 6s ease-in-out infinite;
+  @keyframes breathe {
+    0%,
+    100% {
+      opacity: 0.5;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.9;
+      transform: scale(1.08);
+    }
+  }
 }
+
+/* ============================================
+   登录表单输入控件统一化
+   仅作用于 .login-form 内的 antd 输入控件，
+   统一高度 h-11、圆角 rounded-lg，
+   focus 时叠加主色 ring 发光（token 色，跟随主题）。
+   ============================================ */
+.login-form .ant-input-affix-wrapper,
+.login-form .ant-input-password {
+  height: 2.75rem;
+  border-radius: 0.5rem;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.login-form .ant-input-affix-wrapper:focus-within {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 45%, transparent);
+}
+

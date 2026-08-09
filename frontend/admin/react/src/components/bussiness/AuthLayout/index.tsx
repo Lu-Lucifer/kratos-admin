@@ -4,7 +4,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import SloganIcon from './icons/SloganIcon';
-import './AuthLayout.style.less';
 import { usePreferences } from '@/core/preferences/hooks/usePreferences';
 import { useLocale } from '@/core/preferences/hooks/useLocale';
 
@@ -69,9 +68,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ title, description, children, f
   };
 
   return (
-    <div className={`auth-layout-wrapper${isLightMode ? ' light-mode' : ''}`}>
+    <div className="flex min-h-screen overflow-hidden relative bg-[color:var(--ant-color-bg-layout)]">
       {/* 右上角工具栏 */}
-      <div className="auth-toolbar">
+      <div className="absolute top-5 right-5 flex gap-2 z-10">
         <Tooltip title={t('switchLanguage')}>
           <Button
             type="text"
@@ -93,49 +92,59 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ title, description, children, f
       </div>
 
       {/* 左侧品牌展示区 */}
-      <div className="auth-brand-section">
-        {/* 背景装饰 - 多层渐变 */}
-        <div className="auth-brand-overlay" />
-
-        {/* 装饰圆形 */}
-        <div className="auth-brand-circle circle-1" />
-        <div className="auth-brand-circle circle-2" />
-
-        {/* 品牌图标 */}
-        <div className="auth-brand-icon">
+      <div className="hidden lg:flex flex-1 flex-col items-center justify-center relative overflow-hidden min-w-0 bg-gradient-to-br from-[#0a0a0a] via-[#121218] to-[#0a0a0a]">
+        {/* 背景装饰：径向光晕，缓慢呼吸 */}
+        <div
+          className="absolute inset-0 pointer-events-none animate-breathe bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.18),transparent_60%)]"
+          aria-hidden="true"
+        />
+        {/* 3D 插图 */}
+        <div className="relative z-10 w-[440px] h-[440px] mb-9">
           <SloganIcon />
         </div>
-
-        <h2 className="auth-brand-title">{t('systemTitle')}</h2>
-        <p className="auth-brand-description">{t('systemDescription')}</p>
+        <h2 className="relative z-10 text-center text-[26px] font-bold tracking-wide text-[color:var(--ant-color-text)]">
+          {t('systemTitle')}
+        </h2>
+        <p className="relative z-10 text-center text-[15px] leading-relaxed text-slate-400">
+          {t('systemDescription')}
+        </p>
       </div>
 
       {/* 右侧表单区 */}
-      <div className="auth-form-section">
-        <div className="auth-form-content">
+      <div className="w-full lg:w-[480px] flex flex-col justify-center items-center p-16 relative bg-[color:var(--ant-color-bg-container)] shadow-[-10px_0_40px_rgba(0,0,0,0.05)] dark:border-l dark:border-white/5 dark:shadow-none">
+        <div className="w-full max-w-[420px]">
           {/* 页面标题 */}
-          <h1 className="auth-form-title">{title}</h1>
+          <h1 className="text-[34px] font-extrabold tracking-[-0.5px] mb-2.5 text-[color:var(--ant-color-text)]">
+            {title}
+          </h1>
 
           {/* 页面描述 */}
-          <p className="auth-form-description">{description}</p>
+          <p className="text-[15px] leading-relaxed mb-11 text-slate-400">
+            {description}
+          </p>
 
           {/* 表单内容（由子页面传入） */}
           {children}
 
           {/* 底部链接 */}
           {footerLink && (
-            <div className="auth-footer-link">
-              <span className="auth-footer-text">{footerLink.text} </span>
-              <a href={footerLink.href} className="auth-footer-anchor">
+            <div className="text-center mt-4 text-[13px]">
+              <span className="text-[color:var(--ant-color-text-secondary)]">
+                {footerLink.text}{' '}
+              </span>
+              <a
+                href={footerLink.href}
+                className="text-[color:var(--ant-color-primary)] hover:text-[color:var(--ant-color-primary-hover)]"
+              >
                 {footerLink.linkText}
               </a>
             </div>
           )}
         </div>
 
-        {/* 底部版权信息 */}
+        {/* 底部版权信息 —— flex 列里 mt-auto 自动贴底 */}
         {copyright.enable && (
-          <div className="auth-copyright">
+          <div className="mt-auto pt-8 text-center text-xs text-[color:var(--ant-color-text-secondary)]">
             Copyright © {copyright.date} {copyright.companyName}
           </div>
         )}

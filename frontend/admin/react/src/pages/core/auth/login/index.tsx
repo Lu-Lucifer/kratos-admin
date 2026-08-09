@@ -5,7 +5,6 @@ import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useAuthStore } from '@/stores';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchGenerateCaptcha } from '@/api';
-import '../auth-form.style.less';
 
 const Login: React.FC = () => {
   const { t } = useTranslation('auth');
@@ -100,138 +99,137 @@ const Login: React.FC = () => {
     }
   };
 
+  /**
+   * 验证码图片组件，作为输入框的 addonAfter 承载。
+   * 点击刷新验证码，与输入框视觉融为一体。
+   */
+  const captchaAddon = (
+    <div
+      className="flex items-center justify-center overflow-hidden w-[110px] h-9 rounded cursor-pointer border border-solid bg-[#f5f5f5] dark:border-zinc-700 dark:bg-zinc-800"
+      title={t('captchaRefresh')}
+      onClick={() => !captchaLoading && refreshCaptcha()}
+    >
+      {captchaImage ? (
+        <img
+          src={captchaImage}
+          alt="captcha"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span className="text-[#999] text-xs dark:text-zinc-300">
+          {captchaLoading ? '...' : t('captchaRefresh')}
+        </span>
+      )}
+    </div>
+  );
+
   return (
-    <div className="auth-form-container">
+    <div className="w-full max-w-[420px]">
       {/* 标题 */}
-      <div className="auth-form-header">
-        <h2 className="auth-form-title">{t('welcomeBack')}</h2>
-        <p className="auth-form-description">
+      <div className="mb-11">
+        <h2 className="text-[34px] font-extrabold tracking-[-0.5px] mb-2.5 text-[color:var(--ant-color-text)]">
+          {t('welcomeBack')}
+        </h2>
+        <p className="text-[15px] leading-relaxed text-slate-400">
           {t('loginDescription')}
         </p>
       </div>
 
-      {/* 登录表单 */}
-      <Form
-        name="login"
-        onFinish={handleSubmit}
-        size="large"
-        initialValues={{ remember: true }}
-      >
-        <Form.Item
-          name="tenant_code"
-          className="auth-form-item"
+      {/* 登录表单 —— 卡片包裹，暗黑半透明 + 极细边框 + 圆角 + 柔和阴影 */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md light:border-black/10 light:bg-black/5 light:shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
+        <Form
+          name="login"
+          onFinish={handleSubmit}
+          size="large"
+          initialValues={{ remember: true }}
+          className="login-form"
         >
-          <Input
-            prefix={<UserOutlined />}
-            placeholder={t('tenantCodePlaceholder')}
-            autoComplete="off"
-          />
-        </Form.Item>
+          <Form.Item name="tenant_code" className="login-form-item">
+            <Input
+              prefix={<UserOutlined />}
+              placeholder={t('tenantCodePlaceholder')}
+              autoComplete="off"
+            />
+          </Form.Item>
 
-        <Form.Item
-          name="username"
-          className="auth-form-item"
-          rules={[
-            {
-              required: true,
-              message: t('usernameRequired'),
-            },
-          ]}
-        >
-          <Input
-            prefix={<UserOutlined />}
-            placeholder={t('usernamePlaceholder')}
-            autoComplete="username"
-          />
-        </Form.Item>
+          <Form.Item
+            name="username"
+            className="login-form-item"
+            rules={[
+              {
+                required: true,
+                message: t('usernameRequired'),
+              },
+            ]}
+          >
+            <Input
+              prefix={<UserOutlined />}
+              placeholder={t('usernamePlaceholder')}
+              autoComplete="username"
+            />
+          </Form.Item>
 
-        <Form.Item
-          name="password"
-          className="auth-form-item"
-          rules={[
-            {
-              required: true,
-              message: t('passwordRequired'),
-            },
-          ]}
-        >
-          <Input.Password
-            prefix={<LockOutlined />}
-            placeholder={t('passwordPlaceholder')}
-            autoComplete="current-password"
-          />
-        </Form.Item>
+          <Form.Item
+            name="password"
+            className="login-form-item"
+            rules={[
+              {
+                required: true,
+                message: t('passwordRequired'),
+              },
+            ]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder={t('passwordPlaceholder')}
+              autoComplete="current-password"
+            />
+          </Form.Item>
 
-        {/* 验证码 */}
-        <Form.Item
-          name="captcha"
-          className="auth-form-item"
-          rules={[
-            {
-              required: true,
-              message: t('captchaRequired'),
-            },
-          ]}
-        >
-          <div className="flex items-center gap-2">
+          {/* 验证码 —— 融入输入框 addonAfter */}
+          <Form.Item
+            name="captcha"
+            className="login-form-item"
+            rules={[
+              {
+                required: true,
+                message: t('captchaRequired'),
+              },
+            ]}
+          >
             <Input
               prefix={<SafetyOutlined />}
               placeholder={t('captchaPlaceholder')}
               autoComplete="off"
-              className="flex-1"
+              addonAfter={captchaAddon}
             />
-            {/* 点击图片刷新验证码 */}
-            <div
-              className="flex items-center justify-center overflow-hidden border border-solid bg-[#f5f5f5] dark:border-zinc-700 dark:bg-zinc-800"
-              title={t('captchaRefresh')}
-              onClick={() => !captchaLoading && refreshCaptcha()}
-              style={{
-                height: 40,
-                width: 120,
-                flexShrink: 0,
-                cursor: 'pointer',
-                borderRadius: 6,
-              }}
-            >
-              {captchaImage ? (
-                <img
-                  src={captchaImage}
-                  alt="captcha"
-                  style={{ height: '100%', width: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <span className="text-[#999] text-xs dark:text-zinc-300">
-                  {captchaLoading ? '...' : t('captchaRefresh')}
-                </span>
-              )}
+          </Form.Item>
+
+          <Form.Item className="login-remember-item">
+            <div className="flex items-center justify-between">
+              <Form.Item name="remember" valuePropName="checked" noStyle>
+                <Checkbox>{t('rememberAccount')}</Checkbox>
+              </Form.Item>
             </div>
-          </div>
-        </Form.Item>
+          </Form.Item>
 
-        <Form.Item className="auth-remember-checkbox">
-          <div className="flex items-center justify-between">
-            <Form.Item name="remember" valuePropName="checked" noStyle>
-              <Checkbox>{t('rememberAccount')}</Checkbox>
-            </Form.Item>
-          </div>
-        </Form.Item>
-
-        <Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loginLoading}
-            block
-            className="auth-submit-button"
-          >
-            {loginLoading ? t('loggingIn') : t('loginButton')}
-          </Button>
-        </Form.Item>
-      </Form>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loginLoading}
+              block
+              className="login-submit-btn h-11 rounded-lg"
+            >
+              {loginLoading ? t('loggingIn') : t('loginButton')}
+            </Button>
+          </Form.Item>
+        </Form>
+      </div>
 
       {/* 底部链接 */}
-      <div className="auth-footer-link">
-        <span className="auth-footer-text">
+      <div className="mt-6 text-center text-[13px]">
+        <span className="text-[color:var(--ant-color-text-secondary)]">
           {t('noAccount')}{' '}
         </span>
         <a
