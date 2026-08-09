@@ -1,38 +1,24 @@
-import { Card, Tabs } from 'antd';
-import { useState } from 'react';
-import type { TabsProps } from 'antd';
+import { Card } from 'antd';
+import type { LoginTrendResponse } from '@/api/generated/admin/service/v1';
 import { useI18n } from '@/core/i18n';
 import { LineChart } from './LineChart';
-import { BarChart } from './BarChart';
+
+interface TrendChartProps {
+  data?: LoginTrendResponse;
+}
 
 /**
- * 访问趋势图组件（支持折线图和柱状图切换）
+ * 登录趋势图组件（单折线，数据由父组件从后端 GetLoginTrend 拉取后下发）
  */
-export const TrendChart = () => {
+export const TrendChart = ({ data }: TrendChartProps) => {
   const { t } = useI18n('dashboard');
-  const [activeTab, setActiveTab] = useState<'trend' | 'monthly'>('trend');
-
-  const tabItems: TabsProps['items'] = [
-    {
-      key: 'trend',
-      label: t('charts.visitTrend'),
-      children: <LineChart />,
-    },
-    {
-      key: 'monthly',
-      label: t('charts.monthlyVisits'),
-      children: <BarChart />,
-    },
-  ];
 
   return (
-    <Card style={{ marginTop: 16 }} styles={{ body: { padding: 0 } }}>
-      <Tabs
-        activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as 'trend' | 'monthly')}
-        items={tabItems}
-        style={{ padding: '16px 16px 0' }}
-      />
+    <Card style={{ marginTop: 16 }} styles={{ body: { padding: 16 } }}>
+      <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+        {t('charts.loginTrend')}
+      </div>
+      <LineChart data={data} />
     </Card>
   );
 };

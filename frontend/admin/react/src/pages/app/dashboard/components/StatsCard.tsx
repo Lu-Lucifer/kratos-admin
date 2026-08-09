@@ -3,9 +3,9 @@ import type { ReactNode } from 'react';
 
 interface StatsCardProps {
   title: string;
-  value: string;
+  value: number;
   total: string;
-  totalValue: string;
+  totalValue: number;
   icon: ReactNode;
 }
 

@@ -1,69 +1,80 @@
 import { Card, theme } from 'antd';
 import ReactECharts from 'echarts-for-react';
+import { useMemo } from 'react';
+import type { ActionDistributionResponse } from '@/api/generated/admin/service/v1';
 import { useI18n } from '@/core/i18n';
 
+interface SourceDonutChartProps {
+  data?: ActionDistributionResponse;
+}
+
+const PALETTE = [
+  'var(--ant-color-primary)',
+  'var(--ant-color-success)',
+  'var(--ant-color-warning)',
+  'var(--ant-color-info)',
+];
+
 /**
- * 访问来源环形图组件
+ * 操作类型分布环形图。
+ * 后端返回 action 枚举名（CREATE/UPDATE/...），legend 直接展示枚举名。
  */
-export const SourceDonutChart = () => {
+export const SourceDonutChart = ({ data }: SourceDonutChartProps) => {
   const { token } = theme.useToken();
   const { t } = useI18n('dashboard');
 
-  const option = {
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
-    },
-    legend: {
-      orient: 'horizontal',
-      bottom: 0,
-      data: [
-        t('sources.searchEngine'),
-        t('sources.directAccess'),
-        t('sources.emailMarketing'),
-        t('sources.allianceAdvertising'),
-      ],
-      textStyle: {
-        color: token.colorTextSecondary,
+  const option = useMemo(() => {
+    const items = data?.items ?? [];
+    return {
+      tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} ({d}%)',
       },
-    },
-    series: [
-      {
-        name: t('charts.visitSource'),
-        type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: token.colorBgContainer,
-          borderWidth: 2,
+      legend: {
+        orient: 'horizontal',
+        bottom: 0,
+        data: items.map((it) => it.label),
+        textStyle: {
+          color: token.colorTextSecondary,
         },
-        label: {
-          show: false,
-          position: 'center',
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 20,
-            fontWeight: 'bold',
+      },
+      series: [
+        {
+          name: t('charts.operationActionDistribution'),
+          type: 'pie',
+          radius: ['40%', '70%'],
+          avoidLabelOverlap: false,
+          itemStyle: {
+            borderRadius: 10,
+            borderColor: token.colorBgContainer,
+            borderWidth: 2,
           },
+          label: {
+            show: false,
+            position: 'center',
+          },
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: 20,
+              fontWeight: 'bold',
+            },
+          },
+          labelLine: {
+            show: false,
+          },
+          data: items.map((it, i) => ({
+            value: it.count,
+            name: it.label,
+            itemStyle: { color: PALETTE[i % PALETTE.length] },
+          })),
         },
-        labelLine: {
-          show: false,
-        },
-        data: [
-          { value: 1048, name: t('sources.searchEngine'), itemStyle: { color: '#3b82f6' } },
-          { value: 735, name: t('sources.directAccess'), itemStyle: { color: '#a78bfa' } },
-          { value: 580, name: t('sources.emailMarketing'), itemStyle: { color: '#2dd4bf' } },
-          { value: 484, name: t('sources.allianceAdvertising'), itemStyle: { color: '#14b8a6' } },
-        ],
-      },
-    ],
-  };
+      ],
+    };
+  }, [data, token, t]);
 
   return (
-    <Card title={t('charts.visitSource')} style={{ height: '100%' }}>
+    <Card title={t('charts.operationActionDistribution')} style={{ height: '100%' }}>
       <ReactECharts option={option} style={{ height: 280 }} />
     </Card>
   );

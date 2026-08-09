@@ -7,13 +7,21 @@
     "totalUsers": "Total Users",
     "totalVisits": "Total Visits",
     "totalDownloads": "Total Downloads",
-    "totalUsage": "Total Usage"
+    "totalUsage": "Total Usage",
+    "total": "Total",
+    "userCount": "Total Users",
+    "roleCount": "Total Roles",
+    "todayLoginCount": "Today's Logins",
+    "todayOperationCount": "Today's Operation Audits"
   },
   "charts": {
     "visitTrend": "Visit Trend",
     "monthlyVisits": "Monthly Visits",
     "visitCount": "Visit Count",
-    "visitSource": "Visit Source"
+    "visitSource": "Visit Source",
+    "loginTrend": "Login Trend",
+    "operationActionDistribution": "Operation Action Distribution",
+    "loginStatusDistribution": "Login Success/Failure Ratio"
   },
   "sources": {
     "searchEngine": "Search Engine",

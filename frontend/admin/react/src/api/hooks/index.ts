@@ -48,5 +48,8 @@ export * from './policy-evaluation-log';
 // 缓存监控
 export * from './redis-cache-monitor';
 
+// 首页分析概览
+export * from './dashboard';
+
 // 内部消息
 export * from './internal-message';

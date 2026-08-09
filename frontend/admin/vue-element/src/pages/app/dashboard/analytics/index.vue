@@ -9,10 +9,6 @@
               <div class="title">{{ item.title }}</div>
               <div class="value-row">
                 <span class="value">{{ item.value.toLocaleString() }}</span>
-                <span :class="['trend', item.trend >= 0 ? 'trend--up' : 'trend--down']">
-                  <SvgIcon :icon="item.trend >= 0 ? 'lucide:trending-up' : 'lucide:trending-down'" :size="14" />
-                  {{ Math.abs(item.trend) }}%
-                </span>
               </div>
             </div>
             <div class="overview-header__icon">
@@ -20,7 +16,7 @@
             </div>
           </div>
           <div class="overview-footer">
-            <span class="footer-label">{{ $t("pages.dashboard.vsYesterday") }}</span>
+            <span class="footer-label">{{ $t("pages.dashboard.total") }}</span>
             <span class="footer-total">
               {{ $t("pages.dashboard.total") }}
               <strong>{{ item.totalValue.toLocaleString() }}</strong>
@@ -30,55 +26,37 @@
       </el-col>
     </el-row>
 
-    <!-- Trends Chart -->
+    <!-- Login Trend Chart -->
     <el-card shadow="hover" class="mb-5">
       <template #header>
         <div class="card-header-tabs">
-          <el-radio-group v-model="activeTab" size="small">
-            <el-radio-button value="trends">
-              {{ $t("pages.dashboard.visitsTrend") }}
-            </el-radio-button>
-            <el-radio-button value="visits">
-              {{ $t("pages.dashboard.monthVisits") }}
-            </el-radio-button>
-          </el-radio-group>
+          <span class="card-title">{{ $t("pages.dashboard.loginTrend") }}</span>
         </div>
       </template>
       <div class="chart-container chart-container-trend">
-        <AnalyticsTrends v-if="activeTab === 'trends'" />
-        <AnalyticsVisits v-else />
+        <AnalyticsTrends :data="trendQuery.data.value" />
       </div>
     </el-card>
 
-    <!-- Chart Cards Grid -->
+    <!-- Distribution Cards Grid -->
     <el-row :gutter="16">
-      <el-col :xs="24" :sm="24" :md="8">
+      <el-col :xs="24" :sm="24" :md="12">
         <el-card shadow="hover">
           <template #header>
-            <span class="card-title">{{ $t("pages.dashboard.visitCount") }}</span>
+            <span class="card-title">{{ $t("pages.dashboard.operationActionDistribution") }}</span>
           </template>
           <div class="chart-container chart-container-small">
-            <AnalyticsVisitsData />
+            <AnalyticsVisitsData :data="actionDistQuery.data.value" />
           </div>
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="24" :md="8">
+      <el-col :xs="24" :sm="24" :md="12">
         <el-card shadow="hover">
           <template #header>
-            <span class="card-title">{{ $t("pages.dashboard.visitSource") }}</span>
+            <span class="card-title">{{ $t("pages.dashboard.loginStatusDistribution") }}</span>
           </template>
           <div class="chart-container chart-container-small">
-            <AnalyticsVisitsSource />
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="24" :md="8">
-        <el-card shadow="hover">
-          <template #header>
-            <span class="card-title">{{ $t("pages.dashboard.salesDistribution") }}</span>
-          </template>
-          <div class="chart-container chart-container-small">
-            <AnalyticsVisitsSales />
+            <AnalyticsVisitsSource :data="statusDistQuery.data.value" />
           </div>
         </el-card>
       </el-col>
@@ -87,59 +65,52 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
-
 import SvgIcon from "@/components/SvgIcon/index.vue";
 import { $t } from "@/core/i18n";
-
+import {
+  useDashboardOverview,
+  useLoginStatusDistribution,
+  useLoginTrend,
+  useOperationActionDistribution,
+} from "@/api/composables/dashboard";
 import AnalyticsTrends from "./analytics-trends.vue";
-import AnalyticsVisits from "./analytics-visits.vue";
 import AnalyticsVisitsData from "./analytics-visits-data.vue";
-import AnalyticsVisitsSales from "./analytics-visits-sales.vue";
 import AnalyticsVisitsSource from "./analytics-visits-source.vue";
 
-// 定义 OverviewItem 接口
-interface OverviewItem {
-  icon: string;
-  title: string;
-  totalValue: number;
-  trend: number;
-  value: number;
-}
+// 概览卡：图标在前端按固定顺序映射，数值来自后端 GetOverview。
+// totalValue 字段在本场景无独立"总量"语义，与 value 同值以避免渲染空。
+// 数据未就绪（加载/出错）时返回空数组，待数据到达后由 computed 自动填充。
+const overviewQuery = useDashboardOverview();
 
-const overviewItems = ref<OverviewItem[]>([
-  {
-    icon: "svg:color_card",
-    title: $t("pages.dashboard.currentUserCount"),
-    totalValue: 120_000,
-    trend: 12,
-    value: 2000,
-  },
-  {
-    icon: "svg:color_cake",
-    title: $t("pages.dashboard.currentAccessCount"),
-    totalValue: 500_000,
-    trend: -5,
-    value: 20_000,
-  },
-  {
-    icon: "svg:color_download",
-    title: $t("pages.dashboard.currentDownloadCount"),
-    totalValue: 120_000,
-    trend: 18,
-    value: 8000,
-  },
-  {
-    icon: "svg:color_bell",
-    title: $t("pages.dashboard.currentUsageCount"),
-    totalValue: 50_000,
-    trend: 8,
-    value: 5000,
-  },
-]);
+const overviewItems = computed(() => {
+  const d = overviewQuery.data.value;
+  if (!d) {
+    return [];
+  }
+  const iconPool = ["svg:color_card", "svg:color_cake", "svg:color_download", "svg:color_bell"];
+  const values = [
+    d.userCount ?? 0,
+    d.roleCount ?? 0,
+    d.todayLoginCount ?? 0,
+    d.todayOperationCount ?? 0,
+  ];
+  const titleKeys = [
+    "pages.dashboard.userCount",
+    "pages.dashboard.roleCount",
+    "pages.dashboard.todayLoginCount",
+    "pages.dashboard.todayOperationCount",
+  ];
+  return values.map((v, i) => ({
+    icon: iconPool[i]!,
+    title: $t(titleKeys[i]!),
+    totalValue: v,
+    value: v,
+  }));
+});
 
-// 当前激活的标签
-const activeTab = ref<"trends" | "visits">("trends");
+const trendQuery = useLoginTrend(7);
+const actionDistQuery = useOperationActionDistribution();
+const statusDistQuery = useLoginStatusDistribution();
 </script>
 
 <style lang="scss" scoped>
@@ -219,27 +190,6 @@ const activeTab = ref<"trends" | "visits">("trends");
     color: var(--el-text-color-primary);
     line-height: 1;
     letter-spacing: -0.5px;
-  }
-
-  .trend {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1;
-    padding: 2px 6px;
-    border-radius: 4px;
-
-    &--up {
-      color: var(--el-color-success);
-      background: var(--el-color-success-light-9);
-    }
-
-    &--down {
-      color: var(--el-color-danger);
-      background: var(--el-color-danger-light-9);
-    }
   }
 
   .overview-footer {
