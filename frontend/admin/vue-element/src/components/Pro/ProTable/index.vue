@@ -117,6 +117,7 @@
           type="index"
           :label="col.label"
           :width="col.width ?? 60"
+          :align="col.align || 'center'"
         />
         <ElTableColumn v-else-if="col.type === 'expand'" type="expand">
           <template #default="scope">

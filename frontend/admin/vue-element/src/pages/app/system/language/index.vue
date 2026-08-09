@@ -104,7 +104,7 @@ const pageConfig = computed<ProPageConfig>(() => ({
         width: 100,
         slotName: "isDefault",
       },
-      { prop: "sortOrder", label: $t("common.table.sortOrder"), width: 100, align: "right" },
+      { prop: "sortOrder", label: $t("common.table.sortOrder"), width: 100, align: "center" },
       {
         prop: "createdAt",
         label: $t("common.table.createdAt"),
