@@ -124,7 +124,7 @@ export const UserLayout = ({ requireAuth = false }: UserLayoutProps) => {
 
           {/* 底部版权信息 */}
           {preferences.copyright.enable && (
-            <div className="user-copyright">
+            <div className="user-copyright text-black/60 dark:text-zinc-500">
               Copyright © {preferences.copyright.date} {preferences.copyright.companyName}
             </div>
           )}

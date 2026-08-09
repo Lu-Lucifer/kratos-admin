@@ -180,7 +180,7 @@ const Login: React.FC = () => {
             />
             {/* 点击图片刷新验证码 */}
             <div
-              className="captcha-image-wrapper"
+              className="flex items-center justify-center overflow-hidden border border-solid bg-[#f5f5f5] dark:border-zinc-700 dark:bg-zinc-800"
               title={t('captchaRefresh')}
               onClick={() => !captchaLoading && refreshCaptcha()}
               style={{
@@ -189,10 +189,6 @@ const Login: React.FC = () => {
                 flexShrink: 0,
                 cursor: 'pointer',
                 borderRadius: 6,
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
               }}
             >
               {captchaImage ? (
@@ -202,7 +198,7 @@ const Login: React.FC = () => {
                   style={{ height: '100%', width: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                <span className="captcha-image-placeholder">
+                <span className="text-[#999] text-xs dark:text-zinc-300">
                   {captchaLoading ? '...' : t('captchaRefresh')}
                 </span>
               )}
@@ -236,7 +232,10 @@ const Login: React.FC = () => {
         <span className="auth-footer-text">
           {t('noAccount')}{' '}
         </span>
-        <a href="/auth/register" className="auth-footer-anchor">
+        <a
+          href="/auth/register"
+          className="text-sky-400 hover:text-sky-300 dark:text-sky-400 dark:hover:text-sky-300"
+        >
           {t('createAccount')}
         </a>
       </div>
