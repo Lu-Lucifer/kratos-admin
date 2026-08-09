@@ -190,8 +190,6 @@ const Login: React.FC = () => {
                 cursor: 'pointer',
                 borderRadius: 6,
                 overflow: 'hidden',
-                border: '1px solid #d9d9d9',
-                background: '#f5f5f5',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -204,7 +202,7 @@ const Login: React.FC = () => {
                   style={{ height: '100%', width: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                <span style={{ color: '#999', fontSize: 12 }}>
+                <span className="captcha-image-placeholder">
                   {captchaLoading ? '...' : t('captchaRefresh')}
                 </span>
               )}

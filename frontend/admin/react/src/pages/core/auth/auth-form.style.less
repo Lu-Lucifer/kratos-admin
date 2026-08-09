@@ -59,6 +59,17 @@
   }
 }
 
+/* 验证码图片容器 —— 边框/背景跟随 Antd 主题 token，亮暗自动适配 */
+.captcha-image-wrapper {
+  border: 1px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+
+  .captcha-image-placeholder {
+    color: var(--ant-color-text-tertiary);
+    font-size: 12px;
+  }
+}
+
 /* 记住账号复选框 */
 .auth-remember-checkbox {
   .ant-checkbox-wrapper {
@@ -100,5 +111,27 @@
     &:hover {
       color: var(--ant-color-primary-hover);
     }
+  }
+}
+
+/* ============================================
+   暗色模式专属：提亮输入框与验证码容器的边框/背景
+   Antd darkAlgorithm 派生的 --ant-color-border / --ant-color-bg-container
+   在暗色下偏暗，导致登录表单输入控件边缘几乎不可见。此处用同族略亮的
+   token（color-border-secondary / color-bg-elevated）覆盖静态态，提升
+   轮廓可见度。hover/focus 态仍由 Antd 自身主色 token 接管，不覆盖。
+   限定 :not(.light-mode) 仅暗色生效，亮色不受影响。
+   ============================================ */
+.user-layout-wrapper:not(.light-mode) {
+  .auth-form-item {
+    .ant-input-outlined:not(:hover):not(:focus-within):not(.ant-input-status-error) {
+      border-color: var(--ant-color-border-secondary);
+      background-color: var(--ant-color-bg-elevated);
+    }
+  }
+
+  .captcha-image-wrapper {
+    border-color: var(--ant-color-border-secondary);
+    background-color: var(--ant-color-bg-elevated);
   }
 }
