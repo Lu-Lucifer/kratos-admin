@@ -191,6 +191,11 @@ export function userStatusToColor(status: User_Status) {
   return USER_STATUS_COLOR_MAP[status as string] || USER_STATUS_COLOR_MAP.DEFAULT;
 }
 
+// 启用/禁用 → tag type，NORMAL 为启用（success），其余统一为 info
+export function userStatusToType(status: User_Status): "success" | "info" {
+  return status === "NORMAL" ? "success" : "info";
+}
+
 export function userStatusToName(status?: User_Status) {
   const values = userStatusList.value;
   const matchedItem = values.find((item) => item.value === status);

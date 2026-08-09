@@ -8,8 +8,8 @@
       @toolbar="handleToolbar"
     >
       <!-- 状态 -->
-      <template #status="scope: any">
-        <ElTag size="small" effect="dark" round :color="statusToColor(scope.row.status)">
+      <template #status="scope:any">
+        <ElTag size="small" effect="plain" round :type="statusToType(scope.row.status)">
           {{ statusToName(scope.row.status) }}
         </ElTag>
       </template>
@@ -28,7 +28,7 @@ import ProPage from "@/components/Pro/ProPage/index.vue";
 import type { ProPageConfig } from "@/components/Pro/ProPage/types";
 import PermissionDrawer from "./permission-drawer.vue";
 
-import { statusList, statusToColor, statusToName, useDeletePermission } from "@/api/composables";
+import { statusList, statusToType, statusToName, useDeletePermission } from "@/api/composables";
 import { $t } from "@/core/i18n";
 import { usePermissionViewStore } from "@/pages/app/permission/permission/permission-view.state";
 

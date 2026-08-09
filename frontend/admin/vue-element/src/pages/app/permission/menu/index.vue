@@ -35,7 +35,7 @@
 
       <!-- 状态 -->
       <template #status="scope: any">
-        <ElTag size="small" effect="dark" round :color="statusToColor(scope.row.status)">
+        <ElTag size="small" effect="plain" round :type="statusToType(scope.row.status)">
           {{ statusToName(scope.row.status) }}
         </ElTag>
       </template>
@@ -76,7 +76,7 @@ import {
   menuTypeToColor,
   menuTypeToName,
   statusList,
-  statusToColor,
+  statusToType,
   statusToName,
   fetchListMenus,
   useDeleteMenu,

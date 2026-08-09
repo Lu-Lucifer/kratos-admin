@@ -9,7 +9,7 @@
     >
       <!-- 状态 -->
       <template #status="scope: any">
-        <ElTag size="small" effect="dark" round :color="userStatusToColor(scope.row.status)">
+        <ElTag size="small" effect="plain" round :type="userStatusToType(scope.row.status)">
           {{ userStatusToName(scope.row.status) }}
         </ElTag>
       </template>
@@ -83,7 +83,7 @@ import {
   fetchListPositions,
   fetchListRoles,
   userStatusList,
-  userStatusToColor,
+  userStatusToType,
   userStatusToName,
   useDeleteUser,
 } from "@/api/composables";

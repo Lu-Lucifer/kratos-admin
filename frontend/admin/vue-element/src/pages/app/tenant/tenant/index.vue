@@ -22,7 +22,7 @@
 
       <!-- 状态 -->
       <template #status="scope: any">
-        <ElTag size="small" effect="dark" round :color="tenantStatusToColor(scope.row.status)">
+        <ElTag size="small" effect="plain" round :type="tenantStatusToType(scope.row.status)">
           {{ tenantStatusToName(scope.row.status) }}
         </ElTag>
       </template>
@@ -46,7 +46,7 @@ import {
   tenantAuditStatusToColor,
   tenantAuditStatusToName,
   tenantStatusList,
-  tenantStatusToColor,
+  tenantStatusToType,
   tenantStatusToName,
   tenantTypeList,
   tenantTypeToColor,

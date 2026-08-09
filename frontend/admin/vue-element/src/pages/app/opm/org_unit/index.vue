@@ -16,7 +16,7 @@
 
       <!-- 状态 -->
       <template #status="scope: any">
-        <ElTag size="small" effect="dark" round :color="orgUnitStatusToColor(scope.row.status)">
+        <ElTag size="small" effect="plain" round :type="orgUnitStatusToType(scope.row.status)">
           {{ orgUnitStatusToName(scope.row.status) }}
         </ElTag>
       </template>
@@ -36,7 +36,7 @@ import type { ProPageConfig, ToolsButton } from "@/components/Pro/ProPage/types"
 import OrgDrawer from "./org-drawer.vue";
 
 import {
-  orgUnitStatusToColor,
+  orgUnitStatusToType,
   orgUnitStatusToName,
   orgUnitTypeListForQuery,
   orgUnitTypeToColor,

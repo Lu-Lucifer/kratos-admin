@@ -102,6 +102,13 @@ export function statusToColor(status: "OFF" | "ON" | undefined) {
   }
 }
 
+// 启用/禁用 → Element Plus tag type
+// 启用（ON）映射 success（经暗色柔化），禁用（OFF/缺省）统一映射 info（灰色柔化），
+// 避免与启用态混淆。配合 effect="plain" 走 _dark-mode.scss 的半透明柔化路径。
+export function statusToType(status: "OFF" | "ON" | undefined): "success" | "info" {
+  return status === "ON" ? "success" : "info";
+}
+
 // ==============================
 // 成功/失败状态
 // ==============================

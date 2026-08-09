@@ -3,7 +3,7 @@
     <ProPage ref="pageRef" :config="pageConfig" @add="handleAdd" @edit="handleEdit">
       <!-- 状态 -->
       <template #status="scope: any">
-        <ElTag size="small" effect="dark" round :color="statusToColor(scope.row.status)">
+        <ElTag size="small" effect="plain" round :type="statusToType(scope.row.status)">
           {{ statusToName(scope.row.status) }}
         </ElTag>
       </template>
@@ -24,7 +24,7 @@ import RoleDrawer from "./role-drawer.vue";
 
 import {
   statusList,
-  statusToColor,
+  statusToType,
   statusToName,
   fetchListRoles,
   useDeleteRole,

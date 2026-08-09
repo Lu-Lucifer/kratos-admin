@@ -111,6 +111,11 @@ export function orgUnitStatusToColor(status: OrgUnit_Status) {
   }
 }
 
+// 启用/禁用 → tag type，与 statusToType 同理
+export function orgUnitStatusToType(status: OrgUnit_Status): "success" | "info" {
+  return status === "ON" ? "success" : "info";
+}
+
 export const orgUnitTypeList = computed(() => {
   const typeOrder: OrgUnit_Type[] = [
     "COMPANY",

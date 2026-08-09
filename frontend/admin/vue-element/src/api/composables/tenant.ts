@@ -175,6 +175,11 @@ export function tenantStatusToColor(tenantStatus: Tenant_Status) {
   }
 }
 
+// 启用/禁用 → tag type，ON 为启用（success），OFF/EXPIRED/FREEZE 统一为 info
+export function tenantStatusToType(tenantStatus: Tenant_Status): "success" | "info" {
+  return tenantStatus === "ON" ? "success" : "info";
+}
+
 export const tenantAuditStatusList = computed(() => [
   { value: "PENDING", label: t("enum.tenant.auditStatus.PENDING") },
   { value: "APPROVED", label: t("enum.tenant.auditStatus.APPROVED") },
