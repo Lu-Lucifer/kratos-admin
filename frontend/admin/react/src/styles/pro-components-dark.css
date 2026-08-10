@@ -136,12 +136,10 @@
 }
 
 /* Select：增强特异性覆盖 antd CSS-in-JS */
-[data-theme='dark'] .ant-select .ant-select-selector,
-[data-theme='dark'] .ant-select:not(.ant-select-customize-input) .ant-select-selector,
-[data-theme='dark'] .ant-select-selector {
-  --ant-select-selector-bg: #404040 !important;
+html[data-theme='dark'] .ant-select-selector {
+  background: #404040 !important;
   background-color: #404040 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background-image: none !important;
 }
 
 [data-theme='dark'] .ant-select-selection-item {

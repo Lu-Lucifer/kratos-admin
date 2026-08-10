@@ -50,15 +50,23 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     if (effectiveMode === 'dark') algorithms.push(antdTheme.darkAlgorithm);
     if (appPrefs.compact) algorithms.push(antdTheme.compactAlgorithm);
 
+    const tokens: ThemeConfig['token'] = {
+      colorPrimary: themePrefs.colorPrimary,
+      colorSuccess: themePrefs.colorSuccess,
+      colorWarning: themePrefs.colorWarning,
+      colorError: themePrefs.colorDestructive,
+      borderRadius: Number.parseInt(themePrefs.radius) || 6,
+    };
+
+    // 暗黑模式下调亮容器背景色，提升 Input/Select 边界感知
+    if (effectiveMode === 'dark') {
+      tokens.colorBgContainer = '#404040';
+      tokens.colorBgElevated = '#404040';
+    }
+
     return {
       algorithm: algorithms.length > 0 ? algorithms : antdTheme.defaultAlgorithm,
-      token: {
-        colorPrimary: themePrefs.colorPrimary,
-        colorSuccess: themePrefs.colorSuccess,
-        colorWarning: themePrefs.colorWarning,
-        colorError: themePrefs.colorDestructive,
-        borderRadius: Number.parseInt(themePrefs.radius) || 6,
-      },
+      token: tokens,
       // antd v6 默认使用 CSS 变量模式，无需显式配置 cssVar
     };
   }, [effectiveMode, appPrefs.compact, themePrefs]);
