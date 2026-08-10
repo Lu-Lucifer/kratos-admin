@@ -21,6 +21,18 @@
   background-color: var(--ant-color-fill-secondary) !important;
 }
 
+/* 表格单元格超长文本省略号 */
+.ant-pro-table .ant-table-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 操作列的按钮容器（Ant Space）不截断 */
+.ant-pro-table .ant-table-cell .ant-space {
+  overflow: visible;
+  white-space: nowrap;
+}
+
 /* ========== 分页器 ========== */
 .ant-pagination {
   background-color: transparent !important;
