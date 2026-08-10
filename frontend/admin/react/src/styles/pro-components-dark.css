@@ -285,3 +285,49 @@
   border-bottom-color: #e5e7eb !important;
 }
 
+/* ========== 暗黑模式：Input/TextArea 背景调亮（#27272a） ========== */
+/* 覆盖之前的 #1f1f1f 为略亮的 zinc-800，提升边界感知 */
+[data-theme='dark'] .ant-input,
+[data-theme='dark'] .ant-input-affix-wrapper,
+[data-theme='dark'] .ant-input-outlined,
+[data-theme='dark'] textarea.ant-input {
+  background-color: #27272a !important;
+}
+
+[data-theme='dark'] .ant-select .ant-select-selector {
+  background-color: #27272a !important;
+}
+
+[data-theme='dark'] .ant-select-dropdown {
+  background-color: #27272a !important;
+}
+
+/* ========== 暗黑模式：Radio.Button 未选中态 ========== */
+[data-theme='dark'] .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked) {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked):hover {
+  color: #e2e8f0 !important;
+}
+
+/* ========== Drawer/Modal 底部按钮区域内边距 ========== */
+.ant-drawer-footer {
+  padding: 16px 24px !important;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ========== 暗黑模式：权限树/包裹区域背景 ========== */
+[data-theme='dark'] .ant-tree {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .ant-tree-checkbox-inner {
+  background-color: #27272a !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}

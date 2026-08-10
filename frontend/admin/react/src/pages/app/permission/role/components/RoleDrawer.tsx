@@ -191,24 +191,26 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
       />
 
       {/* 权限树 */}
-      <div style={{ marginBottom: 24 }}>
-        <label style={{ display: 'block', marginBottom: 8, color: 'var(--ant-color-text)' }}>
+      <div className="mb-6">
+        <label className="block mb-2 text-sm font-medium text-[color:var(--ant-color-text)]">
           {t('permissions')}
         </label>
         <Spin spinning={treeLoading}>
           {treeData.length > 0 ? (
-            <Tree
-              checkable
-              checkedKeys={checkedKeys}
-              onCheck={(checked) => {
-                setCheckedKeys(checked as number[]);
-              }}
-              treeData={treeData}
-              defaultExpandAll
-              style={{ maxHeight: 400, overflow: 'auto', border: '1px solid var(--ant-color-border)', borderRadius: 6, padding: 8 }}
-            />
+            <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 dark:border-white/8 dark:bg-zinc-800/40">
+              <Tree
+                checkable
+                checkedKeys={checkedKeys}
+                onCheck={(checked) => {
+                  setCheckedKeys(checked as number[]);
+                }}
+                treeData={treeData}
+                defaultExpandAll
+                className="max-h-80 overflow-auto"
+              />
+            </div>
           ) : (
-            <div style={{ color: 'var(--ant-color-text-quaternary)', padding: 16, textAlign: 'center', border: '1px dashed var(--ant-color-border)', borderRadius: 6 }}>
+            <div className="rounded-lg border border-dashed border-[color:var(--ant-color-border)] py-4 text-center text-sm text-[color:var(--ant-color-text-quaternary)]">
               {treeLoading ? '' : 'No permission data'}
             </div>
           )}
