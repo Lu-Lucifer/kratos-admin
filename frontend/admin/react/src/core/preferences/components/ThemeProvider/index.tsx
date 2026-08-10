@@ -58,16 +58,19 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
       borderRadius: Number.parseInt(themePrefs.radius) || 6,
     };
 
-    // 暗黑模式下调亮容器背景色，提升 Input/Select 边界感知
-    if (effectiveMode === 'dark') {
-      tokens.colorBgContainer = '#404040';
-      tokens.colorBgElevated = '#404040';
-    }
+    // 暗黑模式下调亮 Input/Select 容器背景，仅作用于这两个组件
+    const components: ThemeConfig['components'] = effectiveMode === 'dark' ? {
+      Input: { colorBgContainer: '#404040' },
+      Select: { colorBgContainer: '#404040' },
+      InputNumber: { colorBgContainer: '#404040' },
+      DatePicker: { colorBgContainer: '#404040' },
+      TreeSelect: { colorBgContainer: '#404040' },
+    } : undefined;
 
     return {
       algorithm: algorithms.length > 0 ? algorithms : antdTheme.defaultAlgorithm,
       token: tokens,
-      // antd v6 默认使用 CSS 变量模式，无需显式配置 cssVar
+      components,
     };
   }, [effectiveMode, appPrefs.compact, themePrefs]);
 
