@@ -98,11 +98,13 @@
   color: var(--ant-color-text-secondary) !important;
 }
 
-/* ========== 暗黑模式：表单控件文字可见性 ========== */
+/* ========== 暗黑模式：表单控件统一暗黑背景（#1f1f1f） ========== */
+/* Input 全类型覆盖：普通 input、带前后缀 affix-wrapper、outlined 变体 */
 [data-theme='dark'] .ant-input,
-[data-theme='dark'] .ant-input-affix-wrapper {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+[data-theme='dark'] .ant-input-affix-wrapper,
+[data-theme='dark'] .ant-input-outlined {
+  background-color: #1f1f1f !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
   color: #e2e8f0 !important;
 }
 
@@ -112,9 +114,12 @@
   opacity: 1;
 }
 
-[data-theme='dark'] .ant-select .ant-select-selector {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+/* Select：增强特异性覆盖 antd CSS-in-JS */
+[data-theme='dark'] .ant-select .ant-select-selector,
+[data-theme='dark'] .ant-select:not(.ant-select-customize-input) .ant-select-selector,
+[data-theme='dark'] .ant-select-selector {
+  background-color: #1f1f1f !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme='dark'] .ant-select-selection-item {
@@ -125,15 +130,30 @@
   color: #6b7280 !important;
 }
 
-[data-theme='dark'] .ant-input-affix-wrapper:hover,
-[data-theme='dark'] .ant-select:hover .ant-select-selector {
-  border-color: rgba(255, 255, 255, 0.2) !important;
+[data-theme='dark'] .ant-select-dropdown {
+  background-color: #1f1f1f !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
+[data-theme='dark'] .ant-select-item-option-content {
+  color: #e2e8f0 !important;
+}
+
+/* hover：统一微亮边框 */
+[data-theme='dark'] .ant-input:hover,
+[data-theme='dark'] .ant-input-affix-wrapper:hover,
+[data-theme='dark'] .ant-select:hover .ant-select-selector,
+[data-theme='dark'] .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* focus：统一蓝色（var(--ant-color-primary)）+ ring 发光 */
+[data-theme='dark'] .ant-input:focus,
 [data-theme='dark'] .ant-input-affix-wrapper:focus-within,
-[data-theme='dark'] .ant-select-focused .ant-select-selector {
+[data-theme='dark'] .ant-select-focused .ant-select-selector,
+[data-theme='dark'] .ant-select:not(.ant-select-disabled).ant-select-focused .ant-select-selector {
   border-color: var(--ant-color-primary) !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 30%, transparent) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 25%, transparent) !important;
 }
 
 /* ========== 暗黑模式：表格表头层次感 ========== */
