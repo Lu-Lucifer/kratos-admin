@@ -3,6 +3,7 @@ import { usePreferencesStore } from '@/core/preferences';
 import { type HttpResponse, RequestClient } from '@/core/transport/rest';
 import i18n from 'i18next';
 import { useAuthStore } from '@/stores';
+import { startRefreshTimer } from '@/hooks/useTokenRefresh';
 
 /**
  * 应用启动初始化
@@ -33,6 +34,13 @@ async function _initI18n() {
     onError: (msg) => console.error('[RequestClient]', msg),
     getErrorMsg: getErrorMsg,
   });
+
+  // 页面刷新后，若 localStorage 中有有效 token，恢复定时刷新
+  // （登录时也会启动，但刷新后丢失定时器状态，需在此补启动）
+  const { accessToken } = useAuthStore.getState();
+  if (accessToken) {
+    startRefreshTimer();
+  }
 }
 
 /**
