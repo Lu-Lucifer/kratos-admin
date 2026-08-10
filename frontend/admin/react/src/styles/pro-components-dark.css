@@ -119,12 +119,12 @@
   border-bottom-color: #f0f0f0 !important;
 }
 
-/* ========== 暗黑模式：表单控件统一暗黑背景（#1f1f1f） ========== */
+/* ========== 暗黑模式：表单控件统一暗黑背景（#404040） ========== */
 /* Input 全类型覆盖：普通 input、带前后缀 affix-wrapper、outlined 变体 */
 [data-theme='dark'] .ant-input,
 [data-theme='dark'] .ant-input-affix-wrapper,
 [data-theme='dark'] .ant-input-outlined {
-  background-color: #1f1f1f !important;
+  background-color: #404040 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
   color: #e2e8f0 !important;
 }
@@ -139,7 +139,7 @@
 [data-theme='dark'] .ant-select .ant-select-selector,
 [data-theme='dark'] .ant-select:not(.ant-select-customize-input) .ant-select-selector,
 [data-theme='dark'] .ant-select-selector {
-  background-color: #1f1f1f !important;
+  background-color: #404040 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
@@ -152,7 +152,7 @@
 }
 
 [data-theme='dark'] .ant-select-dropdown {
-  background-color: #1f1f1f !important;
+  background-color: #404040 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
