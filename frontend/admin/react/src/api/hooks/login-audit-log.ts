@@ -1,7 +1,7 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import {
   type auditservicev1_GetLoginAuditLogRequest,
-  type auditservicev1_ListOperationAuditLogResponse,
+  type auditservicev1_ListLoginAuditLogResponse,
   type auditservicev1_LoginAuditLog,
 } from '@/api/generated/admin/service/v1';
 import { type PaginationQuery, queryClient } from '@/core';
@@ -13,7 +13,7 @@ import { apiClient } from '@/api/client';
 
 export function useListLoginAuditLogs(
   query: PaginationQuery,
-  options?: UseQueryOptions<auditservicev1_ListOperationAuditLogResponse, Error>,
+  options?: UseQueryOptions<auditservicev1_ListLoginAuditLogResponse, Error>,
 ) {
   return useQuery({
     queryKey: ['listLoginAuditLogs', query],
