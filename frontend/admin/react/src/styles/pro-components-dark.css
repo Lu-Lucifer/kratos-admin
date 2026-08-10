@@ -125,7 +125,7 @@
 [data-theme='dark'] .ant-input-affix-wrapper,
 [data-theme='dark'] .ant-input-outlined {
   background-color: #404040 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
   color: #e2e8f0 !important;
 }
 
@@ -152,7 +152,7 @@ html[data-theme='dark'] .ant-select-selector {
 
 [data-theme='dark'] .ant-select-dropdown {
   background-color: #404040 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 [data-theme='dark'] .ant-select-item-option-content {
@@ -164,7 +164,7 @@ html[data-theme='dark'] .ant-select-selector {
 [data-theme='dark'] .ant-input-affix-wrapper:hover,
 [data-theme='dark'] .ant-select:hover .ant-select-selector,
 [data-theme='dark'] .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* focus：统一蓝色（var(--ant-color-primary)）+ ring 发光 */
@@ -295,7 +295,7 @@ html[data-theme='dark'] .ant-select-selector {
 /* InputNumber 同步调亮 */
 [data-theme='dark'] .ant-input-number {
   background-color: #404040 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 [data-theme='dark'] .ant-input-number .ant-input-number-input {
