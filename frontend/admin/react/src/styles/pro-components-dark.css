@@ -97,3 +97,66 @@
 [data-theme='dark'] .ant-empty-normal {
   color: var(--ant-color-text-secondary) !important;
 }
+
+/* ========== 暗黑模式：表单控件文字可见性 ========== */
+[data-theme='dark'] .ant-input,
+[data-theme='dark'] .ant-input-affix-wrapper {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .ant-input::placeholder,
+[data-theme='dark'] .ant-input-affix-wrapper .ant-input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1;
+}
+
+[data-theme='dark'] .ant-select .ant-select-selector {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme='dark'] .ant-select-selection-item {
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .ant-select-selection-placeholder {
+  color: #6b7280 !important;
+}
+
+[data-theme='dark'] .ant-input-affix-wrapper:hover,
+[data-theme='dark'] .ant-select:hover .ant-select-selector {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme='dark'] .ant-input-affix-wrapper:focus-within,
+[data-theme='dark'] .ant-select-focused .ant-select-selector {
+  border-color: var(--ant-color-primary) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 30%, transparent) !important;
+}
+
+/* ========== 暗黑模式：表格表头层次感 ========== */
+[data-theme='dark'] .ant-pro-table .ant-table-thead > tr > th {
+  background-color: #1a1a1a !important;
+  color: #d1d5db !important;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme='dark'] .ant-pro-table .ant-table-tbody > tr > td {
+  border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ========== 暗黑模式：搜索按钮与输入框等高 ========== */
+[data-theme='dark'] .ant-pro-table-search .ant-btn {
+  height: 2.75rem;
+}
+
+/* ========== 搜索表单 / 工具条 / 表格之间垂直呼吸感 ========== */
+.ant-pro-table .ant-pro-table-search {
+  margin-bottom: 16px;
+}
+.ant-pro-table .ant-pro-table-list-toolbar-container {
+  margin-bottom: 16px;
+}
