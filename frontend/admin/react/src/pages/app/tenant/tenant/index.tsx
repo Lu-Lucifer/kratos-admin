@@ -73,7 +73,6 @@ const TenantList = () => {
     {
       title: t('name'),
       dataIndex: 'name',
-      width: 150,
       formItemProps: {
         rules: [{ max: 50, message: t('maxChars', { max: 50 }) }],
       },
@@ -81,18 +80,15 @@ const TenantList = () => {
     {
       title: t('code'),
       dataIndex: 'code',
-      width: 150,
     },
     {
       title: t('adminUsername'),
       dataIndex: 'adminUserName',
-      width: 150,
       hideInSearch: true,
     },
     {
       title: t('tenantType'),
       dataIndex: 'type',
-      width: 100,
       valueType: 'select',
       valueEnum: Object.fromEntries(
         Object.entries(TENANT_TYPE_STATUS).map(([key, status]) => [
@@ -112,7 +108,6 @@ const TenantList = () => {
     {
       title: t('auditStatus'),
       dataIndex: 'auditStatus',
-      width: 100,
       valueType: 'select',
       valueEnum: Object.fromEntries(
         Object.entries(AUDIT_STATUS_STATUS).map(([key, status]) => [
@@ -132,7 +127,6 @@ const TenantList = () => {
     {
       title: t('status'),
       dataIndex: 'status',
-      width: 100,
       valueType: 'select',
       valueEnum: Object.fromEntries(
         Object.entries(TENANT_STATUS_STATUS).map(([key, status]) => [
@@ -152,7 +146,6 @@ const TenantList = () => {
     {
       title: t('createdAt'),
       dataIndex: 'createdAt',
-      width: 180,
       valueType: 'dateTime',
       hideInSearch: true,
       sorter: true,
@@ -277,7 +270,6 @@ const TenantList = () => {
             cardBordered={false}
             scroll={{
               y: tableScrollY,
-              x: 1300,
             }}
           />
         </div>
