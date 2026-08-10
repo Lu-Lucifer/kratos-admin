@@ -37,12 +37,12 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [treeData, setTreeData] = useState<any[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<number[]>([]);
+  const [treeVersion, setTreeVersion] = useState(0);
   const [treeLoading, setTreeLoading] = useState(false);
 
   // 加载权限树数据
   useEffect(() => {
     if (open) {
-      setTreeData([]); // 先清空，切换 key 触发 Tree 重挂载
       setTreeLoading(true);
       Promise.all([
         fetchListPermissionGroups(new PaginationQuery({ formValues: { status: 'ON' } })),
@@ -52,6 +52,7 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
           const groups = groupRes?.items || [];
           const permissions = permRes?.items || [];
           setTreeData(buildPermissionTree(groups, permissions));
+          setTreeVersion((v) => v + 1); // 递增版本号，强制 Tree 重挂载以触发 defaultExpandAll
         })
         .catch(() => setTreeData([]))
         .finally(() => setTreeLoading(false));
@@ -206,7 +207,7 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
                 }}
                 treeData={treeData}
                 defaultExpandAll
-                key={treeData.length || undefined}
+                key={treeVersion}
                 className="max-h-80 overflow-auto"
               />
             </div>
