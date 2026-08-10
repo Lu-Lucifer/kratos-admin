@@ -294,6 +294,26 @@
   background-color: #27272a !important;
 }
 
+/* InputNumber 同步调亮 */
+[data-theme='dark'] .ant-input-number {
+  background-color: #27272a !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme='dark'] .ant-input-number .ant-input-number-input {
+  background-color: #27272a !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .ant-input-number:hover {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme='dark'] .ant-input-number-focused {
+  border-color: var(--ant-color-primary) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 25%, transparent) !important;
+}
+
 [data-theme='dark'] .ant-select .ant-select-selector {
   background-color: #27272a !important;
 }
