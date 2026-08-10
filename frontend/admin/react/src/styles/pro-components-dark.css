@@ -285,22 +285,22 @@
   border-bottom-color: #e5e7eb !important;
 }
 
-/* ========== 暗黑模式：Input/TextArea 背景调亮（#2d2d30） ========== */
+/* ========== 暗黑模式：Input/TextArea 背景调亮（#333333） ========== */
 [data-theme='dark'] .ant-input,
 [data-theme='dark'] .ant-input-affix-wrapper,
 [data-theme='dark'] .ant-input-outlined,
 [data-theme='dark'] textarea.ant-input {
-  background-color: #2d2d30 !important;
+  background-color: #333333 !important;
 }
 
 /* InputNumber 同步调亮 */
 [data-theme='dark'] .ant-input-number {
-  background-color: #2d2d30 !important;
+  background-color: #333333 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme='dark'] .ant-input-number .ant-input-number-input {
-  background-color: #2d2d30 !important;
+  background-color: #333333 !important;
   color: #e2e8f0 !important;
 }
 
@@ -314,11 +314,11 @@
 }
 
 [data-theme='dark'] .ant-select .ant-select-selector {
-  background-color: #2d2d30 !important;
+  background-color: #333333 !important;
 }
 
 [data-theme='dark'] .ant-select-dropdown {
-  background-color: #2d2d30 !important;
+  background-color: #333333 !important;
 }
 
 /* ========== 暗黑模式：Radio.Button 未选中态 ========== */
@@ -363,7 +363,7 @@
 }
 
 [data-theme='dark'] .ant-tree-checkbox-inner {
-  background-color: #2d2d30 !important;
+  background-color: #333333 !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
@@ -375,7 +375,7 @@
 /* ========== 暗黑模式：默认/取消按钮背景调亮 ========== */
 [data-theme='dark'] .ant-btn-default,
 [data-theme='dark'] .ant-btn:not(.ant-btn-primary):not(.ant-btn-danger):not(.ant-btn-link):not(.ant-btn-text) {
-  background-color: #2d2d30 !important;
+  background-color: #333333 !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #e2e8f0 !important;
 }
