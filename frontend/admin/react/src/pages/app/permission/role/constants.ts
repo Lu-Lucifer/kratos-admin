@@ -56,7 +56,7 @@ export function buildPermissionTree(
       }));
 
     return {
-      key: Number(group.id),
+      key: `g_${group.id}`,
       title: group.title || group.name || group.code || String(group.id),
       children: groupChildren.length > 0 ? groupChildren : undefined,
     };
