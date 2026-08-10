@@ -98,6 +98,11 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ title, description, children, f
           className="absolute inset-0 pointer-events-none animate-breathe bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.18),transparent_60%)] light:bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_60%)]"
           aria-hidden="true"
         />
+        {/* 3D 插图背后模糊渐变光晕：让插图融入背景，增强层次感 */}
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-linear-to-tr from-blue-50 to-indigo-50 blur-3xl opacity-70 light:opacity-70 dark:opacity-30 pointer-events-none"
+          aria-hidden="true"
+        />
         {/* 3D 插图 */}
         <div className="relative z-10 w-[440px] h-[440px] mb-9">
           <SloganIcon />

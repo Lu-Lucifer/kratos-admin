@@ -136,7 +136,7 @@ const Login: React.FC = () => {
       </div>
 
       {/* 登录表单 —— 卡片包裹，暗黑半透明 + 极细边框 + 圆角 + 柔和阴影 */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md light:border-black/10 light:bg-black/5 light:shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
+      <div className="rounded-xl border border-white/10 bg-white/5 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md light:border-gray-100 light:bg-white light:shadow-lg">
         <Form
           name="login"
           onFinish={handleSubmit}
@@ -216,7 +216,7 @@ const Login: React.FC = () => {
             </div>
           </Form.Item>
 
-          <Form.Item>
+          <Form.Item className="login-form-item">
             <Button
               type="primary"
               htmlType="submit"

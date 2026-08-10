@@ -80,3 +80,28 @@
   border-radius: 0.75rem !important;
 }
 
+/* 统一 Form.Item 间距，确保所有表单元素两端对齐 */
+.login-form .ant-form-item {
+  margin-bottom: 1.25rem;
+}
+
+/* 记住账号行：减小 antd large 尺寸的默认 min-height */
+.login-form .login-remember-item .ant-form-item-control-input {
+  min-height: auto;
+}
+
+/* 浅色模式下卡片内输入框背景为纯白，覆盖默认半透明黑 */
+[data-theme=light] .login-form .ant-input-affix-wrapper,
+[data-theme=light] .login-form .ant-input-password {
+  background-color: #fff;
+  border-color: #e5e7eb;
+}
+
+[data-theme=light] .login-form .ant-input-affix-wrapper:hover {
+  border-color: #d1d5db;
+}
+
+[data-theme=light] .login-form .ant-input-affix-wrapper:focus-within {
+  border-color: var(--ant-color-primary);
+  background-color: #fff;
+}
