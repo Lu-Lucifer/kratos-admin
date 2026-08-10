@@ -136,9 +136,12 @@
 }
 
 [data-theme='dark'] .ant-input::placeholder,
-[data-theme='dark'] .ant-input-affix-wrapper .ant-input::placeholder {
-  color: #6b7280 !important;
-  opacity: 1;
+[data-theme='dark'] .ant-input-affix-wrapper .ant-input::placeholder,
+[data-theme='dark'] .ant-input-affix-wrapper input::placeholder,
+[data-theme='dark'] .ant-select-selection-placeholder,
+[data-theme='dark'] .ant-input-number input::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
 }
 
 /* Select：增强特异性覆盖 antd CSS-in-JS */
@@ -336,6 +339,9 @@ html[data-theme='dark'] .ant-select-selector {
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #94a3b8 !important;
 }
+[data-theme='dark'] .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked) span {
+  color: #94a3b8 !important;
+}
 
 [data-theme='dark'] .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked):hover {
   color: #e2e8f0 !important;
@@ -404,4 +410,10 @@ html[data-theme='dark'] .ant-select-selector {
 /* ========== 面包屑首页图标调亮 ========== */
 [data-theme='dark'] .ant-breadcrumb .anticon {
   color: #94a3b8 !important;
+}
+
+/* ========== 必填星号柔和红 ========== */
+[data-theme='dark'] .ant-form-item-required::before,
+[data-theme='dark'] .ant-form-item-label > label.ant-form-item-required::before {
+  color: #f87171 !important;
 }
