@@ -84,7 +84,7 @@ const TenantList = () => {
       width: 150,
     },
     {
-      title: t('adminUserName'),
+      title: t('adminUsername'),
       dataIndex: 'adminUserName',
       width: 150,
       hideInSearch: true,
