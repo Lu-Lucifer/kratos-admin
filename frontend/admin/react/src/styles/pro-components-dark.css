@@ -12,15 +12,10 @@
 }
 .ant-pro-table .ant-table {
   background-color: var(--ant-color-bg-container) !important;
-  table-layout: fixed;
 }
-.ant-pro-table .ant-table-thead > tr > th {
-  background-color: var(--ant-color-bg-container) !important;
-  color: var(--ant-color-text);
-}
+/* 表体行在亮暗下保持一致的底部边框 */
 .ant-pro-table .ant-table-tbody > tr > td {
-  background-color: var(--ant-color-bg-container) !important;
-  color: var(--ant-color-text);
+  border-bottom: 1px solid;
 }
 .ant-pro-table .ant-table-tbody > tr:hover > td {
   background-color: var(--ant-color-fill-secondary) !important;
@@ -34,6 +29,9 @@
   background-color: var(--ant-color-bg-container) !important;
   border-color: var(--ant-color-border) !important;
 }
+.ant-pagination-item a {
+  color: var(--ant-color-text);
+}
 .ant-pagination-item-active {
   background-color: var(--ant-color-primary) !important;
   border-color: var(--ant-color-primary) !important;
@@ -41,11 +39,12 @@
 .ant-pagination-item-active a {
   color: #fff !important;
 }
-
-/* ========== 搜索表单 ========== */
-.ant-pro-table-search {
-  background-color: var(--ant-color-bg-container) !important;
-  border-color: var(--ant-color-border) !important;
+/* 暗色下分页器 hover/disabled */
+[data-theme='dark'] .ant-pagination-item:not(.ant-pagination-item-active):hover {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+[data-theme='dark'] .ant-pagination-disabled .ant-pagination-item-link {
+  color: #6b7280 !important;
 }
 
 /* ========== ProTable 圆角一致性 ========== */
@@ -97,6 +96,15 @@
 }
 [data-theme='dark'] .ant-empty-normal {
   color: var(--ant-color-text-secondary) !important;
+}
+
+/* 表体行在亮暗下统一的底部边框色 */
+[data-theme='dark'] .ant-pro-table .ant-table-tbody > tr > td {
+  color: #e2e8f0 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+}
+[data-theme='light'] .ant-pro-table .ant-table-tbody > tr > td {
+  border-bottom-color: #f0f0f0 !important;
 }
 
 /* ========== 暗黑模式：表单控件统一暗黑背景（#1f1f1f） ========== */
@@ -155,10 +163,6 @@
 [data-theme='dark'] .ant-select:not(.ant-select-disabled).ant-select-focused .ant-select-selector {
   border-color: var(--ant-color-primary) !important;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 25%, transparent) !important;
-}
-
-[data-theme='dark'] .ant-pro-table .ant-table-tbody > tr > td {
-  border-bottom-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 /* ========== 搜索按钮与输入框等高（通用） ========== */
