@@ -160,3 +160,48 @@
 .ant-pro-table .ant-pro-table-list-toolbar-container {
   margin-bottom: 16px;
 }
+
+/* ========== 搜索表单网格布局：按钮列靠右，不换行 ========== */
+/* ProTable 搜索表单的 Row 使用 flex-wrap，操作列可能被挤到下一行。
+   这里将操作列（.ant-pro-query-filter-collapse / 按钮组）固定在最后，不换行。 */
+.ant-pro-query-filter .ant-row {
+  align-items: flex-end;
+}
+
+/* 搜索按钮组：作为最后一个 flex 子项，固定在右侧，不随内容换行 */
+.ant-pro-form-query-filter .ant-pro-query-filter-collapse,
+.ant-pro-query-filter .ant-form-item:last-child,
+.ant-pro-table-search .ant-form-item[style*="flex"] {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* 搜索输入框撑满 Col 宽度，不设固定宽 */
+.ant-pro-table-search .ant-form-item {
+  width: 100%;
+}
+.ant-pro-table-search .ant-picker,
+.ant-pro-table-search .ant-select,
+.ant-pro-table-search .ant-input-affix-wrapper,
+.ant-pro-table-search .ant-input {
+  width: 100% !important;
+}
+
+/* ========== 页面整体层次感：背景调暗、搜索/表格卡片化 ========== */
+[data-theme='dark'] .ant-pro-page-container {
+  background-color: #0d0d0d !important;
+}
+
+[data-theme='dark'] .ant-pro-table-search {
+  background-color: #111 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 0.5rem !important;
+  padding: 20px 20px 4px !important;
+}
+
+[data-theme='dark'] .ant-pro-table .ant-table {
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden;
+}
+

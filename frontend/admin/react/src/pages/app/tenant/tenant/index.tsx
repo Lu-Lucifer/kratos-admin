@@ -245,6 +245,7 @@ const TenantList = () => {
             search={{
               labelWidth: 'auto',
               defaultCollapsed: false,
+              span: 4,
             }}
             pagination={{
               defaultPageSize: TABLE.DEFAULT_PAGE_SIZE,
