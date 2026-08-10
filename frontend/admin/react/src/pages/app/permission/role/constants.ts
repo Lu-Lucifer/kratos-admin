@@ -28,17 +28,18 @@ export function getStatusOptions(t: TFn) {
 // ========== 权限树构建 ==========
 
 interface TreeNode {
-  key: number;
+  key: number | string;
   title: string;
   children?: TreeNode[];
 }
 
 /**
- * 根据权限组和权限列表构建权限树
- * 权限组作为父节点，权限作为子节点
+ * 根据权限组和权限列表构建权限树。
+ * 权限组 API 返回嵌套结构（children 含子组），需递归处理。
+ * 每个组节点下附加匹配的权限（通过 groupId 关联）。
  */
 export function buildPermissionTree(
-  groups: Array<{ id?: number | string; title?: string; name?: string; code?: string }>,
+  groups: Array<{ id?: number | string; title?: string; name?: string; code?: string; children?: any[] }>,
   permissions: Array<{
     id?: number | string;
     title?: string;
@@ -47,18 +48,24 @@ export function buildPermissionTree(
     groupId?: number | string;
   }>,
 ): TreeNode[] {
-  return (groups || []).map((group) => {
-    const groupChildren = (permissions || [])
+  if (!groups || groups.length === 0) return [];
+
+  return groups.map((group) => {
+    // 子权限组（递归）
+    const subGroups = buildPermissionTree(group.children || [], permissions);
+    // 匹配的权限
+    const matchedPerms = (permissions || [])
       .filter((p) => String(p.groupId) === String(group.id))
       .map((p) => ({
         key: Number(p.id),
         title: p.title || p.name || p.code || String(p.id),
       }));
 
+    const children = [...subGroups, ...matchedPerms];
     return {
       key: `g_${group.id}`,
       title: group.title || group.name || group.code || String(group.id),
-      children: groupChildren.length > 0 ? groupChildren : undefined,
+      children: children.length > 0 ? children : undefined,
     };
   });
 }
@@ -84,19 +91,20 @@ export function filterNumbers(values: any[]): number[] {
  */
 export function extractLeafIds(checkedKeys: any[], treeData: any[]): number[] {
   if (!Array.isArray(checkedKeys) || !Array.isArray(treeData)) return [];
-  const leafIds = new Set<number>();
+  const leafIds = new Set<string | number>();
   const collect = (nodes: any[]) => {
     for (const node of nodes) {
-      if (node.children && node.children.length > 0) {
+      if (node.children?.length > 0) {
         collect(node.children);
-      } else if (typeof node.key === 'number' && !isNaN(node.key)) {
+      } else {
         leafIds.add(node.key);
       }
     }
   };
   collect(treeData);
+  // 只返回数字 key（权限 ID），过滤字符串 key（权限组 g_xxx）
   return checkedKeys
     .flat(Infinity)
-    .filter((v): v is number => typeof v === 'number' && !isNaN(v) && leafIds.has(v))
+    .filter((v) => leafIds.has(v) && typeof v === 'number')
     .map((v) => Number(v));
 }
