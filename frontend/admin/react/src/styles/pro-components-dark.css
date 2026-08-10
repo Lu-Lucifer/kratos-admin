@@ -164,10 +164,6 @@ html[data-theme='dark'] .ant-select-selector {
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-[data-theme='dark'] .ant-select-item-option-content {
-  color: #e2e8f0 !important;
-}
-
 /* hover：统一微亮边框 */
 [data-theme='dark'] .ant-input:hover,
 [data-theme='dark'] .ant-input-affix-wrapper:hover,
