@@ -66,7 +66,7 @@ const ApiManagement = () => {
     {
       title: t('serial'),
       dataIndex: 'id',
-      width: 80,
+      width: 60,
       hideInSearch: true,
       render: (_, record, index) => {
         const pagination = record.id !== undefined ? actionRef.current?.pageInfo : undefined;
@@ -78,7 +78,6 @@ const ApiManagement = () => {
     {
       title: t('description'),
       dataIndex: 'description',
-      width: 200,
       formItemProps: {
         rules: [{ max: 200, message: t('maxChars', { max: 200 }) }],
       },
@@ -86,12 +85,10 @@ const ApiManagement = () => {
     {
       title: t('path'),
       dataIndex: 'path',
-      width: 250,
     },
     {
       title: t('method'),
       dataIndex: 'method',
-      width: 100,
       valueType: 'select',
       valueEnum: Object.fromEntries(
         METHOD_LIST.map((item) => [item.value, { text: item.label, status: 'Default' }]),
@@ -103,19 +100,16 @@ const ApiManagement = () => {
     {
       title: t('module'),
       dataIndex: 'module',
-      width: 150,
     },
     {
       title: t('moduleDescription'),
       dataIndex: 'moduleDescription',
-      width: 200,
       hideInSearch: true,
       ellipsis: true,
     },
     {
       title: t('createdAt'),
       dataIndex: 'createdAt',
-      width: 180,
       valueType: 'dateTime',
       hideInSearch: true,
       sorter: true,
@@ -123,8 +117,7 @@ const ApiManagement = () => {
     {
       title: t('action'),
       valueType: 'option',
-      width: 120,
-      fixed: 'right',
+      width: 100,
       render: (_, record) => [
         <a
           key="edit"
@@ -241,7 +234,6 @@ const ApiManagement = () => {
             cardBordered={false}
             scroll={{
               y: tableScrollY,
-              x: 1300,
             }}
           />
         </div>
