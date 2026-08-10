@@ -109,6 +109,12 @@
 [data-theme='dark'] .ant-empty-normal {
   color: var(--ant-color-text-secondary) !important;
 }
+[data-theme='dark'] .ant-empty-description {
+  color: #94a3b8 !important;
+}
+[data-theme='dark'] .ant-empty-image {
+  opacity: 0.6;
+}
 
 /* 表体行在亮暗下统一的底部边框色 */
 [data-theme='dark'] .ant-pro-table .ant-table-tbody > tr > td {
@@ -187,6 +193,7 @@ html[data-theme='dark'] .ant-select-selector {
 }
 .ant-pro-table .ant-pro-table-list-toolbar-container {
   margin-bottom: 16px;
+  gap: 12px;
 }
 
 /* ========== 搜索表单网格布局：按钮列紧凑跟随，不换行 ========== */
@@ -255,7 +262,8 @@ html[data-theme='dark'] .ant-select-selector {
   border-color: rgba(255, 255, 255, 0.06) !important;
 }
 [data-theme='dark'] .ant-pro-table .ant-table {
-  border-color: rgba(255, 255, 255, 0.06) !important;
+  background-color: #1f1f1f !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* 亮色模式卡片颜色 */
