@@ -37,7 +37,21 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [treeData, setTreeData] = useState<any[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<number[]>([]);
+  const [expandedKeys, setExpandedKeys] = useState<number[]>([]);
   const [treeLoading, setTreeLoading] = useState(false);
+
+  // 递归收集所有节点的 key
+  const collectAllKeys = (nodes: any[]): number[] => {
+    const keys: number[] = [];
+    const walk = (list: any[]) => {
+      for (const n of list) {
+        if (typeof n.key === 'number') keys.push(n.key);
+        if (n.children?.length) walk(n.children);
+      }
+    };
+    walk(nodes);
+    return keys;
+  };
 
   // 加载权限树数据
   useEffect(() => {
@@ -52,6 +66,7 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
           const permissions = permRes?.items || [];
           const tree = buildPermissionTree(groups, permissions);
           setTreeData(tree);
+          setExpandedKeys(collectAllKeys(tree)); // 默认全部展开
         })
         .catch(() => setTreeData([]))
         .finally(() => setTreeLoading(false));
@@ -205,7 +220,8 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
                   setCheckedKeys(checked as number[]);
                 }}
                 treeData={treeData}
-                defaultExpandAll
+                expandedKeys={expandedKeys}
+                onExpand={(keys) => setExpandedKeys(keys as number[])}
                 className="max-h-80 overflow-auto"
               />
             </div>
