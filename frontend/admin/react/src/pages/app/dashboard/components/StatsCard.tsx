@@ -1,4 +1,3 @@
-import { Card } from 'antd';
 import type { ReactNode } from 'react';
 
 interface StatsCardProps {
@@ -14,30 +13,26 @@ interface StatsCardProps {
  */
 export const StatsCard = ({ title, value, total, totalValue, icon }: StatsCardProps) => {
   return (
-    <Card style={{ height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div
-            style={{
-              fontSize: 14,
-              color: 'var(--ant-color-text-secondary)',
-              marginBottom: 8,
-            }}
-          >
+    <div className="h-full rounded-xl border border-white/5 bg-[color:var(--ant-color-bg-container)] p-6 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="text-sm text-[color:var(--ant-color-text-secondary)] mb-2">
             {title}
           </div>
-          <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16 }}>{value}</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-            <span style={{ color: 'var(--ant-color-text-tertiary)' }}>
-              {total}
-            </span>
-            <span style={{ color: 'var(--ant-color-text-secondary)' }}>
-              {totalValue}
+          <div className="text-2xl font-semibold text-[color:var(--ant-color-text)] mb-4">
+            {value.toLocaleString()}
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[color:var(--ant-color-text-tertiary)]">{total}</span>
+            <span className="text-[color:var(--ant-color-text-secondary)] font-medium">
+              {totalValue.toLocaleString()}
             </span>
           </div>
         </div>
-        <div>{icon}</div>
+        <div className="flex shrink-0 items-center justify-center w-11 h-11 rounded-lg bg-blue-500/10 ml-3">
+          {icon}
+        </div>
       </div>
-    </Card>
+    </div>
   );
 };

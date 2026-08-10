@@ -20,11 +20,15 @@ export const LineChart = ({ data }: LineChartProps) => {
     return {
       tooltip: {
         trigger: 'axis',
+        backgroundColor: 'rgba(20,20,30,0.95)',
+        borderColor: 'rgba(255,255,255,0.1)',
+        textStyle: { color: '#e2e8f0' },
       },
       grid: {
         left: '3%',
         right: '4%',
         bottom: '3%',
+        top: '8%',
         containLabel: true,
       },
       xAxis: {
@@ -33,36 +37,35 @@ export const LineChart = ({ data }: LineChartProps) => {
         data: points.map((p) => p.date),
         axisLine: {
           lineStyle: {
-            color: token.colorBorderSecondary,
+            color: 'rgba(255,255,255,0.06)',
           },
         },
         axisTick: {
           lineStyle: {
-            color: token.colorBorderSecondary,
+            color: 'rgba(255,255,255,0.06)',
           },
         },
         axisLabel: {
           color: token.colorTextSecondary,
+          fontSize: 11,
         },
       },
       yAxis: {
         type: 'value',
         axisLine: {
-          lineStyle: {
-            color: token.colorBorderSecondary,
-          },
+          show: false,
         },
         axisTick: {
-          lineStyle: {
-            color: token.colorBorderSecondary,
-          },
+          show: false,
         },
         axisLabel: {
           color: token.colorTextSecondary,
+          fontSize: 11,
         },
         splitLine: {
           lineStyle: {
-            color: token.colorSplit,
+            color: 'rgba(255,255,255,0.05)',
+            type: 'dashed',
           },
         },
       },
@@ -70,16 +73,29 @@ export const LineChart = ({ data }: LineChartProps) => {
         {
           type: 'line',
           smooth: true,
+          symbol: 'circle',
+          symbolSize: 6,
           areaStyle: {
-            opacity: 0.3,
-            color: token.colorPrimary,
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(59,130,246,0.25)' },
+                { offset: 1, color: 'rgba(59,130,246,0)' },
+              ],
+            },
           },
           lineStyle: {
-            width: 2,
+            width: 2.5,
             color: token.colorPrimary,
           },
           itemStyle: {
             color: token.colorPrimary,
+            borderColor: token.colorBgContainer,
+            borderWidth: 2,
           },
           data: points.map((p) => p.count),
         },

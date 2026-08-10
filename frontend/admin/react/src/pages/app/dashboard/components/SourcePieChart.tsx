@@ -10,20 +10,14 @@ interface SourcePieChartProps {
 
 /**
  * 登录成功/失败占比饼图。
- * 后端返回 status 枯举名（SUCCESS/FAILED/...），legend 直接展示枯举名。
+ * 后端返回 status 枚举名（SUCCESS/FAILED/...），legend 直接展示枚举名。
  */
 export const SourcePieChart = ({ data }: SourcePieChartProps) => {
   const { token } = theme.useToken();
   const { t } = useI18n('dashboard');
 
-  // 调色板取 antd 运行时 token 的实际颜色值。ECharts 在 canvas 上渲染，
-  // 无法解析 CSS 变量（var(--ant-color-*)），必须传入已解析的十六进制色值。
-  const palette = [
-    token.colorPrimary,
-    token.colorSuccess,
-    token.colorWarning,
-    token.colorInfo,
-  ];
+  // 科技风暗色系调色板（靛蓝、翠绿、紫罗兰、琥珀）
+  const palette = ['#6366f1', '#10b981', '#8b5cf6', '#f59e0b'];
 
   const option = useMemo(() => {
     const items = data?.items ?? [];
@@ -31,13 +25,28 @@ export const SourcePieChart = ({ data }: SourcePieChartProps) => {
       tooltip: {
         trigger: 'item',
         formatter: '{b}: {c} ({d}%)',
+        backgroundColor: 'rgba(20,20,30,0.95)',
+        borderColor: 'rgba(255,255,255,0.1)',
+        textStyle: { color: '#e2e8f0' },
+      },
+      legend: {
+        orient: 'horizontal',
+        bottom: 0,
+        data: items.map((it) => it.label),
+        textStyle: {
+          color: '#94a3b8',
+          fontSize: 12,
+        },
+        itemWidth: 10,
+        itemHeight: 10,
+        itemGap: 16,
       },
       series: [
         {
           name: t('charts.loginStatusDistribution'),
           type: 'pie',
-          radius: ['20%', '70%'],
-          center: ['50%', '50%'],
+          radius: ['35%', '75%'],
+          center: ['50%', '48%'],
           roseType: 'area',
           itemStyle: {
             borderRadius: 8,
@@ -45,12 +54,13 @@ export const SourcePieChart = ({ data }: SourcePieChartProps) => {
             borderWidth: 2,
           },
           label: {
-            color: token.colorText,
+            show: false,
           },
           labelLine: {
-            lineStyle: {
-              color: token.colorTextSecondary,
-            },
+            show: false,
+          },
+          emphasis: {
+            scaleSize: 8,
           },
           data: items.map((it, i) => ({
             value: it.count,
