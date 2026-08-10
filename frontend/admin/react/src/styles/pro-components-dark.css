@@ -202,17 +202,17 @@ html[data-theme='dark'] .ant-select-selector {
   gap: 0;
 }
 
-/* 搜索项 Col：flex-shrink + 自然宽度，不无限拉伸 */
+/* 搜索项 Col：不限制宽度，让 Input 自然撑满 */
 .ant-pro-table-search .ant-col {
-  flex: 0 1 auto;
+  flex: 1 0 auto;
 }
 
-/* 输入框/下拉框限制最大宽度，宽屏下不过度拉伸 */
+/* Input/Select 不设最大宽度，撑满所属 Col */
 .ant-pro-table-search .ant-picker,
 .ant-pro-table-search .ant-select,
 .ant-pro-table-search .ant-input-affix-wrapper,
 .ant-pro-table-search .ant-input {
-  max-width: 220px;
+  width: 100%;
 }
 
 /* 按钮组：紧跟最后一个输入框（无 margin-left:auto），紧凑不换行 */
