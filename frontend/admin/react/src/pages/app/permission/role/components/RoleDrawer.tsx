@@ -37,25 +37,12 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [treeData, setTreeData] = useState<any[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<number[]>([]);
-  const [expandedKeys, setExpandedKeys] = useState<number[]>([]);
   const [treeLoading, setTreeLoading] = useState(false);
-
-  // 递归收集所有节点的 key
-  const collectAllKeys = (nodes: any[]): number[] => {
-    const keys: number[] = [];
-    const walk = (list: any[]) => {
-      for (const n of list) {
-        if (typeof n.key === 'number') keys.push(n.key);
-        if (n.children?.length) walk(n.children);
-      }
-    };
-    walk(nodes);
-    return keys;
-  };
 
   // 加载权限树数据
   useEffect(() => {
     if (open) {
+      setTreeData([]); // 先清空，切换 key 触发 Tree 重挂载
       setTreeLoading(true);
       Promise.all([
         fetchListPermissionGroups(new PaginationQuery({ formValues: { status: 'ON' } })),
@@ -64,9 +51,7 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
         .then(([groupRes, permRes]) => {
           const groups = groupRes?.items || [];
           const permissions = permRes?.items || [];
-          const tree = buildPermissionTree(groups, permissions);
-          setTreeData(tree);
-          setExpandedKeys(collectAllKeys(tree)); // 默认全部展开
+          setTreeData(buildPermissionTree(groups, permissions));
         })
         .catch(() => setTreeData([]))
         .finally(() => setTreeLoading(false));
@@ -220,8 +205,8 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
                   setCheckedKeys(checked as number[]);
                 }}
                 treeData={treeData}
-                expandedKeys={expandedKeys}
-                onExpand={(keys) => setExpandedKeys(keys as number[])}
+                defaultExpandAll
+                key={treeData.length || undefined}
                 className="max-h-80 overflow-auto"
               />
             </div>
