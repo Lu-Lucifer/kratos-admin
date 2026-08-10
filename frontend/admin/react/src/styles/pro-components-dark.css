@@ -347,7 +347,28 @@
   color: #e2e8f0 !important;
 }
 
+[data-theme='dark'] .ant-tree .ant-tree-treenode {
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .ant-tree .ant-tree-node-content-wrapper {
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .ant-tree .ant-tree-node-content-wrapper:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme='dark'] .ant-tree .ant-tree-switcher {
+  color: #94a3b8 !important;
+}
+
 [data-theme='dark'] .ant-tree-checkbox-inner {
   background-color: #27272a !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme='dark'] .ant-tree-checkbox-checked .ant-tree-checkbox-inner {
+  background-color: var(--ant-color-primary) !important;
+  border-color: var(--ant-color-primary) !important;
 }

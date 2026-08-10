@@ -58,7 +58,7 @@ export function buildPermissionTree(
     return {
       key: Number(group.id),
       title: group.title || group.name || group.code || String(group.id),
-      children: groupChildren,
+      children: groupChildren.length > 0 ? groupChildren : undefined,
     };
   });
 }
