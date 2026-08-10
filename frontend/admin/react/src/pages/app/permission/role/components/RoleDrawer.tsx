@@ -51,8 +51,16 @@ const RoleDrawer: React.FC<RoleDrawerProps> = ({ open, mode, data, onClose, onSu
         .then(([groupRes, permRes]) => {
           const groups = groupRes?.items || [];
           const permissions = permRes?.items || [];
-          setTreeData(buildPermissionTree(groups, permissions));
-          setTreeVersion((v) => v + 1); // 递增版本号，强制 Tree 重挂载以触发 defaultExpandAll
+          if (groups.length === 0 && permissions.length > 0) {
+            // 无权限组时，直接罗列权限（平铺，不嵌套）
+            setTreeData(permissions.map((p) => ({
+              key: Number(p.id),
+              title: p.name || p.code || String(p.id),
+            })));
+          } else {
+            setTreeData(buildPermissionTree(groups, permissions));
+          }
+          setTreeVersion((v) => v + 1);
         })
         .catch(() => setTreeData([]))
         .finally(() => setTreeLoading(false));
