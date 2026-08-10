@@ -215,11 +215,13 @@ html[data-theme='dark'] .ant-select-selector {
   width: 100%;
 }
 
-/* 按钮组：紧跟最后一个输入框（无 margin-left:auto），紧凑不换行 */
+/* 按钮组：右对齐，与表格右边缘垂直对齐 */
 .ant-pro-form-query-filter .ant-pro-query-filter-collapse,
 .ant-pro-query-filter .ant-form-item:last-child,
 .ant-pro-table-search .ant-form-item[style*="flex"] {
   flex: 0 0 auto;
+  margin-left: auto;
+  justify-content: flex-end;
 }
 
 /* Label 与输入框间距缩小 */
@@ -392,4 +394,14 @@ html[data-theme='dark'] .ant-select-selector {
   background-color: #3a3a3e !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
+}
+
+/* ========== Input 文字垂直居中 ========== */
+.ant-pro-table-search .ant-input-affix-wrapper {
+  align-items: center;
+}
+
+/* ========== 面包屑首页图标调亮 ========== */
+[data-theme='dark'] .ant-breadcrumb .anticon {
+  color: #94a3b8 !important;
 }
