@@ -93,7 +93,6 @@ const InboxList = () => {
       title: t('action'),
       valueType: 'option',
       width: 90,
-      fixed: 'right',
       render: (_, record) => [
         record.status !== 'READ' && (
           <a
@@ -179,7 +178,7 @@ const InboxList = () => {
           size="middle"
           bordered
           cardBordered={false}
-          scroll={{ y: tableScrollY, x: 700 }}
+          scroll={{ y: tableScrollY }}
         />
       </div>
     </ContentContainer>

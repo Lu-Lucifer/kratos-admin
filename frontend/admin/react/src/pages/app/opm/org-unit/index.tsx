@@ -166,7 +166,6 @@ const OrgUnitManagement = () => {
       title: t('action'),
       valueType: 'option',
       width: 90,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"
@@ -264,7 +263,7 @@ const OrgUnitManagement = () => {
             size="middle"
             bordered
             cardBordered={false}
-            scroll={{ y: tableScrollY, x: 1200 }}
+            scroll={{ y: tableScrollY }}
             expandable={{
               expandedRowKeys,
               onExpandedRowsChange: (keys) => setExpandedRowKeys(keys),

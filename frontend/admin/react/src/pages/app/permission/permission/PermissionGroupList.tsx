@@ -121,7 +121,6 @@ const PermissionGroupList: React.FC<PermissionGroupListProps> = ({
       title: t('action'),
       valueType: 'option',
       width: 90,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"
@@ -245,7 +244,7 @@ const PermissionGroupList: React.FC<PermissionGroupListProps> = ({
           size="small"
           bordered
           cardBordered={false}
-          scroll={{ y: tableScrollY, x: 500 }}
+          scroll={{ y: tableScrollY }}
           expandable={{
             expandedRowKeys,
             onExpandedRowsChange: (keys) => setExpandedRowKeys(keys),

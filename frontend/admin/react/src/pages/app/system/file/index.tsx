@@ -144,7 +144,6 @@ const FileManagement = () => {
       title: t('action'),
       valueType: 'option',
       width: 100,
-      fixed: 'right',
       render: (_, record) => [
         <a key="download" onClick={() => handleDownload(record)}>
           <DownloadOutlined />

@@ -212,7 +212,7 @@ const ApiLogPage: React.FC<ApiLogPageProps> = ({ userId }) => {
         size="middle"
         bordered
         cardBordered={false}
-        scroll={{ y: tableScrollY, x: 1400 }}
+        scroll={{ y: tableScrollY }}
       />
     </div>
   );

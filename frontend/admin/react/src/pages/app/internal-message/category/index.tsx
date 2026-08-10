@@ -88,7 +88,6 @@ const InternalMessageCategoryManagement = () => {
       title: t('action'),
       valueType: 'option',
       width: 90,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"
@@ -172,7 +171,7 @@ const InternalMessageCategoryManagement = () => {
             size="middle"
             bordered
             cardBordered={false}
-            scroll={{ y: tableScrollY, x: 800 }}
+            scroll={{ y: tableScrollY }}
           />
         </div>
       </ContentContainer>

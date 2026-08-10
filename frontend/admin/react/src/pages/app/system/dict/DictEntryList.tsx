@@ -99,7 +99,6 @@ const DictEntryList: React.FC<DictEntryListProps> = ({ typeId }) => {
       title: t('action'),
       valueType: 'option',
       width: 90,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"
@@ -197,7 +196,7 @@ const DictEntryList: React.FC<DictEntryListProps> = ({ typeId }) => {
             size="small"
             bordered
             cardBordered={false}
-            scroll={{ y: tableScrollY, x: 700 }}
+            scroll={{ y: tableScrollY }}
           />
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>

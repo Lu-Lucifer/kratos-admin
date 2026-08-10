@@ -127,7 +127,7 @@ const InternalMessagePage: React.FC<InternalMessagePageProps> = ({ userId }) => 
         size="middle"
         bordered
         cardBordered={false}
-        scroll={{ y: tableScrollY, x: 700 }}
+        scroll={{ y: tableScrollY }}
       />
     </div>
   );

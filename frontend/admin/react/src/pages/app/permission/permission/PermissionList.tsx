@@ -84,7 +84,6 @@ const PermissionList: React.FC<PermissionListProps> = ({ groupId }) => {
       title: t('action'),
       valueType: 'option',
       width: 90,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"
@@ -182,7 +181,7 @@ const PermissionList: React.FC<PermissionListProps> = ({ groupId }) => {
             size="small"
             bordered
             cardBordered={false}
-            scroll={{ y: tableScrollY, x: 650 }}
+            scroll={{ y: tableScrollY }}
           />
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>

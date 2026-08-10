@@ -129,7 +129,6 @@ const PositionManagement = () => {
       title: t('action'),
       valueType: 'option',
       width: 90,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"
@@ -221,7 +220,7 @@ const PositionManagement = () => {
             size="middle"
             bordered
             cardBordered={false}
-            scroll={{ y: tableScrollY, x: 1100 }}
+            scroll={{ y: tableScrollY }}
           />
         </div>
       </ContentContainer>

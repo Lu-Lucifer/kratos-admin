@@ -76,7 +76,6 @@ const DictTypeList: React.FC<DictTypeListProps> = ({ currentTypeId, onTypeSelect
       title: t('action'),
       valueType: 'option',
       width: 90,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"
@@ -177,7 +176,7 @@ const DictTypeList: React.FC<DictTypeListProps> = ({ currentTypeId, onTypeSelect
           size="small"
           bordered
           cardBordered={false}
-          scroll={{ y: tableScrollY, x: 500 }}
+          scroll={{ y: tableScrollY }}
           onRow={(record) => ({
             onClick: () => {
               onTypeSelect(record.id);

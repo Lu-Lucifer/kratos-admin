@@ -122,7 +122,6 @@ const LoginPolicyManagement = () => {
       title: t('action'),
       valueType: 'option',
       width: 100,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"

@@ -172,7 +172,6 @@ const UserList: React.FC<UserListProps> = ({ tenantId, orgUnitId }) => {
       title: t('action'),
       valueType: 'option',
       width: 100,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="detail"
@@ -290,7 +289,7 @@ const UserList: React.FC<UserListProps> = ({ tenantId, orgUnitId }) => {
           size="small"
           bordered
           cardBordered={false}
-          scroll={{ y: tableScrollY, x: 1600 }}
+          scroll={{ y: tableScrollY }}
         />
       </div>
 

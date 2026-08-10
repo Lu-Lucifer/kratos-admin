@@ -206,7 +206,6 @@ const TaskManagement = () => {
       title: t('action'),
       valueType: 'option',
       width: 200,
-      fixed: 'right',
       render: (_, record) => [
         <a
           key="edit"
@@ -370,7 +369,7 @@ const TaskManagement = () => {
             size="middle"
             bordered
             cardBordered={false}
-            scroll={{ y: tableScrollY, x: 1200 }}
+            scroll={{ y: tableScrollY }}
           />
         </div>
       </ContentContainer>
