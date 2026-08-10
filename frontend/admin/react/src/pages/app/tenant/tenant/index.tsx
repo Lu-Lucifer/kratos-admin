@@ -60,7 +60,7 @@ const TenantList = () => {
     {
       title: t('serial'),
       dataIndex: 'id',
-      width: 80,
+      width: 60,
       hideInSearch: true,
       render: (_, record, index) => {
         // ProTable 自动传递 pagination 信息
@@ -159,8 +159,7 @@ const TenantList = () => {
     {
       title: t('action'),
       valueType: 'option',
-      width: 120,
-      fixed: 'right',
+      width: 100,
       render: (_, record) => [
         <a
           key="edit"

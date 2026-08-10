@@ -12,6 +12,7 @@
 }
 .ant-pro-table .ant-table {
   background-color: var(--ant-color-bg-container) !important;
+  table-layout: fixed;
 }
 .ant-pro-table .ant-table-thead > tr > th {
   background-color: var(--ant-color-bg-container) !important;
