@@ -133,7 +133,7 @@ const PlanDrawer: React.FC<PlanDrawerProps> = ({
 
       <ProFormSelect
         name="version"
-        label={t('version')}
+        label={t('versionLabel')}
         placeholder={t('versionPlaceholder')}
         options={getPlanVersionOptions(t)}
         rules={[{ required: true, message: t('requiredVersion') }]}
@@ -142,7 +142,7 @@ const PlanDrawer: React.FC<PlanDrawerProps> = ({
 
       <ProFormSelect
         name="expiryPolicy"
-        label={t('expiryPolicy')}
+        label={t('expiryPolicyLabel')}
         placeholder={t('expiryPolicyPlaceholder')}
         options={getExpiryPolicyOptions(t)}
         rules={[{ required: true, message: t('requiredExpiryPolicy') }]}

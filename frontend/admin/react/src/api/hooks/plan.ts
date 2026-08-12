@@ -6,7 +6,6 @@ import {
 } from '@tanstack/react-query';
 import {
   type identityservicev1_Plan,
-  type identityservicev1_PlanQuota,
   type identityservicev1_ListPlanResponse,
   type identityservicev1_ListPlanQuotaResponse,
   type identityservicev1_DeletePlanRequest,
@@ -14,7 +13,6 @@ import {
   type identityservicev1_GetPlanRequest,
   type identityservicev1_CreatePlanQuotaRequest,
   type identityservicev1_DeletePlanQuotaRequest,
-  type identityservicev1_GetPlanQuotaRequest,
 } from '@/api/generated/admin/service/v1';
 import { makeUpdateMask, type PaginationQuery } from '@/core/transport/rest';
 import { queryClient } from '@/core';
@@ -110,17 +108,6 @@ export async function fetchListPlanQuotas(params: PaginationQuery) {
     queryKey: ['listPlanQuotas', params],
     queryFn: () => apiClient.planQuotaService.List(params.toRawParams()),
     retry: 0,
-  });
-}
-
-export function useGetPlanQuota(
-  req: identityservicev1_GetPlanQuotaRequest,
-  options?: UseQueryOptions<identityservicev1_PlanQuota, Error>,
-) {
-  return useQuery({
-    queryKey: ['getPlanQuota', req],
-    queryFn: () => apiClient.planQuotaService.Get(req),
-    ...options,
   });
 }
 

@@ -56,7 +56,7 @@ const PlanQuotaList: React.FC<PlanQuotaListProps> = ({ planId }) => {
   // 列配置
   const columns: ProColumns<any>[] = [
     {
-      title: t('quotaType'),
+      title: t('quotaTypeLabel'),
       dataIndex: 'quotaType',
       width: 120,
       valueType: 'select',

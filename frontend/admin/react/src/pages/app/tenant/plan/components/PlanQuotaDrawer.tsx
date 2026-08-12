@@ -170,7 +170,7 @@ const PlanQuotaDrawer: React.FC<PlanQuotaDrawerProps> = ({
 
       <ProFormSelect
         name="quotaType"
-        label={t('quotaType')}
+        label={t('quotaTypeLabel')}
         placeholder={t('quotaTypePlaceholder')}
         options={getQuotaTypeOptions(t)}
         rules={[{ required: true, message: t('requiredQuotaType') }]}

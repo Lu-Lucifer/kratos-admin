@@ -1,10 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { DrawerForm, ProFormText, ProFormSelect, ProFormTextArea } from '@ant-design/pro-components';
+import React, { useEffect, useRef, useState } from 'react';
+import { DrawerForm, ProFormText, ProFormSelect, ProFormTextArea, ProFormDateTimePicker } from '@ant-design/pro-components';
 import type { ProFormInstance } from '@ant-design/pro-components';
 import { Button, message, Divider } from 'antd';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useUpdateTenant, useCreateTenantWithAdminUser } from '@/api/hooks/tenant';
+import { fetchListPlans } from '@/api/hooks/plan';
+import { PaginationQuery } from '@/core';
 import type {
   identityservicev1_Tenant,
   identityservicev1_Tenant_Type,
@@ -43,6 +45,24 @@ const TenantDrawer: React.FC<TenantDrawerProps> = ({
   const updateMutation = useUpdateTenant();
   const createMutation = useCreateTenantWithAdminUser();
 
+  // 套餐下拉数据
+  const [planOptions, setPlanOptions] = useState<{ label: string; value: number }[]>([]);
+
+  // 打开抽屉时加载套餐目录下拉
+  useEffect(() => {
+    if (open) {
+      fetchListPlans(new PaginationQuery({ formValues: {} }))
+        .then((res) => {
+          const options = (res.items || []).map((item: any) => ({
+            label: item.name,
+            value: item.id,
+          }));
+          setPlanOptions(options);
+        })
+        .catch(() => setPlanOptions([]));
+    }
+  }, [open]);
+
   // 当 Drawer 打开时，设置表单初始值
   useEffect(() => {
     if (open) {
@@ -54,6 +74,8 @@ const TenantDrawer: React.FC<TenantDrawerProps> = ({
             tenantType: data.type,
             auditStatus: data.auditStatus,
             status: data.status,
+            planId: data.planId,
+            expiredAt: data.expiredAt,
             remark: data.remark,
           });
         } else if (formRef.current) {
@@ -86,6 +108,8 @@ const TenantDrawer: React.FC<TenantDrawerProps> = ({
             type: values.tenantType as identityservicev1_Tenant_Type,
             auditStatus: values.auditStatus as identityservicev1_Tenant_AuditStatus,
             status: values.status as identityservicev1_Tenant_Status,
+            planId: values.planId,
+            expiredAt: values.expiredAt,
             remark: values.remark,
           },
           user: {
@@ -117,6 +141,8 @@ const TenantDrawer: React.FC<TenantDrawerProps> = ({
             type: values.tenantType as identityservicev1_Tenant_Type,
             auditStatus: values.auditStatus as identityservicev1_Tenant_AuditStatus,
             status: values.status as identityservicev1_Tenant_Status,
+            planId: values.planId,
+            expiredAt: values.expiredAt,
             remark: values.remark,
           },
         });
@@ -219,6 +245,21 @@ const TenantDrawer: React.FC<TenantDrawerProps> = ({
         options={getTenantStatusOptions(t)}
         rules={[{ required: true, message: t('requiredStatus') }]}
         fieldProps={SELECT_FILTER_PROPS}
+      />
+
+      <ProFormSelect
+        name="planId"
+        label={t('subscriptionPlan')}
+        placeholder={t('subscriptionPlanPlaceholder')}
+        options={planOptions}
+        fieldProps={SELECT_FILTER_PROPS}
+      />
+
+      <ProFormDateTimePicker
+        name="expiredAt"
+        label={t('expiredAt')}
+        placeholder={t('expiredAtPlaceholder')}
+        fieldProps={{ allowClear: true, showTime: true, style: { width: '100%' } }}
       />
 
       <ProFormTextArea
