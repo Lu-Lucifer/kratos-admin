@@ -43,7 +43,8 @@
   },
   "tenant": {
     "moduleName": "租户管理",
-    "member": "租户列表"
+    "member": "租户列表",
+    "plan": "套餐管理"
   },
   "profile": {
     "settings": "个人中心",

@@ -27,6 +27,17 @@ const tenant: RouteRecordRaw[] = [
         },
         component: () => import('#/views/app/tenant/tenant/index.vue'),
       },
+      {
+        path: 'plans',
+        name: 'PlanManagement',
+        meta: {
+          order: 2,
+          icon: 'lucide:package',
+          title: $t('menu.tenant.plan'),
+          authority: ['sys:platform_admin'],
+        },
+        component: () => import('#/views/app/tenant/plan/index.vue'),
+      },
     ],
   },
 ];

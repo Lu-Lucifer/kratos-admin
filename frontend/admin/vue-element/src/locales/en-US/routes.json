@@ -42,7 +42,8 @@
   },
   "tenant": {
     "moduleName": "Tenant Management",
-    "member": "Tenant Member"
+    "member": "Tenant Member",
+    "plan": "Subscription Plans"
   },
   "profile": {
     "settings": "Profile Center",

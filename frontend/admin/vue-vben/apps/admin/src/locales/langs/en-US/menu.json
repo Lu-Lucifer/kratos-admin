@@ -31,7 +31,8 @@
   },
   "tenant": {
     "moduleName": "Tenant Management",
-    "member": "Tenant List"
+    "member": "Tenant List",
+    "plan": "Subscription Plans"
   },
   "system": {
     "moduleName": "System Management",

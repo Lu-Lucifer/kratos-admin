@@ -217,5 +217,25 @@
     "OIDC_SOCIAL": "OIDC/社交登录",
     "FIDO2": "FIDO2",
     "BIOMETRIC": "生物识别"
+  },
+  "plan": {
+    "version": {
+      "FREE": "免费版",
+      "STANDARD": "标准版",
+      "ENTERPRISE": "企业版",
+      "PLAN_VERSION_UNSPECIFIED": "未指定"
+    },
+    "expiryPolicy": {
+      "BLOCK_LOGIN": "阻止登录",
+      "FREEZE": "冻结",
+      "READONLY": "只读",
+      "PLAN_EXPIRY_POLICY_UNSPECIFIED": "未指定"
+    },
+    "quotaType": {
+      "API_CALL": "API 调用次数",
+      "STORAGE": "存储容量",
+      "USER_LIMIT": "用户数量上限",
+      "PLAN_QUOTA_TYPE_UNSPECIFIED": "未指定"
+    }
   }
 }

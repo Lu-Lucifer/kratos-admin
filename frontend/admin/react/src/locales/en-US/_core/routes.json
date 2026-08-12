@@ -2,6 +2,7 @@
   "dashboard": "Dashboard",
   "tenant": "Tenant Management",
   "tenant-members": "Tenant Members",
+  "tenant-plans": "Subscription Plans",
   "permission": "Permission Management",
   "permission-codes": "Permission Codes",
   "roles": "Role Management",

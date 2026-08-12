@@ -217,5 +217,25 @@
     "OIDC_SOCIAL": "OIDC/Social",
     "FIDO2": "FIDO2",
     "BIOMETRIC": "Biometric"
+  },
+  "plan": {
+    "version": {
+      "FREE": "Free",
+      "STANDARD": "Standard",
+      "ENTERPRISE": "Enterprise",
+      "PLAN_VERSION_UNSPECIFIED": "Unspecified"
+    },
+    "expiryPolicy": {
+      "BLOCK_LOGIN": "Block Login",
+      "FREEZE": "Freeze",
+      "READONLY": "Read Only",
+      "PLAN_EXPIRY_POLICY_UNSPECIFIED": "Unspecified"
+    },
+    "quotaType": {
+      "API_CALL": "API Call Count",
+      "STORAGE": "Storage Capacity",
+      "USER_LIMIT": "User Limit",
+      "PLAN_QUOTA_TYPE_UNSPECIFIED": "Unspecified"
+    }
   }
 }

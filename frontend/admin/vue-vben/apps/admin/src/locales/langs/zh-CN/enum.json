@@ -239,5 +239,22 @@
     "AWS": "亚马逊S3",
     "AZURE": "微软AzureBlob",
     "GOOGLE": "谷歌云存储"
+  },
+  "plan": {
+    "version": {
+      "FREE": "免费版",
+      "STANDARD": "标准版",
+      "ENTERPRISE": "企业版"
+    },
+    "expiryPolicy": {
+      "BLOCK_LOGIN": "禁止登录",
+      "FREEZE": "冻结",
+      "READONLY": "只读"
+    },
+    "quotaType": {
+      "STORAGE": "存储",
+      "USER_LIMIT": "用户数上限",
+      "API_CALL": "API 调用"
+    }
   }
 }

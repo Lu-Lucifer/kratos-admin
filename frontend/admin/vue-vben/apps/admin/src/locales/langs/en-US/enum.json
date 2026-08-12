@@ -239,5 +239,22 @@
     "AWS": "Amazon S3",
     "AZURE": "Azure Blob Storage",
     "GOOGLE": "Google Cloud Storage"
+  },
+  "plan": {
+    "version": {
+      "FREE": "Free",
+      "STANDARD": "Standard",
+      "ENTERPRISE": "Enterprise"
+    },
+    "expiryPolicy": {
+      "BLOCK_LOGIN": "Block Login",
+      "FREEZE": "Freeze",
+      "READONLY": "Readonly"
+    },
+    "quotaType": {
+      "STORAGE": "Storage",
+      "USER_LIMIT": "User Limit",
+      "API_CALL": "API Call"
+    }
   }
 }
