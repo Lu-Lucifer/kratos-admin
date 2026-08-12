@@ -199,6 +199,10 @@ func (m *Tenant) validate(all bool) error {
 		// no validation rules for SubscriptionPlan
 	}
 
+	if m.PlanId != nil {
+		// no validation rules for PlanId
+	}
+
 	if m.MemberCount != nil {
 		// no validation rules for MemberCount
 	}

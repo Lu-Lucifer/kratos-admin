@@ -13,6 +13,8 @@
   "status": "状态",
   "remark": "备注",
   "createdAt": "创建时间",
+  "subscriptionPlan": "订阅套餐",
+  "expiredAt": "到期时间",
   "tenant_code_exists": "租户编码已存在",
   "notification": {
     "user_username_exists": "用户名已存在",

@@ -8,6 +8,8 @@ import { notification } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import {
+  fetchListPlans,
+  PaginationQuery,
   tenantAuditStatusList,
   tenantStatusList,
   tenantTypeList,
@@ -112,6 +114,38 @@ const [BaseForm, baseFormApi] = useVbenForm({
       componentProps: {
         placeholder: $t('ui.placeholder.input'),
         allowClear: true,
+      },
+    },
+
+    {
+      component: 'ApiSelect',
+      fieldName: 'subscriptionPlan',
+      label: $t('page.tenant.subscriptionPlan'),
+      componentProps: {
+        placeholder: $t('ui.placeholder.select'),
+        showSearch: true,
+        allowClear: true,
+        filterOption: (input: string, option: any) =>
+          option.label.toLowerCase().includes(input.toLowerCase()),
+        labelField: 'name',
+        valueField: 'id',
+        api: async () => {
+          const result = await fetchListPlans(
+            new PaginationQuery({
+              formValues: {},
+            }),
+          );
+          return result.items;
+        },
+      },
+    },
+
+    {
+      component: 'DatePicker',
+      fieldName: 'expiredAt',
+      label: $t('page.tenant.expiredAt'),
+      componentProps: {
+        placeholder: $t('ui.placeholder.select'),
       },
     },
 
@@ -361,6 +395,8 @@ async function updateTenant(values: any) {
         auditStatus: values.auditStatus,
         status: values.status,
         remark: values.remark,
+        subscriptionPlan: values.subscriptionPlan,
+        expiredAt: values.expiredAt,
       },
     });
 

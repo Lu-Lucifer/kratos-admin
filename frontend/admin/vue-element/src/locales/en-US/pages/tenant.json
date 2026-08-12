@@ -13,6 +13,8 @@
   "status": "Status",
   "remark": "Remark",
   "createdAt": "Created At",
+  "subscriptionPlan": "Subscription Plan",
+  "expiredAt": "Expiration Time",
   "tenant_code_exists": "Tenant code already exists",
   "notification": {
     "user_username_exists": "Username already exists",

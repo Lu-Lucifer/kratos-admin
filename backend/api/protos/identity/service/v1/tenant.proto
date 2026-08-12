@@ -134,6 +134,11 @@ message Tenant {
     (gnostic.openapi.v3.property) = {description: "订阅套餐（如“企业版1年”“基础版3个月”）"}
   ]; // 订阅套餐（如“企业版1年”“基础版3个月”）
 
+  optional uint32 plan_id = 24 [
+    json_name = "planId",
+    (gnostic.openapi.v3.property) = {description: "订阅套餐ID（引用套餐目录）"}
+  ]; // 订阅套餐ID（引用套餐目录）
+
   optional int32 member_count = 30 [
     json_name = "memberCount",
     (gnostic.openapi.v3.property) = {description: "成员数量"}

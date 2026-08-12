@@ -208,6 +208,7 @@ type Tenant struct {
 	UnsubscribeAt    *timestamppb.Timestamp `protobuf:"bytes,21,opt,name=unsubscribe_at,json=unsubscribeAt,proto3,oneof" json:"unsubscribe_at,omitempty"`                                        // 取消订阅时间（NULL表示未取消）
 	ExpiredAt        *timestamppb.Timestamp `protobuf:"bytes,22,opt,name=expired_at,json=expiredAt,proto3,oneof" json:"expired_at,omitempty"`                                                    // 租户有效期（NULL表示永久，过期后状态自动改为“过期”）
 	SubscriptionPlan *string                `protobuf:"bytes,23,opt,name=subscription_plan,json=subscriptionPlan,proto3,oneof" json:"subscription_plan,omitempty"`                               // 订阅套餐（如“企业版1年”“基础版3个月”）
+	PlanId           *uint32                `protobuf:"varint,24,opt,name=plan_id,json=planId,proto3,oneof" json:"plan_id,omitempty"`                                                            // 订阅套餐ID（引用套餐目录）
 	MemberCount      *int32                 `protobuf:"varint,30,opt,name=member_count,json=memberCount,proto3,oneof" json:"member_count,omitempty"`                                             // 成员数量
 	Status           *Tenant_Status         `protobuf:"varint,31,opt,name=status,proto3,enum=identity.service.v1.Tenant_Status,oneof" json:"status,omitempty"`                                   // 租户状态
 	AuditStatus      *Tenant_AuditStatus    `protobuf:"varint,32,opt,name=audit_status,json=auditStatus,proto3,enum=identity.service.v1.Tenant_AuditStatus,oneof" json:"audit_status,omitempty"` // 审核状态
@@ -347,6 +348,13 @@ func (x *Tenant) GetSubscriptionPlan() string {
 		return *x.SubscriptionPlan
 	}
 	return ""
+}
+
+func (x *Tenant) GetPlanId() uint32 {
+	if x != nil && x.PlanId != nil {
+		return *x.PlanId
+	}
+	return 0
 }
 
 func (x *Tenant) GetMemberCount() int32 {
@@ -1100,7 +1108,7 @@ var File_identity_service_v1_tenant_proto protoreflect.FileDescriptor
 
 const file_identity_service_v1_tenant_proto_rawDesc = "" +
 	"\n" +
-	" identity/service/v1/tenant.proto\x12\x13identity.service.v1\x1a$gnostic/openapi/v3/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\x1a\x1eidentity/service/v1/user.proto\"\xc1\x12\n" +
+	" identity/service/v1/tenant.proto\x12\x13identity.service.v1\x1a$gnostic/openapi/v3/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\x1a\x1eidentity/service/v1/user.proto\"\x99\x13\n" +
 	"\x06Tenant\x12#\n" +
 	"\x02id\x18\x01 \x01(\rB\x0e\xbaG\v\x92\x02\b租户IDH\x00R\x02id\x88\x01\x01\x12+\n" +
 	"\x04name\x18\x02 \x01(\tB\x12\xbaG\x0f\x92\x02\f租户名称H\x01R\x04name\x88\x01\x01\x12+\n" +
@@ -1118,22 +1126,23 @@ const file_identity_service_v1_tenant_proto_rawDesc = "" +
 	"\x0eunsubscribe_at\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampB\x18\xbaG\x15\x92\x02\x12取消订阅时间H\vR\runsubscribeAt\x88\x01\x01\x12\x95\x01\n" +
 	"\n" +
 	"expired_at\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampBU\xbaGR\x92\x02O租户有效期（NULL表示永久，过期后状态自动改为“过期”）H\fR\texpiredAt\x88\x01\x01\x12v\n" +
-	"\x11subscription_plan\x18\x17 \x01(\tBD\xbaGA\x92\x02>订阅套餐（如“企业版1年”“基础版3个月”）H\rR\x10subscriptionPlan\x88\x01\x01\x12:\n" +
-	"\fmember_count\x18\x1e \x01(\x05B\x12\xbaG\x0f\x92\x02\f成员数量H\x0eR\vmemberCount\x88\x01\x01\x12S\n" +
-	"\x06status\x18\x1f \x01(\x0e2\".identity.service.v1.Tenant.StatusB\x12\xbaG\x0f\x92\x02\f租户状态H\x0fR\x06status\x88\x01\x01\x12c\n" +
-	"\faudit_status\x18  \x01(\x0e2'.identity.service.v1.Tenant.AuditStatusB\x12\xbaG\x0f\x92\x02\f审核状态H\x10R\vauditStatus\x88\x01\x01\x125\n" +
+	"\x11subscription_plan\x18\x17 \x01(\tBD\xbaGA\x92\x02>订阅套餐（如“企业版1年”“基础版3个月”）H\rR\x10subscriptionPlan\x88\x01\x01\x12J\n" +
+	"\aplan_id\x18\x18 \x01(\rB,\xbaG)\x92\x02&订阅套餐ID（引用套餐目录）H\x0eR\x06planId\x88\x01\x01\x12:\n" +
+	"\fmember_count\x18\x1e \x01(\x05B\x12\xbaG\x0f\x92\x02\f成员数量H\x0fR\vmemberCount\x88\x01\x01\x12S\n" +
+	"\x06status\x18\x1f \x01(\x0e2\".identity.service.v1.Tenant.StatusB\x12\xbaG\x0f\x92\x02\f租户状态H\x10R\x06status\x88\x01\x01\x12c\n" +
+	"\faudit_status\x18  \x01(\x0e2'.identity.service.v1.Tenant.AuditStatusB\x12\xbaG\x0f\x92\x02\f审核状态H\x11R\vauditStatus\x88\x01\x01\x125\n" +
 	"\n" +
-	"created_by\x18d \x01(\rB\x11\xbaG\x0e\x92\x02\v创建者IDH\x11R\tcreatedBy\x88\x01\x01\x125\n" +
+	"created_by\x18d \x01(\rB\x11\xbaG\x0e\x92\x02\v创建者IDH\x12R\tcreatedBy\x88\x01\x01\x125\n" +
 	"\n" +
-	"updated_by\x18e \x01(\rB\x11\xbaG\x0e\x92\x02\v更新者IDH\x12R\tupdatedBy\x88\x01\x01\x12;\n" +
+	"updated_by\x18e \x01(\rB\x11\xbaG\x0e\x92\x02\v更新者IDH\x13R\tupdatedBy\x88\x01\x01\x12;\n" +
 	"\n" +
-	"deleted_by\x18f \x01(\rB\x17\xbaG\x14\x92\x02\x11删除者用户IDH\x13R\tdeletedBy\x88\x01\x01\x12S\n" +
+	"deleted_by\x18f \x01(\rB\x17\xbaG\x14\x92\x02\x11删除者用户IDH\x14R\tdeletedBy\x88\x01\x01\x12S\n" +
 	"\n" +
-	"created_at\x18\xc8\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f创建时间H\x14R\tcreatedAt\x88\x01\x01\x12S\n" +
+	"created_at\x18\xc8\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f创建时间H\x15R\tcreatedAt\x88\x01\x01\x12S\n" +
 	"\n" +
-	"updated_at\x18\xc9\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f更新时间H\x15R\tupdatedAt\x88\x01\x01\x12S\n" +
+	"updated_at\x18\xc9\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f更新时间H\x16R\tupdatedAt\x88\x01\x01\x12S\n" +
 	"\n" +
-	"deleted_at\x18\xca\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f删除时间H\x16R\tdeletedAt\x88\x01\x01\"2\n" +
+	"deleted_at\x18\xca\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f删除时间H\x17R\tdeletedAt\x88\x01\x01\"2\n" +
 	"\x06Status\x12\a\n" +
 	"\x03OFF\x10\x00\x12\x06\n" +
 	"\x02ON\x10\x01\x12\v\n" +
@@ -1166,7 +1175,9 @@ const file_identity_service_v1_tenant_proto_rawDesc = "" +
 	"\x10_subscription_atB\x11\n" +
 	"\x0f_unsubscribe_atB\r\n" +
 	"\v_expired_atB\x14\n" +
-	"\x12_subscription_planB\x0f\n" +
+	"\x12_subscription_planB\n" +
+	"\n" +
+	"\b_plan_idB\x0f\n" +
 	"\r_member_countB\t\n" +
 	"\a_statusB\x0f\n" +
 	"\r_audit_statusB\r\n" +

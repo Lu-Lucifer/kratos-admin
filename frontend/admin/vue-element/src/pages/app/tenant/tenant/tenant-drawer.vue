@@ -71,6 +71,32 @@
         />
       </ElFormItem>
 
+      <ElFormItem :label="$t('pages.tenant.subscriptionPlan')" prop="subscriptionPlan">
+        <ElSelect
+          v-model="formData.subscriptionPlan"
+          :placeholder="$t('common.placeholder.select')"
+          filterable
+          clearable
+          class="w-full"
+        >
+          <ElOption
+            v-for="item in planOptions"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id as number"
+          />
+        </ElSelect>
+      </ElFormItem>
+
+      <ElFormItem :label="$t('pages.tenant.expiredAt')" prop="expiredAt">
+        <ElDatePicker
+          v-model="formData.expiredAt"
+          type="datetime"
+          :placeholder="$t('common.placeholder.select')"
+          class="w-full"
+        />
+      </ElFormItem>
+
       <!-- 管理员设置（仅创建时显示） -->
       <ElDivider v-if="isCreate">{{ $t("pages.tenant.adminSetting") }}</ElDivider>
 
@@ -142,8 +168,10 @@ import {
   useUpdateTenant,
   useUserExists,
   fetchListTenants,
+  fetchListPlans,
 } from "@/api/composables";
 import { PaginationQuery } from "@/core/transport/rest";
+import type { identityservicev1_Plan as Plan } from "@/api/generated/admin/service/v1";
 import type { identityservicev1_Tenant as Tenant } from "@/api/generated/admin/service/v1";
 import { $t } from "@/core/i18n";
 import { DRAWER_WIDTH } from "@/constants";
@@ -173,6 +201,9 @@ const { mutateAsync: userExists } = useUserExists();
 // 加载状态
 const loading = ref(false);
 
+// 套餐下拉选项（订阅套餐）
+const planOptions = ref<(Plan & { id?: number; name?: string })[]>([]);
+
 // 表单数据
 const formData = ref({
   name: "",
@@ -181,6 +212,8 @@ const formData = ref({
   auditStatus: "APPROVED",
   status: "ON",
   remark: "",
+  subscriptionPlan: undefined as number | undefined,
+  expiredAt: "" as string,
   user: {
     username: "",
     mobile: "",
@@ -234,7 +267,7 @@ const title = computed(() =>
 );
 
 // 监听弹窗打开/关闭
-watch(visible, (val) => {
+watch(visible, async (val) => {
   if (val) {
     if (!isCreate.value && data.value.row) {
       // 编辑模式
@@ -246,6 +279,8 @@ watch(visible, (val) => {
         auditStatus: row.auditStatus || "APPROVED",
         status: row.status || "ON",
         remark: row.remark || "",
+        subscriptionPlan: row.planId,
+        expiredAt: "",
         user: {
           username: "",
           mobile: "",
@@ -257,6 +292,15 @@ watch(visible, (val) => {
     } else {
       // 创建模式
       resetForm();
+    }
+
+    // 加载套餐下拉选项（订阅套餐）
+    try {
+      const res = await fetchListPlans(new PaginationQuery({ paging: { page: 1, pageSize: 100 } }));
+      planOptions.value = (res.items || []) as (Plan & { id?: number; name?: string })[];
+    } catch (err) {
+      console.error("Failed to load plan options:", err);
+      planOptions.value = [];
     }
   } else {
     // ProModal 关闭时自动重置表单
@@ -273,6 +317,8 @@ const resetForm = () => {
     auditStatus: "APPROVED",
     status: "ON",
     remark: "",
+    subscriptionPlan: undefined,
+    expiredAt: "",
     user: {
       username: "",
       mobile: "",
@@ -377,6 +423,8 @@ async function updateTenant() {
       auditStatus: formData.value.auditStatus,
       status: formData.value.status,
       remark: formData.value.remark,
+      planId: formData.value.subscriptionPlan,
+      expiredAt: formData.value.expiredAt,
     },
   });
 
