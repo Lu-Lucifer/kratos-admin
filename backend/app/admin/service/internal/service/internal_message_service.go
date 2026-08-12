@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -92,7 +93,7 @@ func (s *InternalMessageService) RegisterInternalMessagePublisher(internalMessag
 	s.internalMessagePublisher = internalMessagePublisher
 }
 
-func (s *InternalMessageService) HandleAuthorize(_ *http.Request, token string) error {
+func (s *InternalMessageService) HandleAuthorize(r *http.Request, token string) error {
 	//s.log.Debugf("authorizing token: %s", token)
 	//s.log.Debugf("authorizing token HEADER: %s", req.Header.Get("Authorization"))
 
@@ -115,7 +116,24 @@ func (s *InternalMessageService) HandleAuthorize(_ *http.Request, token string) 
 		return authenticationV1.ErrorUnauthorized("invalid token")
 	}
 
-	s.log.Debugf("token authenticated successfully, userId: [%d]", resp.GetPayload().GetUserId())
+	// 越权校验：streamID 已从 access token 改为 userId，必须保证订阅者只能订阅自己的流，
+	// 否则用户 A 可通过 ?stream=<userB_id> 收到 B 的站内信通知。
+	// （此前 streamID 即 token 字符串、不可伪造，无需此校验。）
+	tokenUserId := resp.GetPayload().GetUserId()
+	streamParam := r.URL.Query().Get("stream")
+	if streamParam == "" {
+		return authenticationV1.ErrorForbidden("stream user mismatch")
+	}
+	streamUserId, err := strconv.ParseUint(streamParam, 10, 32)
+	if err != nil {
+		return authenticationV1.ErrorForbidden("stream user mismatch")
+	}
+	if uint32(streamUserId) != tokenUserId {
+		s.log.Warnf("stream user mismatch: token uid=%d, stream uid=%d", tokenUserId, streamUserId)
+		return authenticationV1.ErrorForbidden("stream user mismatch")
+	}
+
+	s.log.Debugf("token authenticated successfully, userId: [%d]", tokenUserId)
 
 	return nil
 }
@@ -394,18 +412,17 @@ func (s *InternalMessageService) sendNotification(ctx context.Context, messageId
 		return nil
 	}
 
-	recipientStreamIds := s.authenticator.GetAccessTokens(ctx, s.clientType, recipientUserId)
-	for _, streamId := range recipientStreamIds {
-		// 用 TryPublish 非阻塞推送：流不存在或缓冲已满时立即跳过，
-		// 避免某个慢客户端塞满 SSE 流缓冲时阻塞发送方。
-		// 站内信已落库，客户端重连后可通过拉取收件箱补取，实时推送仅为尽力而为。
-		if ok := s.internalMessagePublisher.TryPublish(ctx, sse.StreamID(streamId), &sse.Event{
-			ID:    []byte(id.NewGUIDv4(false)),
-			Data:  recipientJson,
-			Event: []byte("notification"),
-		}); !ok {
-			s.log.Debugf("sse try publish skipped (stream not exist or buffer full): user=%d stream=%s", recipientUserId, streamId)
-		}
+	// streamID 已从 access token 改为 userId：同一用户的所有在线设备订阅同一条流，
+	// 库的 stream fan-out 会把该事件投递给该流的全部 subscriber，因此只需单次 publish。
+	// 用 TryPublish 非阻塞推送：流不存在（用户无在线 SSE 连接）或缓冲已满时立即跳过，
+	// 避免慢客户端阻塞发送方。站内信已落库，客户端重连后可拉取收件箱补取，实时推送仅为尽力而为。
+	streamId := strconv.FormatUint(uint64(recipientUserId), 10)
+	if ok := s.internalMessagePublisher.TryPublish(ctx, sse.StreamID(streamId), &sse.Event{
+		ID:    []byte(id.NewGUIDv4(false)),
+		Data:  recipientJson,
+		Event: []byte("notification"),
+	}); !ok {
+		s.log.Debugf("sse try publish skipped (stream not exist or buffer full): user=%d stream=%s", recipientUserId, streamId)
 	}
 
 	return nil

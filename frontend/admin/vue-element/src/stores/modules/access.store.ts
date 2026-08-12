@@ -120,14 +120,10 @@ export const useAccessStore = defineStore("core-access", {
     },
   },
   persist: {
-    // 持久化
-    pick: [
-      "accessToken",
-      "refreshToken",
-      "accessCodes",
-      "refreshTokenExpireTime",
-      "accessTokenExpireTime",
-    ],
+    // Token（access/refresh 及其过期时间）全部仅存内存，不落 localStorage。
+    // 刷新页面后 token 丢失 → 守卫看到 accessToken 为 null → 跳登录页。
+    // accessCodes 是权限码（非 secret），仍持久化以避免刷新后重新拉取。
+    pick: ["accessCodes"],
   },
   state: (): AccessState => ({
     accessCodes: [],

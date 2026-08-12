@@ -476,12 +476,17 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * 连接 SSE 服务器
-   * 将 accessToken 注入请求头，不再通过 URL 查询参数传递
+   * streamID 使用 userId，鉴权走 Authorization 头；两者缺一不可。
    */
   function _connectSSEServer() {
-    const targetSseUrl = `${import.meta.env.VITE_GLOB_SSE_URL}?stream=${encodeURIComponent(accessStore.accessToken ?? '')}`;
-
     const token = accessStore.accessToken ?? '';
+    const userId = userStore.userInfo?.id;
+    if (!token || userId == null) {
+      console.warn('[SSE] No access token or userId, skip connection');
+      return;
+    }
+    const targetSseUrl = `${import.meta.env.VITE_GLOB_SSE_URL}?stream=${userId}`;
+
     globalSSEClient.setHeaders({ Authorization: `Bearer ${token}` });
     globalSSEClient.connect(targetSseUrl);
   }
@@ -491,10 +496,13 @@ export const useAuthStore = defineStore('auth', () => {
    * 适用于 token 刷新后 SSE 连接携带的凭证已过期的场景
    */
   function _reconnectSSEServer(): void {
-    const accessStore = useAccessStore();
-
     const token = accessStore.accessToken ?? '';
-    const targetSseUrl = `${import.meta.env.VITE_GLOB_SSE_URL}?stream=${encodeURIComponent(token)}`;
+    const userId = userStore.userInfo?.id;
+    if (!token || userId == null) {
+      console.warn('[SSE] No access token or userId, skip reconnect');
+      return;
+    }
+    const targetSseUrl = `${import.meta.env.VITE_GLOB_SSE_URL}?stream=${userId}`;
 
     globalSSEClient.setHeaders({ Authorization: `Bearer ${token}` });
     globalSSEClient.reconnect(targetSseUrl);

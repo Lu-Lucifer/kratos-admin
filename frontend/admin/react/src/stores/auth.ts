@@ -305,52 +305,10 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage', // localStorage key
-      partialize: (state) => {
-        const persisted = {
-          // ✅ 只持久化 Token 相关字段
-          accessToken: state.accessToken,
-          refreshTokenValue: state.refreshTokenValue,
-          accessTokenExpireAt: state.accessTokenExpireAt,
-          refreshTokenExpireAt: state.refreshTokenExpireAt,
-          // ❌ userInfo/error 不持久化，避免脏数据
-        };
-        console.log('💿 Persisting auth state to localStorage:', {
-          hasAccessToken: !!persisted.accessToken,
-          hasRefreshToken: !!persisted.refreshTokenValue,
-        });
-        return persisted;
-      },
-      onRehydrateStorage: () => (state) => {
-        // 应用启动时校验持久化的 token 是否已过期。
-        // accessTokenExpireAt / refreshTokenExpireAt 是基于 Date.now() 计算的绝对时间戳，
-        // 用户关闭页面几天后再打开时这些值早已过期，但 AuthGuard 只检查 accessToken 是否存在，
-        // 会导致用户带着过期 token 进入应用、首个请求 401 后才被弹回登录页（先看到页面再被踢）。
-        // 这里在 rehydrate 阶段提前清理过期的 token，让用户直接走登录流程。
-        //
-        // 注意：此处直接 mutate state 清理 token 字段（不调用 forceLogout）。
-        // rehydrate 发生在 store 创建期、组件订阅之前，直接赋值即可让首次读取拿到清理后的值；
-        // 不调 forceLogout 是为了避免其在启动期触发 setState → persist 写回的潜在递归，
-        // 且 stopRefreshTimer/disconnectSSEServer/queryClient.clear 此时本就尚未启动。
-        // 后续任意一次 set() 会通过 partialize 把 null 写回 localStorage，最终一致。
-        if (!state) return;
-        const now = Date.now();
-        const refreshExpired =
-          state.refreshTokenExpireAt != null && state.refreshTokenExpireAt <= now;
-        const accessExpired =
-          state.accessTokenExpireAt != null && state.accessTokenExpireAt <= now;
-        if (refreshExpired || accessExpired) {
-          console.warn(
-            'Persisted token expired on rehydrate, clearing auth state.',
-            { accessExpired, refreshExpired },
-          );
-          state.accessToken = null;
-          state.refreshTokenValue = null;
-          state.accessTokenExpireAt = null;
-          state.refreshTokenExpireAt = null;
-          state.userInfo = null;
-          state.error = null;
-        }
-      },
+      // Token（access/refresh 及其过期时间）全部仅存内存，不落 localStorage。
+      // 刷新页面后 token 丢失 → AuthGuard 看到 accessToken 为 null → 跳登录页。
+      // 登出时仍 localStorage.removeItem('auth-storage') 清理历史残留数据。
+      partialize: () => ({}),
     },
   ),
 );

@@ -3,7 +3,7 @@ import { LOGIN_PATH } from "@/constants";
 import { preferences } from "@/core/preferences";
 import { globalSSEClient } from "@/core/transport/sse";
 import { queryClient } from "@/plugins/vue-query";
-import { resetAllStores, useAccessStore } from "@/stores";
+import { resetAllStores, useAccessStore, useAppUserStore } from "@/stores";
 import { router } from "@/router";
 
 // ==============================
@@ -244,9 +244,16 @@ export function startRefreshTimer(): void {
 
 export function connectSSEServer(): void {
   const accessStore = useAccessStore();
+  const userStore = useAppUserStore();
 
+  // streamID 已改为 userId，鉴权仍走 Authorization 头。两者缺一不可。
   const token = accessStore.accessToken ?? "";
-  const targetSseUrl = `${import.meta.env.VITE_APP_SSE_URL}?stream=${encodeURIComponent(token)}`;
+  const userId = userStore.userInfo?.id;
+  if (!token || userId == null) {
+    console.warn("[TokenRefresh] No access token or userId, skip SSE connection");
+    return;
+  }
+  const targetSseUrl = `${import.meta.env.VITE_APP_SSE_URL}?stream=${userId}`;
 
   globalSSEClient.setHeaders({ Authorization: `Bearer ${token}` });
   globalSSEClient.connect(targetSseUrl);
@@ -258,9 +265,16 @@ export function connectSSEServer(): void {
  */
 function reconnectSSEServer(): void {
   const accessStore = useAccessStore();
+  const userStore = useAppUserStore();
 
+  // streamID 已改为 userId，鉴权仍走 Authorization 头。两者缺一不可。
   const token = accessStore.accessToken ?? "";
-  const targetSseUrl = `${import.meta.env.VITE_APP_SSE_URL}?stream=${encodeURIComponent(token)}`;
+  const userId = userStore.userInfo?.id;
+  if (!token || userId == null) {
+    console.warn("[TokenRefresh] No access token or userId, skip SSE reconnect");
+    return;
+  }
+  const targetSseUrl = `${import.meta.env.VITE_APP_SSE_URL}?stream=${userId}`;
 
   globalSSEClient.setHeaders({ Authorization: `Bearer ${token}` });
   globalSSEClient.reconnect(targetSseUrl);
