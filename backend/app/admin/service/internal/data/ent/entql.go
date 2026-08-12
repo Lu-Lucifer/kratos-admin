@@ -29,6 +29,8 @@ import (
 	"go-wind-admin/app/admin/service/internal/data/ent/permissiongroup"
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionmenu"
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionpolicy"
+	"go-wind-admin/app/admin/service/internal/data/ent/plan"
+	"go-wind-admin/app/admin/service/internal/data/ent/planquota"
 	"go-wind-admin/app/admin/service/internal/data/ent/policyevaluationlog"
 	"go-wind-admin/app/admin/service/internal/data/ent/position"
 	"go-wind-admin/app/admin/service/internal/data/ent/predicate"
@@ -51,7 +53,7 @@ import (
 
 // schemaGraph holds a representation of ent/schema at runtime.
 var schemaGraph = func() *sqlgraph.Schema {
-	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 38)}
+	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 40)}
 	graph.Nodes[0] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   api.Table,
@@ -793,6 +795,52 @@ var schemaGraph = func() *sqlgraph.Schema {
 	}
 	graph.Nodes[26] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
+			Table:   plan.Table,
+			Columns: plan.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUint32,
+				Column: plan.FieldID,
+			},
+		},
+		Type: "Plan",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			plan.FieldCreatedAt:         {Type: field.TypeTime, Column: plan.FieldCreatedAt},
+			plan.FieldUpdatedAt:         {Type: field.TypeTime, Column: plan.FieldUpdatedAt},
+			plan.FieldDeletedAt:         {Type: field.TypeTime, Column: plan.FieldDeletedAt},
+			plan.FieldCreatedBy:         {Type: field.TypeUint32, Column: plan.FieldCreatedBy},
+			plan.FieldUpdatedBy:         {Type: field.TypeUint32, Column: plan.FieldUpdatedBy},
+			plan.FieldDeletedBy:         {Type: field.TypeUint32, Column: plan.FieldDeletedBy},
+			plan.FieldRemark:            {Type: field.TypeString, Column: plan.FieldRemark},
+			plan.FieldName:              {Type: field.TypeString, Column: plan.FieldName},
+			plan.FieldVersion:           {Type: field.TypeEnum, Column: plan.FieldVersion},
+			plan.FieldExpiryPolicy:      {Type: field.TypeEnum, Column: plan.FieldExpiryPolicy},
+			plan.FieldDataRetentionDays: {Type: field.TypeUint32, Column: plan.FieldDataRetentionDays},
+			plan.FieldDescription:       {Type: field.TypeString, Column: plan.FieldDescription},
+		},
+	}
+	graph.Nodes[27] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
+			Table:   planquota.Table,
+			Columns: planquota.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUint32,
+				Column: planquota.FieldID,
+			},
+		},
+		Type: "PlanQuota",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			planquota.FieldCreatedAt:  {Type: field.TypeTime, Column: planquota.FieldCreatedAt},
+			planquota.FieldUpdatedAt:  {Type: field.TypeTime, Column: planquota.FieldUpdatedAt},
+			planquota.FieldDeletedAt:  {Type: field.TypeTime, Column: planquota.FieldDeletedAt},
+			planquota.FieldCreatedBy:  {Type: field.TypeUint32, Column: planquota.FieldCreatedBy},
+			planquota.FieldUpdatedBy:  {Type: field.TypeUint32, Column: planquota.FieldUpdatedBy},
+			planquota.FieldDeletedBy:  {Type: field.TypeUint32, Column: planquota.FieldDeletedBy},
+			planquota.FieldQuotaType:  {Type: field.TypeEnum, Column: planquota.FieldQuotaType},
+			planquota.FieldQuotaValue: {Type: field.TypeUint64, Column: planquota.FieldQuotaValue},
+		},
+	}
+	graph.Nodes[28] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
 			Table:   policyevaluationlog.Table,
 			Columns: policyevaluationlog.Columns,
 			ID: &sqlgraph.FieldSpec{
@@ -820,7 +868,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			policyevaluationlog.FieldSignature:         {Type: field.TypeBytes, Column: policyevaluationlog.FieldSignature},
 		},
 	}
-	graph.Nodes[27] = &sqlgraph.Node{
+	graph.Nodes[29] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   position.Table,
 			Columns: position.Columns,
@@ -856,7 +904,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			position.FieldEndAt:               {Type: field.TypeTime, Column: position.FieldEndAt},
 		},
 	}
-	graph.Nodes[28] = &sqlgraph.Node{
+	graph.Nodes[30] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   role.Table,
 			Columns: role.Columns,
@@ -884,7 +932,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			role.FieldType:        {Type: field.TypeEnum, Column: role.FieldType},
 		},
 	}
-	graph.Nodes[29] = &sqlgraph.Node{
+	graph.Nodes[31] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   rolemetadata.Table,
 			Columns: rolemetadata.Columns,
@@ -913,7 +961,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			rolemetadata.FieldCustomOverrides:   {Type: field.TypeJSON, Column: rolemetadata.FieldCustomOverrides},
 		},
 	}
-	graph.Nodes[30] = &sqlgraph.Node{
+	graph.Nodes[32] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   rolepermission.Table,
 			Columns: rolepermission.Columns,
@@ -938,7 +986,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			rolepermission.FieldPriority:     {Type: field.TypeInt32, Column: rolepermission.FieldPriority},
 		},
 	}
-	graph.Nodes[31] = &sqlgraph.Node{
+	graph.Nodes[33] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   task.Table,
 			Columns: task.Columns,
@@ -965,7 +1013,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			task.FieldEnable:      {Type: field.TypeBool, Column: task.FieldEnable},
 		},
 	}
-	graph.Nodes[32] = &sqlgraph.Node{
+	graph.Nodes[34] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   tenant.Table,
 			Columns: tenant.Columns,
@@ -998,7 +1046,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tenant.FieldExpiredAt:        {Type: field.TypeTime, Column: tenant.FieldExpiredAt},
 		},
 	}
-	graph.Nodes[33] = &sqlgraph.Node{
+	graph.Nodes[35] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
@@ -1034,7 +1082,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			user.FieldStatus:      {Type: field.TypeEnum, Column: user.FieldStatus},
 		},
 	}
-	graph.Nodes[34] = &sqlgraph.Node{
+	graph.Nodes[36] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   usercredential.Table,
 			Columns: usercredential.Columns,
@@ -1067,7 +1115,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			usercredential.FieldResetTokenUsedAt:       {Type: field.TypeTime, Column: usercredential.FieldResetTokenUsedAt},
 		},
 	}
-	graph.Nodes[35] = &sqlgraph.Node{
+	graph.Nodes[37] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userorgunit.Table,
 			Columns: userorgunit.Columns,
@@ -1097,7 +1145,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			userorgunit.FieldStatus:     {Type: field.TypeEnum, Column: userorgunit.FieldStatus},
 		},
 	}
-	graph.Nodes[36] = &sqlgraph.Node{
+	graph.Nodes[38] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userposition.Table,
 			Columns: userposition.Columns,
@@ -1126,7 +1174,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			userposition.FieldStatus:     {Type: field.TypeEnum, Column: userposition.FieldStatus},
 		},
 	}
-	graph.Nodes[37] = &sqlgraph.Node{
+	graph.Nodes[39] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userrole.Table,
 			Columns: userrole.Columns,
@@ -1273,6 +1321,54 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"PermissionGroup",
 		"PermissionGroup",
+	)
+	graph.MustAddE(
+		"tenants",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plan.TenantsTable,
+			Columns: []string{plan.TenantsColumn},
+			Bidi:    false,
+		},
+		"Plan",
+		"Tenant",
+	)
+	graph.MustAddE(
+		"quotas",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plan.QuotasTable,
+			Columns: []string{plan.QuotasColumn},
+			Bidi:    false,
+		},
+		"Plan",
+		"PlanQuota",
+	)
+	graph.MustAddE(
+		"plan",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   planquota.PlanTable,
+			Columns: []string{planquota.PlanColumn},
+			Bidi:    false,
+		},
+		"PlanQuota",
+		"Plan",
+	)
+	graph.MustAddE(
+		"plan",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tenant.PlanTable,
+			Columns: []string{tenant.PlanColumn},
+			Bidi:    false,
+		},
+		"Tenant",
+		"Plan",
 	)
 	return graph
 }()
@@ -4469,6 +4565,228 @@ func (f *PermissionPolicyFilter) WhereCacheTTL(p entql.Uint32P) {
 }
 
 // addPredicate implements the predicateAdder interface.
+func (_q *PlanQuery) addPredicate(pred func(s *sql.Selector)) {
+	_q.predicates = append(_q.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the PlanQuery builder.
+func (_q *PlanQuery) Filter() *PlanFilter {
+	return &PlanFilter{config: _q.config, predicateAdder: _q}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *PlanMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the PlanMutation builder.
+func (m *PlanMutation) Filter() *PlanFilter {
+	return &PlanFilter{config: m.config, predicateAdder: m}
+}
+
+// PlanFilter provides a generic filtering capability at runtime for PlanQuery.
+type PlanFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *PlanFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[26].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql uint32 predicate on the id field.
+func (f *PlanFilter) WhereID(p entql.Uint32P) {
+	f.Where(p.Field(plan.FieldID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *PlanFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(plan.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *PlanFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(plan.FieldUpdatedAt))
+}
+
+// WhereDeletedAt applies the entql time.Time predicate on the deleted_at field.
+func (f *PlanFilter) WhereDeletedAt(p entql.TimeP) {
+	f.Where(p.Field(plan.FieldDeletedAt))
+}
+
+// WhereCreatedBy applies the entql uint32 predicate on the created_by field.
+func (f *PlanFilter) WhereCreatedBy(p entql.Uint32P) {
+	f.Where(p.Field(plan.FieldCreatedBy))
+}
+
+// WhereUpdatedBy applies the entql uint32 predicate on the updated_by field.
+func (f *PlanFilter) WhereUpdatedBy(p entql.Uint32P) {
+	f.Where(p.Field(plan.FieldUpdatedBy))
+}
+
+// WhereDeletedBy applies the entql uint32 predicate on the deleted_by field.
+func (f *PlanFilter) WhereDeletedBy(p entql.Uint32P) {
+	f.Where(p.Field(plan.FieldDeletedBy))
+}
+
+// WhereRemark applies the entql string predicate on the remark field.
+func (f *PlanFilter) WhereRemark(p entql.StringP) {
+	f.Where(p.Field(plan.FieldRemark))
+}
+
+// WhereName applies the entql string predicate on the name field.
+func (f *PlanFilter) WhereName(p entql.StringP) {
+	f.Where(p.Field(plan.FieldName))
+}
+
+// WhereVersion applies the entql string predicate on the version field.
+func (f *PlanFilter) WhereVersion(p entql.StringP) {
+	f.Where(p.Field(plan.FieldVersion))
+}
+
+// WhereExpiryPolicy applies the entql string predicate on the expiry_policy field.
+func (f *PlanFilter) WhereExpiryPolicy(p entql.StringP) {
+	f.Where(p.Field(plan.FieldExpiryPolicy))
+}
+
+// WhereDataRetentionDays applies the entql uint32 predicate on the data_retention_days field.
+func (f *PlanFilter) WhereDataRetentionDays(p entql.Uint32P) {
+	f.Where(p.Field(plan.FieldDataRetentionDays))
+}
+
+// WhereDescription applies the entql string predicate on the description field.
+func (f *PlanFilter) WhereDescription(p entql.StringP) {
+	f.Where(p.Field(plan.FieldDescription))
+}
+
+// WhereHasTenants applies a predicate to check if query has an edge tenants.
+func (f *PlanFilter) WhereHasTenants() {
+	f.Where(entql.HasEdge("tenants"))
+}
+
+// WhereHasTenantsWith applies a predicate to check if query has an edge tenants with a given conditions (other predicates).
+func (f *PlanFilter) WhereHasTenantsWith(preds ...predicate.Tenant) {
+	f.Where(entql.HasEdgeWith("tenants", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasQuotas applies a predicate to check if query has an edge quotas.
+func (f *PlanFilter) WhereHasQuotas() {
+	f.Where(entql.HasEdge("quotas"))
+}
+
+// WhereHasQuotasWith applies a predicate to check if query has an edge quotas with a given conditions (other predicates).
+func (f *PlanFilter) WhereHasQuotasWith(preds ...predicate.PlanQuota) {
+	f.Where(entql.HasEdgeWith("quotas", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
+func (_q *PlanQuotaQuery) addPredicate(pred func(s *sql.Selector)) {
+	_q.predicates = append(_q.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the PlanQuotaQuery builder.
+func (_q *PlanQuotaQuery) Filter() *PlanQuotaFilter {
+	return &PlanQuotaFilter{config: _q.config, predicateAdder: _q}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *PlanQuotaMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the PlanQuotaMutation builder.
+func (m *PlanQuotaMutation) Filter() *PlanQuotaFilter {
+	return &PlanQuotaFilter{config: m.config, predicateAdder: m}
+}
+
+// PlanQuotaFilter provides a generic filtering capability at runtime for PlanQuotaQuery.
+type PlanQuotaFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *PlanQuotaFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[27].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql uint32 predicate on the id field.
+func (f *PlanQuotaFilter) WhereID(p entql.Uint32P) {
+	f.Where(p.Field(planquota.FieldID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *PlanQuotaFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(planquota.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *PlanQuotaFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(planquota.FieldUpdatedAt))
+}
+
+// WhereDeletedAt applies the entql time.Time predicate on the deleted_at field.
+func (f *PlanQuotaFilter) WhereDeletedAt(p entql.TimeP) {
+	f.Where(p.Field(planquota.FieldDeletedAt))
+}
+
+// WhereCreatedBy applies the entql uint32 predicate on the created_by field.
+func (f *PlanQuotaFilter) WhereCreatedBy(p entql.Uint32P) {
+	f.Where(p.Field(planquota.FieldCreatedBy))
+}
+
+// WhereUpdatedBy applies the entql uint32 predicate on the updated_by field.
+func (f *PlanQuotaFilter) WhereUpdatedBy(p entql.Uint32P) {
+	f.Where(p.Field(planquota.FieldUpdatedBy))
+}
+
+// WhereDeletedBy applies the entql uint32 predicate on the deleted_by field.
+func (f *PlanQuotaFilter) WhereDeletedBy(p entql.Uint32P) {
+	f.Where(p.Field(planquota.FieldDeletedBy))
+}
+
+// WhereQuotaType applies the entql string predicate on the quota_type field.
+func (f *PlanQuotaFilter) WhereQuotaType(p entql.StringP) {
+	f.Where(p.Field(planquota.FieldQuotaType))
+}
+
+// WhereQuotaValue applies the entql uint64 predicate on the quota_value field.
+func (f *PlanQuotaFilter) WhereQuotaValue(p entql.Uint64P) {
+	f.Where(p.Field(planquota.FieldQuotaValue))
+}
+
+// WhereHasPlan applies a predicate to check if query has an edge plan.
+func (f *PlanQuotaFilter) WhereHasPlan() {
+	f.Where(entql.HasEdge("plan"))
+}
+
+// WhereHasPlanWith applies a predicate to check if query has an edge plan with a given conditions (other predicates).
+func (f *PlanQuotaFilter) WhereHasPlanWith(preds ...predicate.Plan) {
+	f.Where(entql.HasEdgeWith("plan", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
 func (_q *PolicyEvaluationLogQuery) addPredicate(pred func(s *sql.Selector)) {
 	_q.predicates = append(_q.predicates, pred)
 }
@@ -4497,7 +4815,7 @@ type PolicyEvaluationLogFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *PolicyEvaluationLogFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[26].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[28].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -4617,7 +4935,7 @@ type PositionFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *PositionFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[27].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[29].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -4772,7 +5090,7 @@ type RoleFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *RoleFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[28].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[30].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -4887,7 +5205,7 @@ type RoleMetadataFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *RoleMetadataFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[29].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[31].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5007,7 +5325,7 @@ type RolePermissionFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *RolePermissionFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[30].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[32].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5107,7 +5425,7 @@ type TaskFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TaskFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[31].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[33].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5217,7 +5535,7 @@ type TenantFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TenantFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[32].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[34].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5328,6 +5646,20 @@ func (f *TenantFilter) WhereExpiredAt(p entql.TimeP) {
 	f.Where(p.Field(tenant.FieldExpiredAt))
 }
 
+// WhereHasPlan applies a predicate to check if query has an edge plan.
+func (f *TenantFilter) WhereHasPlan() {
+	f.Where(entql.HasEdge("plan"))
+}
+
+// WhereHasPlanWith applies a predicate to check if query has an edge plan with a given conditions (other predicates).
+func (f *TenantFilter) WhereHasPlanWith(preds ...predicate.Plan) {
+	f.Where(entql.HasEdgeWith("plan", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
 // addPredicate implements the predicateAdder interface.
 func (_q *UserQuery) addPredicate(pred func(s *sql.Selector)) {
 	_q.predicates = append(_q.predicates, pred)
@@ -5357,7 +5689,7 @@ type UserFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[33].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[35].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5512,7 +5844,7 @@ type UserCredentialFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserCredentialFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[34].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[36].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5652,7 +5984,7 @@ type UserOrgUnitFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserOrgUnitFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[35].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[37].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5777,7 +6109,7 @@ type UserPositionFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserPositionFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[36].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5897,7 +6229,7 @@ type UserRoleFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserRoleFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[37].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})

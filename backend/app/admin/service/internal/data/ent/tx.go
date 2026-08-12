@@ -64,6 +64,10 @@ type Tx struct {
 	PermissionMenu *PermissionMenuClient
 	// PermissionPolicy is the client for interacting with the PermissionPolicy builders.
 	PermissionPolicy *PermissionPolicyClient
+	// Plan is the client for interacting with the Plan builders.
+	Plan *PlanClient
+	// PlanQuota is the client for interacting with the PlanQuota builders.
+	PlanQuota *PlanQuotaClient
 	// PolicyEvaluationLog is the client for interacting with the PolicyEvaluationLog builders.
 	PolicyEvaluationLog *PolicyEvaluationLogClient
 	// Position is the client for interacting with the Position builders.
@@ -245,6 +249,8 @@ func (tx *Tx) init() {
 	tx.PermissionGroup = NewPermissionGroupClient(tx.config)
 	tx.PermissionMenu = NewPermissionMenuClient(tx.config)
 	tx.PermissionPolicy = NewPermissionPolicyClient(tx.config)
+	tx.Plan = NewPlanClient(tx.config)
+	tx.PlanQuota = NewPlanQuotaClient(tx.config)
 	tx.PolicyEvaluationLog = NewPolicyEvaluationLogClient(tx.config)
 	tx.Position = NewPositionClient(tx.config)
 	tx.Role = NewRoleClient(tx.config)

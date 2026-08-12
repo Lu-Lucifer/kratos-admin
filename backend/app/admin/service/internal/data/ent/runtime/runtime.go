@@ -31,6 +31,8 @@ import (
 	"go-wind-admin/app/admin/service/internal/data/ent/permissiongroup"
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionmenu"
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionpolicy"
+	"go-wind-admin/app/admin/service/internal/data/ent/plan"
+	"go-wind-admin/app/admin/service/internal/data/ent/planquota"
 	"go-wind-admin/app/admin/service/internal/data/ent/policyevaluationlog"
 	"go-wind-admin/app/admin/service/internal/data/ent/position"
 	"go-wind-admin/app/admin/service/internal/data/ent/role"
@@ -743,6 +745,28 @@ func init() {
 	permissionpolicyDescID := permissionpolicyMixinFields0[0].Descriptor()
 	// permissionpolicy.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	permissionpolicy.IDValidator = permissionpolicyDescID.Validators[0].(func(uint32) error)
+	planMixin := schema.Plan{}.Mixin()
+	planMixinFields0 := planMixin[0].Fields()
+	_ = planMixinFields0
+	planFields := schema.Plan{}.Fields()
+	_ = planFields
+	// planDescName is the schema descriptor for name field.
+	planDescName := planFields[0].Descriptor()
+	// plan.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	plan.NameValidator = planDescName.Validators[0].(func(string) error)
+	// planDescID is the schema descriptor for id field.
+	planDescID := planMixinFields0[0].Descriptor()
+	// plan.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	plan.IDValidator = planDescID.Validators[0].(func(uint32) error)
+	planquotaMixin := schema.PlanQuota{}.Mixin()
+	planquotaMixinFields0 := planquotaMixin[0].Fields()
+	_ = planquotaMixinFields0
+	planquotaFields := schema.PlanQuota{}.Fields()
+	_ = planquotaFields
+	// planquotaDescID is the schema descriptor for id field.
+	planquotaDescID := planquotaMixinFields0[0].Descriptor()
+	// planquota.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	planquota.IDValidator = planquotaDescID.Validators[0].(func(uint32) error)
 	policyevaluationlogMixin := schema.PolicyEvaluationLog{}.Mixin()
 	policyevaluationlog.Policy = privacy.NewPolicies(policyevaluationlogMixin[2], schema.PolicyEvaluationLog{})
 	policyevaluationlog.Hooks[0] = func(next ent.Mutator) ent.Mutator {

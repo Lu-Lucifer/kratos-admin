@@ -3015,6 +3015,292 @@ paths:
                 "200":
                     description: OK
                     content: {}
+    /admin/v1/plan-quotas:
+        get:
+            tags:
+                - PlanQuotaService
+            description: 分页查询套餐配额列表
+            operationId: PlanQuotaService_List
+            parameters:
+                - name: page
+                  in: query
+                  description: 当前页码（从1开始，默认1）
+                  schema:
+                    type: integer
+                    format: uint32
+                - name: pageSize
+                  in: query
+                  description: 每页条数（默认10，建议设置上限如100）
+                  schema:
+                    type: integer
+                    format: uint32
+                - name: offset
+                  in: query
+                  description: 跳过的记录数（从0开始，默认0）
+                  schema:
+                    type: string
+                - name: limit
+                  in: query
+                  description: 最多返回的记录数（默认10，建议设置上限如100）
+                  schema:
+                    type: integer
+                    format: uint32
+                - name: token
+                  in: query
+                  description: 上一页最后一条记录的游标（如ID/时间戳+ID，首次请求为空）
+                  schema:
+                    type: string
+                - name: noPaging
+                  in: query
+                  description: 是否不分页，如果为true，则page和pageSize参数无效。
+                  schema:
+                    type: boolean
+                - name: query
+                  in: query
+                  description: JSON字符串过滤条件，基础语法：{"field1":"val1", "field2___icontains":"val2"}，具体请参见：https://github.com/tx7do/go-crud/tree/main/pagination/filter/README.md
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  description: Google AIP规范字符串过滤条件
+                  schema:
+                    type: string
+                - name: filterExpr.type
+                  in: query
+                  description: 过滤表达式类型
+                  schema:
+                    enum:
+                        - EXPR_TYPE_UNSPECIFIED
+                        - AND
+                        - OR
+                    type: string
+                    format: enum
+                - name: orderBy
+                  in: query
+                  description: 排序条件
+                  schema:
+                    type: string
+                - name: fieldMask
+                  in: query
+                  description: 字段掩码，其作用为SELECT中的字段，其语法为使用逗号分隔字段名，例如：id,realName,userName。如果为空则选中所有字段，即SELECT *。
+                  schema:
+                    type: string
+                    format: field-mask
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListPlanQuotaResponse'
+        post:
+            tags:
+                - PlanQuotaService
+            description: 创建套餐配额
+            operationId: PlanQuotaService_Create
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreatePlanQuotaRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+        delete:
+            tags:
+                - PlanQuotaService
+            description: 删除套餐配额
+            operationId: PlanQuotaService_Delete
+            parameters:
+                - name: id
+                  in: query
+                  schema:
+                    type: integer
+                    format: uint32
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+    /admin/v1/plan-quotas/{id}:
+        put:
+            tags:
+                - PlanQuotaService
+            description: 更新套餐配额
+            operationId: PlanQuotaService_Update
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: uint32
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdatePlanQuotaRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+    /admin/v1/plans:
+        get:
+            tags:
+                - PlanService
+            description: 分页查询套餐列表
+            operationId: PlanService_List
+            parameters:
+                - name: page
+                  in: query
+                  description: 当前页码（从1开始，默认1）
+                  schema:
+                    type: integer
+                    format: uint32
+                - name: pageSize
+                  in: query
+                  description: 每页条数（默认10，建议设置上限如100）
+                  schema:
+                    type: integer
+                    format: uint32
+                - name: offset
+                  in: query
+                  description: 跳过的记录数（从0开始，默认0）
+                  schema:
+                    type: string
+                - name: limit
+                  in: query
+                  description: 最多返回的记录数（默认10，建议设置上限如100）
+                  schema:
+                    type: integer
+                    format: uint32
+                - name: token
+                  in: query
+                  description: 上一页最后一条记录的游标（如ID/时间戳+ID，首次请求为空）
+                  schema:
+                    type: string
+                - name: noPaging
+                  in: query
+                  description: 是否不分页，如果为true，则page和pageSize参数无效。
+                  schema:
+                    type: boolean
+                - name: query
+                  in: query
+                  description: JSON字符串过滤条件，基础语法：{"field1":"val1", "field2___icontains":"val2"}，具体请参见：https://github.com/tx7do/go-crud/tree/main/pagination/filter/README.md
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  description: Google AIP规范字符串过滤条件
+                  schema:
+                    type: string
+                - name: filterExpr.type
+                  in: query
+                  description: 过滤表达式类型
+                  schema:
+                    enum:
+                        - EXPR_TYPE_UNSPECIFIED
+                        - AND
+                        - OR
+                    type: string
+                    format: enum
+                - name: orderBy
+                  in: query
+                  description: 排序条件
+                  schema:
+                    type: string
+                - name: fieldMask
+                  in: query
+                  description: 字段掩码，其作用为SELECT中的字段，其语法为使用逗号分隔字段名，例如：id,realName,userName。如果为空则选中所有字段，即SELECT *。
+                  schema:
+                    type: string
+                    format: field-mask
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListPlanResponse'
+        post:
+            tags:
+                - PlanService
+            description: 创建套餐
+            operationId: PlanService_Create
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreatePlanRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+        delete:
+            tags:
+                - PlanService
+            description: 删除套餐
+            operationId: PlanService_Delete
+            parameters:
+                - name: id
+                  in: query
+                  schema:
+                    type: integer
+                    format: uint32
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+    /admin/v1/plans/{id}:
+        get:
+            tags:
+                - PlanService
+            description: 查询套餐详情
+            operationId: PlanService_Get
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: uint32
+                - name: viewMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Plan'
+        put:
+            tags:
+                - PlanService
+            description: 更新套餐
+            operationId: PlanService_Update
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: uint32
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdatePlanRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content: {}
     /admin/v1/policy-evaluation-logs:
         get:
             tags:
@@ -4529,6 +4815,18 @@ components:
                 data:
                     $ref: '#/components/schemas/Permission'
             description: 创建 - 请求
+        CreatePlanQuotaRequest:
+            type: object
+            properties:
+                data:
+                    $ref: '#/components/schemas/PlanQuota'
+            description: 创建套餐配额 - 请求
+        CreatePlanRequest:
+            type: object
+            properties:
+                data:
+                    $ref: '#/components/schemas/Plan'
+            description: 创建套餐 - 请求
         CreatePositionRequest:
             type: object
             properties:
@@ -5605,6 +5903,26 @@ components:
                 total:
                     type: string
             description: 查询列表 - 回应
+        ListPlanQuotaResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/PlanQuota'
+                total:
+                    type: string
+            description: 套餐配额列表 - 答复
+        ListPlanResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Plan'
+                total:
+                    type: string
+            description: 套餐列表 - 答复
         ListPolicyEvaluationLogResponse:
             type: object
             properties:
@@ -6641,6 +6959,117 @@ components:
                     type: string
                     description: 短信验证码
             description: 手机验证
+        Plan:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    description: 套餐ID
+                    format: uint32
+                name:
+                    type: string
+                    description: 套餐名称
+                version:
+                    enum:
+                        - PLAN_VERSION_UNSPECIFIED
+                        - FREE
+                        - STANDARD
+                        - ENTERPRISE
+                    type: string
+                    description: 套餐版本
+                    format: enum
+                expiryPolicy:
+                    enum:
+                        - PLAN_EXPIRY_POLICY_UNSPECIFIED
+                        - READONLY
+                        - BLOCK_LOGIN
+                        - FREEZE
+                    type: string
+                    description: 到期处置策略
+                    format: enum
+                dataRetentionDays:
+                    type: integer
+                    description: 数据保留周期（天）
+                    format: uint32
+                description:
+                    type: string
+                    description: 描述
+                remark:
+                    type: string
+                    description: 备注
+                createdBy:
+                    type: integer
+                    description: 创建者ID
+                    format: uint32
+                updatedBy:
+                    type: integer
+                    description: 更新者ID
+                    format: uint32
+                deletedBy:
+                    type: integer
+                    description: 删除者用户ID
+                    format: uint32
+                createdAt:
+                    type: string
+                    description: 创建时间
+                    format: date-time
+                updatedAt:
+                    type: string
+                    description: 更新时间
+                    format: date-time
+                deletedAt:
+                    type: string
+                    description: 删除时间
+                    format: date-time
+            description: 套餐
+        PlanQuota:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    description: 配额项ID
+                    format: uint32
+                planId:
+                    type: integer
+                    description: 所属套餐ID
+                    format: uint32
+                quotaType:
+                    enum:
+                        - PLAN_QUOTA_TYPE_UNSPECIFIED
+                        - USER_LIMIT
+                        - STORAGE
+                        - API_CALL
+                    type: string
+                    description: 配额类型
+                    format: enum
+                quotaValue:
+                    type: string
+                    description: 配额值
+                createdBy:
+                    type: integer
+                    description: 创建者用户ID
+                    format: uint32
+                updatedBy:
+                    type: integer
+                    description: 更新者用户ID
+                    format: uint32
+                deletedBy:
+                    type: integer
+                    description: 删除者用户ID
+                    format: uint32
+                createdAt:
+                    type: string
+                    description: 创建时间
+                    format: date-time
+                updatedAt:
+                    type: string
+                    description: 更新时间
+                    format: date-time
+                deletedAt:
+                    type: string
+                    description: 删除时间
+                    format: date-time
+            description: 套餐配额
         PolicyEvaluationLog:
             type: object
             properties:
@@ -7219,6 +7648,10 @@ components:
                 subscriptionPlan:
                     type: string
                     description: 订阅套餐（如“企业版1年”“基础版3个月”）
+                planId:
+                    type: integer
+                    description: 订阅套餐ID（引用套餐目录）
+                    format: uint32
                 memberCount:
                     type: integer
                     description: 成员数量
@@ -7485,6 +7918,40 @@ components:
                     type: boolean
                     description: 如果设置为true的时候，资源不存在则会新增(插入)，并且在这种情况下`updateMask`字段将会被忽略。
             description: 更新 - 请求
+        UpdatePlanQuotaRequest:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: uint32
+                data:
+                    $ref: '#/components/schemas/PlanQuota'
+                updateMask:
+                    example: id,realname,username
+                    type: string
+                    description: 要更新的字段列表
+                    format: field-mask
+                allowMissing:
+                    type: boolean
+                    description: 如果设置为true的时候，资源不存在则会新增(插入)，并且在这种情况下`updateMask`字段将会被忽略。
+            description: 更新套餐配额 -请求
+        UpdatePlanRequest:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: uint32
+                data:
+                    $ref: '#/components/schemas/Plan'
+                updateMask:
+                    example: id,realname,username
+                    type: string
+                    description: 要更新的字段列表
+                    format: field-mask
+                allowMissing:
+                    type: boolean
+                    description: 如果设置为true的时候，资源不存在则会新增(插入)，并且在这种情况下`updateMask`字段将会被忽略。
+            description: 更新套餐 -请求
         UpdatePositionRequest:
             type: object
             properties:
@@ -7870,6 +8337,10 @@ tags:
       description: 权限组管理服务
     - name: PermissionService
       description: 权限点管理服务
+    - name: PlanQuotaService
+      description: 套餐配额管理服务
+    - name: PlanService
+      description: 套餐管理服务
     - name: PolicyEvaluationLogService
       description: 策略评估日志服务
     - name: PositionService

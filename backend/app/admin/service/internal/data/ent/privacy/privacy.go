@@ -735,6 +735,54 @@ func (f PermissionPolicyMutationRuleFunc) EvalMutation(ctx context.Context, m en
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.PermissionPolicyMutation", m)
 }
 
+// The PlanQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type PlanQueryRuleFunc func(context.Context, *ent.PlanQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f PlanQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.PlanQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.PlanQuery", q)
+}
+
+// The PlanMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type PlanMutationRuleFunc func(context.Context, *ent.PlanMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f PlanMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.PlanMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.PlanMutation", m)
+}
+
+// The PlanQuotaQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type PlanQuotaQueryRuleFunc func(context.Context, *ent.PlanQuotaQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f PlanQuotaQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.PlanQuotaQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.PlanQuotaQuery", q)
+}
+
+// The PlanQuotaMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type PlanQuotaMutationRuleFunc func(context.Context, *ent.PlanQuotaMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f PlanQuotaMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.PlanQuotaMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.PlanQuotaMutation", m)
+}
+
 // The PolicyEvaluationLogQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type PolicyEvaluationLogQueryRuleFunc func(context.Context, *ent.PolicyEvaluationLogQuery) error
@@ -1110,6 +1158,10 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.PermissionPolicyQuery:
 		return q.Filter(), nil
+	case *ent.PlanQuery:
+		return q.Filter(), nil
+	case *ent.PlanQuotaQuery:
+		return q.Filter(), nil
 	case *ent.PolicyEvaluationLogQuery:
 		return q.Filter(), nil
 	case *ent.PositionQuery:
@@ -1192,6 +1244,10 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.PermissionMenuMutation:
 		return m.Filter(), nil
 	case *ent.PermissionPolicyMutation:
+		return m.Filter(), nil
+	case *ent.PlanMutation:
+		return m.Filter(), nil
+	case *ent.PlanQuotaMutation:
 		return m.Filter(), nil
 	case *ent.PolicyEvaluationLogMutation:
 		return m.Filter(), nil

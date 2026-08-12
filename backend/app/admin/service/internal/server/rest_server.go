@@ -101,6 +101,8 @@ func NewRestServer(
 	languageService *service.LanguageService,
 
 	tenantService *service.TenantService,
+	planService *service.PlanService,
+	planQuotaService *service.PlanQuotaService,
 	userService *service.UserService,
 	userProfileService *service.UserProfileService,
 	roleService *service.RoleService,
@@ -165,6 +167,8 @@ func NewRestServer(
 	adminV1.RegisterRoleServiceHTTPServer(srv, roleService)
 	adminV1.RegisterPositionServiceHTTPServer(srv, positionService)
 	adminV1.RegisterTenantServiceHTTPServer(srv, tenantService)
+	adminV1.RegisterPlanServiceHTTPServer(srv, planService)
+	adminV1.RegisterPlanQuotaServiceHTTPServer(srv, planQuotaService)
 
 	adminV1.RegisterLoginAuditLogServiceHTTPServer(srv, loginAuditLogService)
 	adminV1.RegisterApiAuditLogServiceHTTPServer(srv, apiAuditLogService)
