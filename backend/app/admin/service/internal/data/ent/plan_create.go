@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"go-wind-admin/app/admin/service/internal/data/ent/plan"
+	"go-wind-admin/app/admin/service/internal/data/ent/planmodule"
 	"go-wind-admin/app/admin/service/internal/data/ent/planquota"
 	"go-wind-admin/app/admin/service/internal/data/ent/tenant"
 	"time"
@@ -228,6 +229,21 @@ func (_c *PlanCreate) AddQuotas(v ...*PlanQuota) *PlanCreate {
 	return _c.AddQuotaIDs(ids...)
 }
 
+// AddModuleIDs adds the "modules" edge to the PlanModule entity by IDs.
+func (_c *PlanCreate) AddModuleIDs(ids ...uint32) *PlanCreate {
+	_c.mutation.AddModuleIDs(ids...)
+	return _c
+}
+
+// AddModules adds the "modules" edges to the PlanModule entity.
+func (_c *PlanCreate) AddModules(v ...*PlanModule) *PlanCreate {
+	ids := make([]uint32, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddModuleIDs(ids...)
+}
+
 // Mutation returns the PlanMutation object of the builder.
 func (_c *PlanCreate) Mutation() *PlanMutation {
 	return _c.mutation
@@ -297,6 +313,9 @@ func (_c *PlanCreate) check() error {
 	}
 	if len(_c.mutation.QuotasIDs()) == 0 {
 		return &ValidationError{Name: "quotas", err: errors.New(`ent: missing required edge "Plan.quotas"`)}
+	}
+	if len(_c.mutation.ModulesIDs()) == 0 {
+		return &ValidationError{Name: "modules", err: errors.New(`ent: missing required edge "Plan.modules"`)}
 	}
 	return nil
 }
@@ -404,6 +423,22 @@ func (_c *PlanCreate) createSpec() (*Plan, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(planquota.FieldID, field.TypeUint32),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ModulesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plan.ModulesTable,
+			Columns: []string{plan.ModulesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(planmodule.FieldID, field.TypeUint32),
 			},
 		}
 		for _, k := range nodes {

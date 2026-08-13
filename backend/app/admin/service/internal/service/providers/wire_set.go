@@ -35,6 +35,7 @@ var ProviderSet = wire.NewSet(
 	service.NewTenantService,
 	service.NewPlanService,
 	service.NewPlanQuotaService,
+	service.NewPlanModuleService,
 	service.NewInternalMessageService,
 	service.NewInternalMessageCategoryService,
 	service.NewInternalMessageRecipientService,

@@ -9,7 +9,10 @@ TRUNCATE TABLE public.sys_org_units,
                public.sys_login_policies,
                public.sys_dict_types,
                public.sys_dict_entries,
-               public.internal_message_categories
+               public.internal_message_categories,
+               public.sys_plan_modules,
+               public.sys_plan_quotas,
+               public.sys_plans
 RESTART IDENTITY CASCADE;
 
 -- 测试租户
@@ -243,5 +246,62 @@ VALUES
     (403, 'user_permission_changed', '权限变更', '账号角色或功能权限调整通知', 17, true, NOW())
 ;
 SELECT setval('internal_message_categories_id_seq', (SELECT MAX(id) FROM internal_message_categories));
+
+-- 套餐目录种子（三版本：免费/标准/企业）
+INSERT INTO public.sys_plans (id, name, version, expiry_policy, data_retention_days, description, created_at)
+VALUES
+    (1, '免费版', 'FREE', 'READONLY', 0, '免费版套餐，仅基础功能', now()),
+    (2, '标准版', 'STANDARD', 'BLOCK_LOGIN', 30, '标准版套餐，含核心业务模块', now()),
+    (3, '企业版', 'ENTERPRISE', 'FREEZE', 90, '企业版套餐，全功能模块', now())
+;
+SELECT setval('sys_plans_id_seq', (SELECT MAX(id) FROM sys_plans));
+
+-- 套餐配额种子
+INSERT INTO public.sys_plan_quotas (plan_id, quota_type, quota_value, created_at)
+VALUES
+    (1, 'USER_LIMIT', 5, now()),
+    (1, 'STORAGE', 1073741824, now()),
+    (1, 'API_CALL', 1000, now()),
+    (2, 'USER_LIMIT', 50, now()),
+    (2, 'STORAGE', 10737418240, now()),
+    (2, 'API_CALL', 10000, now()),
+    (3, 'USER_LIMIT', 500, now()),
+    (3, 'STORAGE', 107374182400, now()),
+    (3, 'API_CALL', 100000, now())
+;
+
+-- 套餐模块白名单种子
+-- 免费版（plan_id=1）：DASHBOARD + TENANT
+INSERT INTO public.sys_plan_modules (plan_id, module, created_at)
+VALUES
+    (1, 'DASHBOARD', now()),
+    (1, 'TENANT', now())
+;
+
+-- 标准版（plan_id=2）：DASHBOARD + OPM + SYSTEM + DICT + LOG + TENANT
+INSERT INTO public.sys_plan_modules (plan_id, module, created_at)
+VALUES
+    (2, 'DASHBOARD', now()),
+    (2, 'OPM', now()),
+    (2, 'SYSTEM', now()),
+    (2, 'DICT', now()),
+    (2, 'LOG', now()),
+    (2, 'TENANT', now())
+;
+
+-- 企业版（plan_id=3）：全模块
+INSERT INTO public.sys_plan_modules (plan_id, module, created_at)
+VALUES
+    (3, 'DASHBOARD', now()),
+    (3, 'OPM', now()),
+    (3, 'SYSTEM', now()),
+    (3, 'DICT', now()),
+    (3, 'TENANT', now()),
+    (3, 'PERMISSION', now()),
+    (3, 'LOG', now()),
+    (3, 'INTERNAL_MESSAGE', now()),
+    (3, 'FILE', now()),
+    (3, 'TASK', now())
+;
 
 COMMIT;

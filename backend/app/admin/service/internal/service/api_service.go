@@ -18,10 +18,12 @@ import (
 
 	adminV1 "go-wind-admin/api/gen/go/admin/service/v1"
 	permissionV1 "go-wind-admin/api/gen/go/permission/service/v1"
+	identityV1 "go-wind-admin/api/gen/go/identity/service/v1"
 
 	"go-wind-admin/pkg/authorizer"
 	appViewer "go-wind-admin/pkg/entgo/viewer"
 	"go-wind-admin/pkg/middleware/auth"
+	"go-wind-admin/pkg/constants"
 )
 
 type RouteWalker interface {
@@ -197,6 +199,13 @@ func (s *ApiService) syncWithOpenAPI(ctx context.Context) error {
 				}
 			}
 
+			var businessModule identityV1.Module = identityV1.Module_MODULE_UNSPECIFIED
+			if module != "" {
+				if bm, ok := constants.ServiceTagToBusinessModule[module]; ok {
+					businessModule = bm
+				}
+			}
+
 			count++
 
 			apiList = append(apiList, &permissionV1.Api{
@@ -205,6 +214,7 @@ func (s *ApiService) syncWithOpenAPI(ctx context.Context) error {
 				Method:            trans.Ptr(method),
 				Module:            trans.Ptr(module),
 				ModuleDescription: trans.Ptr(moduleDescription),
+				BusinessModule:    trans.Ptr(businessModule),
 				Description:       trans.Ptr(operation.Description),
 				Operation:         trans.Ptr(operation.OperationID),
 			})

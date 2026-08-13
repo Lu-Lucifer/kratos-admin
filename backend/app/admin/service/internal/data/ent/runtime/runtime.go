@@ -32,6 +32,7 @@ import (
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionmenu"
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionpolicy"
 	"go-wind-admin/app/admin/service/internal/data/ent/plan"
+	"go-wind-admin/app/admin/service/internal/data/ent/planmodule"
 	"go-wind-admin/app/admin/service/internal/data/ent/planquota"
 	"go-wind-admin/app/admin/service/internal/data/ent/policyevaluationlog"
 	"go-wind-admin/app/admin/service/internal/data/ent/position"
@@ -758,6 +759,15 @@ func init() {
 	planDescID := planMixinFields0[0].Descriptor()
 	// plan.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	plan.IDValidator = planDescID.Validators[0].(func(uint32) error)
+	planmoduleMixin := schema.PlanModule{}.Mixin()
+	planmoduleMixinFields0 := planmoduleMixin[0].Fields()
+	_ = planmoduleMixinFields0
+	planmoduleFields := schema.PlanModule{}.Fields()
+	_ = planmoduleFields
+	// planmoduleDescID is the schema descriptor for id field.
+	planmoduleDescID := planmoduleMixinFields0[0].Descriptor()
+	// planmodule.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	planmodule.IDValidator = planmoduleDescID.Validators[0].(func(uint32) error)
 	planquotaMixin := schema.PlanQuota{}.Mixin()
 	planquotaMixinFields0 := planquotaMixin[0].Fields()
 	_ = planquotaMixinFields0

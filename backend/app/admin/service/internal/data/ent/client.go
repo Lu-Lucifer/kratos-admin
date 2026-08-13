@@ -38,6 +38,7 @@ import (
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionmenu"
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionpolicy"
 	"go-wind-admin/app/admin/service/internal/data/ent/plan"
+	"go-wind-admin/app/admin/service/internal/data/ent/planmodule"
 	"go-wind-admin/app/admin/service/internal/data/ent/planquota"
 	"go-wind-admin/app/admin/service/internal/data/ent/policyevaluationlog"
 	"go-wind-admin/app/admin/service/internal/data/ent/position"
@@ -117,6 +118,8 @@ type Client struct {
 	PermissionPolicy *PermissionPolicyClient
 	// Plan is the client for interacting with the Plan builders.
 	Plan *PlanClient
+	// PlanModule is the client for interacting with the PlanModule builders.
+	PlanModule *PlanModuleClient
 	// PlanQuota is the client for interacting with the PlanQuota builders.
 	PlanQuota *PlanQuotaClient
 	// PolicyEvaluationLog is the client for interacting with the PolicyEvaluationLog builders.
@@ -181,6 +184,7 @@ func (c *Client) init() {
 	c.PermissionMenu = NewPermissionMenuClient(c.config)
 	c.PermissionPolicy = NewPermissionPolicyClient(c.config)
 	c.Plan = NewPlanClient(c.config)
+	c.PlanModule = NewPlanModuleClient(c.config)
 	c.PlanQuota = NewPlanQuotaClient(c.config)
 	c.PolicyEvaluationLog = NewPolicyEvaluationLogClient(c.config)
 	c.Position = NewPositionClient(c.config)
@@ -313,6 +317,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		PermissionMenu:           NewPermissionMenuClient(cfg),
 		PermissionPolicy:         NewPermissionPolicyClient(cfg),
 		Plan:                     NewPlanClient(cfg),
+		PlanModule:               NewPlanModuleClient(cfg),
 		PlanQuota:                NewPlanQuotaClient(cfg),
 		PolicyEvaluationLog:      NewPolicyEvaluationLogClient(cfg),
 		Position:                 NewPositionClient(cfg),
@@ -372,6 +377,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		PermissionMenu:           NewPermissionMenuClient(cfg),
 		PermissionPolicy:         NewPermissionPolicyClient(cfg),
 		Plan:                     NewPlanClient(cfg),
+		PlanModule:               NewPlanModuleClient(cfg),
 		PlanQuota:                NewPlanQuotaClient(cfg),
 		PolicyEvaluationLog:      NewPolicyEvaluationLogClient(cfg),
 		Position:                 NewPositionClient(cfg),
@@ -420,9 +426,9 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Membership, c.MembershipOrgUnit, c.MembershipPosition, c.MembershipRole,
 		c.Menu, c.OperationAuditLog, c.OrgUnit, c.Permission, c.PermissionApi,
 		c.PermissionAuditLog, c.PermissionGroup, c.PermissionMenu, c.PermissionPolicy,
-		c.Plan, c.PlanQuota, c.PolicyEvaluationLog, c.Position, c.Role, c.RoleMetadata,
-		c.RolePermission, c.Task, c.Tenant, c.User, c.UserCredential, c.UserOrgUnit,
-		c.UserPosition, c.UserRole,
+		c.Plan, c.PlanModule, c.PlanQuota, c.PolicyEvaluationLog, c.Position, c.Role,
+		c.RoleMetadata, c.RolePermission, c.Task, c.Tenant, c.User, c.UserCredential,
+		c.UserOrgUnit, c.UserPosition, c.UserRole,
 	} {
 		n.Use(hooks...)
 	}
@@ -438,9 +444,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Membership, c.MembershipOrgUnit, c.MembershipPosition, c.MembershipRole,
 		c.Menu, c.OperationAuditLog, c.OrgUnit, c.Permission, c.PermissionApi,
 		c.PermissionAuditLog, c.PermissionGroup, c.PermissionMenu, c.PermissionPolicy,
-		c.Plan, c.PlanQuota, c.PolicyEvaluationLog, c.Position, c.Role, c.RoleMetadata,
-		c.RolePermission, c.Task, c.Tenant, c.User, c.UserCredential, c.UserOrgUnit,
-		c.UserPosition, c.UserRole,
+		c.Plan, c.PlanModule, c.PlanQuota, c.PolicyEvaluationLog, c.Position, c.Role,
+		c.RoleMetadata, c.RolePermission, c.Task, c.Tenant, c.User, c.UserCredential,
+		c.UserOrgUnit, c.UserPosition, c.UserRole,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -503,6 +509,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PermissionPolicy.mutate(ctx, m)
 	case *PlanMutation:
 		return c.Plan.mutate(ctx, m)
+	case *PlanModuleMutation:
+		return c.PlanModule.mutate(ctx, m)
 	case *PlanQuotaMutation:
 		return c.PlanQuota.mutate(ctx, m)
 	case *PolicyEvaluationLogMutation:
@@ -4310,6 +4318,22 @@ func (c *PlanClient) QueryQuotas(_m *Plan) *PlanQuotaQuery {
 	return query
 }
 
+// QueryModules queries the modules edge of a Plan.
+func (c *PlanClient) QueryModules(_m *Plan) *PlanModuleQuery {
+	query := (&PlanModuleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plan.Table, plan.FieldID, id),
+			sqlgraph.To(planmodule.Table, planmodule.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, plan.ModulesTable, plan.ModulesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PlanClient) Hooks() []Hook {
 	return c.hooks.Plan
@@ -4332,6 +4356,155 @@ func (c *PlanClient) mutate(ctx context.Context, m *PlanMutation) (Value, error)
 		return (&PlanDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Plan mutation op: %q", m.Op())
+	}
+}
+
+// PlanModuleClient is a client for the PlanModule schema.
+type PlanModuleClient struct {
+	config
+}
+
+// NewPlanModuleClient returns a client for the PlanModule from the given config.
+func NewPlanModuleClient(c config) *PlanModuleClient {
+	return &PlanModuleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `planmodule.Hooks(f(g(h())))`.
+func (c *PlanModuleClient) Use(hooks ...Hook) {
+	c.hooks.PlanModule = append(c.hooks.PlanModule, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `planmodule.Intercept(f(g(h())))`.
+func (c *PlanModuleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PlanModule = append(c.inters.PlanModule, interceptors...)
+}
+
+// Create returns a builder for creating a PlanModule entity.
+func (c *PlanModuleClient) Create() *PlanModuleCreate {
+	mutation := newPlanModuleMutation(c.config, OpCreate)
+	return &PlanModuleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PlanModule entities.
+func (c *PlanModuleClient) CreateBulk(builders ...*PlanModuleCreate) *PlanModuleCreateBulk {
+	return &PlanModuleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PlanModuleClient) MapCreateBulk(slice any, setFunc func(*PlanModuleCreate, int)) *PlanModuleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PlanModuleCreateBulk{err: fmt.Errorf("calling to PlanModuleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PlanModuleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PlanModuleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PlanModule.
+func (c *PlanModuleClient) Update() *PlanModuleUpdate {
+	mutation := newPlanModuleMutation(c.config, OpUpdate)
+	return &PlanModuleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PlanModuleClient) UpdateOne(_m *PlanModule) *PlanModuleUpdateOne {
+	mutation := newPlanModuleMutation(c.config, OpUpdateOne, withPlanModule(_m))
+	return &PlanModuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PlanModuleClient) UpdateOneID(id uint32) *PlanModuleUpdateOne {
+	mutation := newPlanModuleMutation(c.config, OpUpdateOne, withPlanModuleID(id))
+	return &PlanModuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PlanModule.
+func (c *PlanModuleClient) Delete() *PlanModuleDelete {
+	mutation := newPlanModuleMutation(c.config, OpDelete)
+	return &PlanModuleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PlanModuleClient) DeleteOne(_m *PlanModule) *PlanModuleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PlanModuleClient) DeleteOneID(id uint32) *PlanModuleDeleteOne {
+	builder := c.Delete().Where(planmodule.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PlanModuleDeleteOne{builder}
+}
+
+// Query returns a query builder for PlanModule.
+func (c *PlanModuleClient) Query() *PlanModuleQuery {
+	return &PlanModuleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePlanModule},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PlanModule entity by its id.
+func (c *PlanModuleClient) Get(ctx context.Context, id uint32) (*PlanModule, error) {
+	return c.Query().Where(planmodule.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PlanModuleClient) GetX(ctx context.Context, id uint32) *PlanModule {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPlan queries the plan edge of a PlanModule.
+func (c *PlanModuleClient) QueryPlan(_m *PlanModule) *PlanQuery {
+	query := (&PlanClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(planmodule.Table, planmodule.FieldID, id),
+			sqlgraph.To(plan.Table, plan.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, planmodule.PlanTable, planmodule.PlanColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PlanModuleClient) Hooks() []Hook {
+	return c.hooks.PlanModule
+}
+
+// Interceptors returns the client interceptors.
+func (c *PlanModuleClient) Interceptors() []Interceptor {
+	return c.inters.PlanModule
+}
+
+func (c *PlanModuleClient) mutate(ctx context.Context, m *PlanModuleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PlanModuleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PlanModuleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PlanModuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PlanModuleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PlanModule mutation op: %q", m.Op())
 	}
 }
 
@@ -6115,8 +6288,8 @@ type (
 		LoginAuditLog, LoginPolicy, Membership, MembershipOrgUnit, MembershipPosition,
 		MembershipRole, Menu, OperationAuditLog, OrgUnit, Permission, PermissionApi,
 		PermissionAuditLog, PermissionGroup, PermissionMenu, PermissionPolicy, Plan,
-		PlanQuota, PolicyEvaluationLog, Position, Role, RoleMetadata, RolePermission,
-		Task, Tenant, User, UserCredential, UserOrgUnit, UserPosition,
+		PlanModule, PlanQuota, PolicyEvaluationLog, Position, Role, RoleMetadata,
+		RolePermission, Task, Tenant, User, UserCredential, UserOrgUnit, UserPosition,
 		UserRole []ent.Hook
 	}
 	inters struct {
@@ -6125,8 +6298,8 @@ type (
 		LoginAuditLog, LoginPolicy, Membership, MembershipOrgUnit, MembershipPosition,
 		MembershipRole, Menu, OperationAuditLog, OrgUnit, Permission, PermissionApi,
 		PermissionAuditLog, PermissionGroup, PermissionMenu, PermissionPolicy, Plan,
-		PlanQuota, PolicyEvaluationLog, Position, Role, RoleMetadata, RolePermission,
-		Task, Tenant, User, UserCredential, UserOrgUnit, UserPosition,
+		PlanModule, PlanQuota, PolicyEvaluationLog, Position, Role, RoleMetadata,
+		RolePermission, Task, Tenant, User, UserCredential, UserOrgUnit, UserPosition,
 		UserRole []ent.Interceptor
 	}
 )

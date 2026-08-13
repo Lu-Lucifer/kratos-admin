@@ -51,10 +51,11 @@ type TaskService struct {
 
 	taskScheduler TaskScheduler
 
-	userRepo   data.UserRepo
-	taskRepo   *data.TaskRepo
-	backupRepo *data.BackupRepo
-	mc         *oss.MinIOClient
+	userRepo       data.UserRepo
+	taskRepo       *data.TaskRepo
+	backupRepo     *data.BackupRepo
+	tenantUsageRepo *data.TenantUsageRepo
+	mc             *oss.MinIOClient
 }
 
 func NewTaskService(
@@ -62,14 +63,16 @@ func NewTaskService(
 	taskRepo *data.TaskRepo,
 	userRepo data.UserRepo,
 	backupRepo *data.BackupRepo,
+	tenantUsageRepo *data.TenantUsageRepo,
 	mc *oss.MinIOClient,
 ) *TaskService {
 	svc := &TaskService{
-		log:        ctx.NewLoggerHelper("task/service/admin-service"),
-		taskRepo:   taskRepo,
-		userRepo:   userRepo,
-		backupRepo: backupRepo,
-		mc:         mc,
+		log:             ctx.NewLoggerHelper("task/service/admin-service"),
+		taskRepo:        taskRepo,
+		userRepo:        userRepo,
+		backupRepo:      backupRepo,
+		tenantUsageRepo: tenantUsageRepo,
+		mc:              mc,
 	}
 
 	return svc
@@ -323,6 +326,21 @@ func (s *TaskService) startAllTask(ctx context.Context) (int32, error) {
 
 	s.log.Infof("总共成功开启定时任务[%d]个", count)
 
+	// 注册系统级常驻任务：租户到期扫描（不依赖 sys_tasks 表，规避 typeName 去重问题）。
+	// 放在 startAllTask 末尾，确保初始启动与 RestartAllTask（先 RemoveAllPeriodicTask 再
+	// startAllTask）后均能恢复调度项。handler 已在 NewAsynqServer 中通过 RegisterSubscriber 注册。
+	if s.hasScheduler() {
+		if _, err := s.taskScheduler.NewPeriodicTask(
+			task.TenantExpiryScanCronSpec,
+			task.TenantExpiryScanTaskType,
+			&task.TenantExpiryScanTaskData{},
+		); err != nil {
+			s.log.Errorf("注册系统级到期扫描定时任务失败: %s", err.Error())
+		} else {
+			s.log.Infof("系统级到期扫描定时任务已注册（cron=%s）", task.TenantExpiryScanCronSpec)
+		}
+	}
+
 	return count, nil
 }
 
@@ -542,4 +560,33 @@ func gzipBytes(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// AsyncTenantExpiryScan 租户到期扫描任务的实际执行逻辑。
+//
+// 系统级常驻定时任务（每小时整点），由 NewAsynqServer 启动时注册，不写入 sys_tasks 表。
+// 逻辑详见 TenantUsageRepo.EnforceExpiryPolicies：扫描 status==ON 且 expired_at<=now 的租户，
+// 按其套餐的 expiry_policy 修改租户状态（BLOCK_LOGIN→EXPIRED、FREEZE→FREEZE、READONLY 保持 ON），
+// 并吊销受影响租户全部用户的在线令牌。
+//
+// READONLY 策略的即时读写拦截由 TenantAccessChecker 中间件承担，不需要等待本扫描任务。
+func (s *TaskService) AsyncTenantExpiryScan(taskType string, taskData *task.TenantExpiryScanTaskData) error {
+	s.log.Infof("AsyncTenantExpiryScan [%s] [%+v]", taskType, taskData)
+
+	if s.tenantUsageRepo == nil {
+		s.log.Errorf("AsyncTenantExpiryScan: tenantUsageRepo is nil, aborting")
+		return errors.New("tenantUsageRepo is not configured")
+	}
+
+	// 用 SystemViewerContext 包裹：到期扫描需要跨租户查询。
+	ctx := appViewer.NewSystemViewerContext(context.Background())
+
+	count, err := s.tenantUsageRepo.EnforceExpiryPolicies(ctx)
+	if err != nil {
+		s.log.Errorf("AsyncTenantExpiryScan: enforce failed: %v", err)
+		return err
+	}
+
+	s.log.Infof("AsyncTenantExpiryScan: completed, %d tenants enforced", count)
+	return nil
 }

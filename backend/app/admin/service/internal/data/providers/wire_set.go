@@ -30,6 +30,7 @@ var ProviderSet = wire.NewSet(
 	data.NewAuthenticator,
 	authorizer.NewAuthorizer,
 	data.NewTokenChecker,
+	data.NewTenantAccessCheckerImpl,
 
 	data.NewPasswordCrypto,
 	data.NewCaptcha,
@@ -52,6 +53,8 @@ var ProviderSet = wire.NewSet(
 	data.NewTenantRepo,
 	data.NewPlanRepo,
 	data.NewPlanQuotaRepo,
+	data.NewPlanModuleRepo,
+	data.NewTenantUsageRepo,
 
 	data.NewUserRepo,
 	data.NewUserCredentialRepo,

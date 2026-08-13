@@ -18,6 +18,9 @@ TRUNCATE TABLE sys_users AUTO_INCREMENT = 1;
 TRUNCATE TABLE sys_user_credentials AUTO_INCREMENT = 1;
 TRUNCATE TABLE sys_memberships AUTO_INCREMENT = 1;
 TRUNCATE TABLE sys_membership_roles AUTO_INCREMENT = 1;
+TRUNCATE TABLE sys_plan_modules AUTO_INCREMENT = 1;
+TRUNCATE TABLE sys_plan_quotas AUTO_INCREMENT = 1;
+TRUNCATE TABLE sys_plans AUTO_INCREMENT = 1;
 
 -- 测试租户
 INSERT INTO sys_tenants(id, name, code, type, audit_status, status, admin_user_id, created_at)
@@ -171,6 +174,58 @@ VALUES
     (402, 'user_profile_updated', '资料变更', '用户手机号、邮箱等信息修改后通知', 16, true, NOW()),
     (403, 'user_permission_changed', '权限变更', '账号角色或功能权限调整通知', 17, true, NOW());
 ALTER TABLE internal_message_categories AUTO_INCREMENT = (SELECT COALESCE(MAX(id) + 1, 1) FROM internal_message_categories);
+
+-- 套餐目录种子（三版本：免费/标准/企业）
+INSERT INTO sys_plans (id, name, version, expiry_policy, data_retention_days, description, created_at)
+VALUES
+    (1, '免费版', 'FREE', 'READONLY', 0, '免费版套餐，仅基础功能', NOW()),
+    (2, '标准版', 'STANDARD', 'BLOCK_LOGIN', 30, '标准版套餐，含核心业务模块', NOW()),
+    (3, '企业版', 'ENTERPRISE', 'FREEZE', 90, '企业版套餐，全功能模块', NOW());
+ALTER TABLE sys_plans AUTO_INCREMENT = (SELECT COALESCE(MAX(id) + 1, 1) FROM sys_plans);
+
+-- 套餐配额种子
+INSERT INTO sys_plan_quotas (plan_id, quota_type, quota_value, created_at)
+VALUES
+    (1, 'USER_LIMIT', 5, NOW()),
+    (1, 'STORAGE', 1073741824, NOW()),
+    (1, 'API_CALL', 1000, NOW()),
+    (2, 'USER_LIMIT', 50, NOW()),
+    (2, 'STORAGE', 10737418240, NOW()),
+    (2, 'API_CALL', 10000, NOW()),
+    (3, 'USER_LIMIT', 500, NOW()),
+    (3, 'STORAGE', 107374182400, NOW()),
+    (3, 'API_CALL', 100000, NOW());
+
+-- 套餐模块白名单种子
+-- 免费版（plan_id=1）：DASHBOARD + TENANT
+INSERT INTO sys_plan_modules (plan_id, module, created_at)
+VALUES
+    (1, 'DASHBOARD', NOW()),
+    (1, 'TENANT', NOW());
+
+-- 标准版（plan_id=2）：DASHBOARD + OPM + SYSTEM + DICT + LOG + TENANT
+INSERT INTO sys_plan_modules (plan_id, module, created_at)
+VALUES
+    (2, 'DASHBOARD', NOW()),
+    (2, 'OPM', NOW()),
+    (2, 'SYSTEM', NOW()),
+    (2, 'DICT', NOW()),
+    (2, 'LOG', NOW()),
+    (2, 'TENANT', NOW());
+
+-- 企业版（plan_id=3）：全模块
+INSERT INTO sys_plan_modules (plan_id, module, created_at)
+VALUES
+    (3, 'DASHBOARD', NOW()),
+    (3, 'OPM', NOW()),
+    (3, 'SYSTEM', NOW()),
+    (3, 'DICT', NOW()),
+    (3, 'TENANT', NOW()),
+    (3, 'PERMISSION', NOW()),
+    (3, 'LOG', NOW()),
+    (3, 'INTERNAL_MESSAGE', NOW()),
+    (3, 'FILE', NOW()),
+    (3, 'TASK', NOW());
 
 -- 提交事务+恢复外键检查
 COMMIT;

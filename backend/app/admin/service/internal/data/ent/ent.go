@@ -33,6 +33,7 @@ import (
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionmenu"
 	"go-wind-admin/app/admin/service/internal/data/ent/permissionpolicy"
 	"go-wind-admin/app/admin/service/internal/data/ent/plan"
+	"go-wind-admin/app/admin/service/internal/data/ent/planmodule"
 	"go-wind-admin/app/admin/service/internal/data/ent/planquota"
 	"go-wind-admin/app/admin/service/internal/data/ent/policyevaluationlog"
 	"go-wind-admin/app/admin/service/internal/data/ent/position"
@@ -139,6 +140,7 @@ func checkColumn(t, c string) error {
 			permissionmenu.Table:           permissionmenu.ValidColumn,
 			permissionpolicy.Table:         permissionpolicy.ValidColumn,
 			plan.Table:                     plan.ValidColumn,
+			planmodule.Table:               planmodule.ValidColumn,
 			planquota.Table:                planquota.ValidColumn,
 			policyevaluationlog.Table:      policyevaluationlog.ValidColumn,
 			position.Table:                 position.ValidColumn,

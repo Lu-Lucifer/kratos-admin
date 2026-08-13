@@ -332,6 +332,18 @@ func (f PlanFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PlanMutation", m)
 }
 
+// The PlanModuleFunc type is an adapter to allow the use of ordinary
+// function as PlanModule mutator.
+type PlanModuleFunc func(context.Context, *ent.PlanModuleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PlanModuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PlanModuleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PlanModuleMutation", m)
+}
+
 // The PlanQuotaFunc type is an adapter to allow the use of ordinary
 // function as PlanQuota mutator.
 type PlanQuotaFunc func(context.Context, *ent.PlanQuotaMutation) (ent.Value, error)

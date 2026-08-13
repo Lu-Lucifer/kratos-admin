@@ -87,6 +87,9 @@ type PermissionPolicy func(*sql.Selector)
 // Plan is the predicate function for plan builders.
 type Plan func(*sql.Selector)
 
+// PlanModule is the predicate function for planmodule builders.
+type PlanModule func(*sql.Selector)
+
 // PlanQuota is the predicate function for planquota builders.
 type PlanQuota func(*sql.Selector)
 

@@ -6,6 +6,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
+	http "github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/tx7do/go-crud/viewer"
 	"go.opentelemetry.io/otel/trace"
 
@@ -92,22 +93,39 @@ func Server(opts ...Option) middleware.Middleware {
 				ctx = viewer.WithContext(ctx, userViewer)
 			}
 
-			if op.injectMetadata {
-				ctx, err = metadata.NewContext(ctx,
-					&authenticationV1.OperatorMetadata{
-						UserId:    uint64(tokenPayload.GetUserId()),
-						TenantId:  uint64(tokenPayload.GetTenantId()),
-						OrgUnitId: uint64(tokenPayload.GetOrgUnitId()),
-						DataScope: tokenPayload.GetDataScope(),
-					},
-				)
-				if err != nil {
-					op.log.Errorf("auth middleware: invalid token payload in context [%s]", err.Error())
-					return nil, err
-				}
-			}
+	if op.injectMetadata {
+		ctx, err = metadata.NewContext(ctx,
+			&authenticationV1.OperatorMetadata{
+				UserId:    uint64(tokenPayload.GetUserId()),
+				TenantId:  uint64(tokenPayload.GetTenantId()),
+				OrgUnitId: uint64(tokenPayload.GetOrgUnitId()),
+				DataScope: tokenPayload.GetDataScope(),
+			},
+		)
+		if err != nil {
+			op.log.Errorf("auth middleware: invalid token payload in context [%s]", err.Error())
+			return nil, err
+		}
+	}
 
-			if op.enableAuthz {
+	// 租户级访问检查：仅对租户用户（tenantId>0）生效，平台管理员（tenantId=0）直接放行。
+	// 检查项：租户状态（OFF/EXPIRED/FREEZE 拒绝）、到期只读策略（仅放行 GET/HEAD/OPTIONS）、
+	// 套餐模块白名单（请求所属业务模块不在白名单则拒绝）。
+	if op.tenantAccessChecker != nil && tokenPayload.GetTenantId() > 0 {
+		var path, method string
+		if htr, ok := tr.(*http.Transport); ok {
+			path = htr.PathTemplate()
+			method = htr.Request().Method
+		} else {
+			path = tr.Operation()
+			method = ""
+		}
+		if err := op.tenantAccessChecker.CheckTenantAccess(ctx, tokenPayload.GetTenantId(), path, method); err != nil {
+			return nil, err
+		}
+	}
+
+	if op.enableAuthz {
 				ctx, err = processAuthz(ctx, tr, tokenPayload)
 				if err != nil {
 					op.log.Errorf("auth middleware: invalid token payload in context [%s]", err.Error())

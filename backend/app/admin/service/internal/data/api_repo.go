@@ -20,14 +20,16 @@ import (
 	"github.com/tx7do/go-utils/mapper"
 
 	permissionV1 "go-wind-admin/api/gen/go/permission/service/v1"
+	identityV1 "go-wind-admin/api/gen/go/identity/service/v1"
 )
 
 type ApiRepo struct {
 	entClient *entCrud.EntClient[*ent.Client]
 	log       *log.Helper
 
-	mapper         *mapper.CopierMapper[permissionV1.Api, ent.Api]
-	scopeConverter *mapper.EnumTypeConverter[permissionV1.Api_Scope, api.Scope]
+	mapper                 *mapper.CopierMapper[permissionV1.Api, ent.Api]
+	scopeConverter         *mapper.EnumTypeConverter[permissionV1.Api_Scope, api.Scope]
+	businessModuleConverter *mapper.EnumTypeConverter[identityV1.Module, api.BusinessModule]
 
 	repository *entCrud.Repository[
 		ent.APIQuery, ent.APISelect,
@@ -46,6 +48,9 @@ func NewApiRepo(ctx *bootstrap.Context, entClient *entCrud.EntClient[*ent.Client
 		mapper:    mapper.NewCopierMapper[permissionV1.Api, ent.Api](),
 		scopeConverter: mapper.NewEnumTypeConverter[permissionV1.Api_Scope, api.Scope](
 			permissionV1.Api_Scope_name, permissionV1.Api_Scope_value,
+		),
+		businessModuleConverter: mapper.NewEnumTypeConverter[identityV1.Module, api.BusinessModule](
+			identityV1.Module_name, identityV1.Module_value,
 		),
 	}
 
@@ -68,6 +73,7 @@ func (r *ApiRepo) init() {
 	r.mapper.AppendConverters(copierutil.NewTimeTimestamppbConverterPair())
 
 	r.mapper.AppendConverters(r.scopeConverter.NewConverterPair())
+	r.mapper.AppendConverters(r.businessModuleConverter.NewConverterPair())
 }
 
 func (r *ApiRepo) Count(ctx context.Context, req *paginationV1.PagingRequest) (*permissionV1.CountApiResponse, error) {
@@ -222,6 +228,7 @@ func (r *ApiRepo) newApiCreate(api *permissionV1.Api) *ent.APICreate {
 		SetNillablePath(api.Path).
 		SetNillableMethod(api.Method).
 		SetNillableScope(r.scopeConverter.ToEntity(api.Scope)).
+		SetNillableBusinessModule(r.businessModuleConverter.ToEntity(api.BusinessModule)).
 		SetNillableCreatedBy(api.CreatedBy).
 		SetCreatedAt(time.Now())
 
@@ -286,6 +293,7 @@ func (r *ApiRepo) Update(ctx context.Context, req *permissionV1.UpdateApiRequest
 				SetNillablePath(req.Data.Path).
 				SetNillableMethod(req.Data.Method).
 				SetNillableScope(r.scopeConverter.ToEntity(req.Data.Scope)).
+				SetNillableBusinessModule(r.businessModuleConverter.ToEntity(req.Data.BusinessModule)).
 				SetNillableUpdatedBy(req.Data.UpdatedBy).
 				SetUpdatedAt(time.Now())
 		},

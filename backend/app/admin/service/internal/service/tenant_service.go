@@ -27,6 +27,7 @@ type TenantService struct {
 	log *log.Helper
 
 	tenantRepo          *data.TenantRepo
+	tenantUsageRepo     *data.TenantUsageRepo
 	userRepo            data.UserRepo
 	userCredentialsRepo *data.UserCredentialRepo
 	roleRepo            *data.RoleRepo
@@ -37,6 +38,7 @@ type TenantService struct {
 func NewTenantService(
 	ctx *bootstrap.Context,
 	tenantRepo *data.TenantRepo,
+	tenantUsageRepo *data.TenantUsageRepo,
 	userRepo data.UserRepo,
 	userCredentialsRepo *data.UserCredentialRepo,
 	roleRepo *data.RoleRepo,
@@ -45,6 +47,7 @@ func NewTenantService(
 	return &TenantService{
 		log:                 ctx.NewLoggerHelper("tenant/service/admin-service"),
 		tenantRepo:          tenantRepo,
+		tenantUsageRepo:     tenantUsageRepo,
 		userRepo:            userRepo,
 		userCredentialsRepo: userCredentialsRepo,
 		roleRepo:            roleRepo,
@@ -108,6 +111,28 @@ func (s *TenantService) enrichRelations(ctx context.Context, tenants []*identity
 		return err
 	}
 	s.bindRelations(tenants, userSet)
+
+	// 回填 member_count：按各租户 ID 批量统计用户数
+	tenantIDs := make([]uint32, 0, len(tenants))
+	for _, t := range tenants {
+		if t != nil && t.Id != nil && *t.Id > 0 {
+			tenantIDs = append(tenantIDs, *t.Id)
+		}
+	}
+	counts, err := s.userRepo.CountByTenantIDs(ctx, tenantIDs)
+	if err != nil {
+		s.log.Errorf("enrich member_count failed: %s", err.Error())
+	} else {
+		for _, t := range tenants {
+			if t != nil && t.Id != nil {
+				if cnt, ok := counts[*t.Id]; ok {
+					val := int32(cnt)
+					t.MemberCount = &val
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -298,5 +323,24 @@ func (s *TenantService) CreateTenantWithAdminUser(ctx context.Context, req *iden
 		return nil, err
 	}
 
+	return &emptypb.Empty{}, nil
+}
+
+// GetUsage 查询租户用量与配额
+func (s *TenantService) GetUsage(ctx context.Context, req *identityV1.GetTenantUsageRequest) (*identityV1.TenantUsage, error) {
+	if req == nil || req.GetId() == 0 {
+		return nil, adminV1.ErrorBadRequest("invalid parameter")
+	}
+	return s.tenantUsageRepo.GetUsage(ctx, req.GetId())
+}
+
+// CleanupData 清理租户数据（保留租户记录，状态改为 OFF）
+func (s *TenantService) CleanupData(ctx context.Context, req *identityV1.CleanupTenantDataRequest) (*emptypb.Empty, error) {
+	if req == nil || req.GetId() == 0 {
+		return nil, adminV1.ErrorBadRequest("invalid parameter")
+	}
+	if err := s.tenantUsageRepo.CleanupTenantData(ctx, req.GetId()); err != nil {
+		return nil, err
+	}
 	return &emptypb.Empty{}, nil
 }

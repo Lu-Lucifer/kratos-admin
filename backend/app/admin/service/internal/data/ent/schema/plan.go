@@ -93,6 +93,13 @@ func (Plan) Edges() []ent.Edge {
 				OnDelete: entsql.Cascade,
 			}).
 			StorageKey(edge.Column("plan_id")),
+
+		edge.To("modules", PlanModule.Type).
+			Required().
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}).
+			StorageKey(edge.Column("plan_id")),
 	}
 }
 

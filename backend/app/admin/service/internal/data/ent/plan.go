@@ -54,9 +54,11 @@ type PlanEdges struct {
 	Tenants []*Tenant `json:"tenants,omitempty"`
 	// Quotas holds the value of the quotas edge.
 	Quotas []*PlanQuota `json:"quotas,omitempty"`
+	// Modules holds the value of the modules edge.
+	Modules []*PlanModule `json:"modules,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // TenantsOrErr returns the Tenants value or an error if the edge
@@ -75,6 +77,15 @@ func (e PlanEdges) QuotasOrErr() ([]*PlanQuota, error) {
 		return e.Quotas, nil
 	}
 	return nil, &NotLoadedError{edge: "quotas"}
+}
+
+// ModulesOrErr returns the Modules value or an error if the edge
+// was not loaded in eager-loading.
+func (e PlanEdges) ModulesOrErr() ([]*PlanModule, error) {
+	if e.loadedTypes[2] {
+		return e.Modules, nil
+	}
+	return nil, &NotLoadedError{edge: "modules"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -214,6 +225,11 @@ func (_m *Plan) QueryTenants() *TenantQuery {
 // QueryQuotas queries the "quotas" edge of the Plan entity.
 func (_m *Plan) QueryQuotas() *PlanQuotaQuery {
 	return NewPlanClient(_m.config).QueryQuotas(_m)
+}
+
+// QueryModules queries the "modules" edge of the Plan entity.
+func (_m *Plan) QueryModules() *PlanModuleQuery {
+	return NewPlanClient(_m.config).QueryModules(_m)
 }
 
 // Update returns a builder for updating this Plan.

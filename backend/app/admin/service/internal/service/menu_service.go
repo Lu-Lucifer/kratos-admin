@@ -171,8 +171,9 @@ func (s *MenuService) syncMenuTree(ctx context.Context, menus []*permissionV1.Me
 
 		// 清除前端可能传入的 ID，由数据库自增生成 / Clear client-provided ID, let DB auto-increment
 		m.Id = nil
-		m.ParentId = parentId
-		m.CreatedBy = trans.Ptr(operatorId)
+			m.ParentId = parentId
+			m.Module = trans.Ptr(constants.ComponentToModule(m.GetComponent()))
+			m.CreatedBy = trans.Ptr(operatorId)
 		m.UpdatedBy = nil
 
 		// 插入当前节点，获取数据库生成的 ID / Insert current node, get DB-generated ID
@@ -197,6 +198,7 @@ func (s *MenuService) syncMenuTree(ctx context.Context, menus []*permissionV1.Me
 
 func (s *MenuService) createDefaultMenus(ctx context.Context) error {
 	for _, m := range constants.DefaultMenus {
+		m.Module = trans.Ptr(constants.ComponentToModule(m.GetComponent()))
 		if err := s.menuRepo.Create(ctx, &permissionV1.CreateMenuRequest{Data: m}); err != nil {
 			s.log.Errorf("create default menu err: %v", err)
 			return err

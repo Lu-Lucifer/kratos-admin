@@ -273,6 +273,38 @@ var DefaultLanguages = []*dictV1.Language{
 	{LanguageCode: trans.Ptr("fr-FR"), LanguageName: trans.Ptr("法语"), NativeName: trans.Ptr("Français"), IsDefault: trans.Ptr(false), IsEnabled: trans.Ptr(true), SortOrder: trans.Uint32(100)},
 }
 
+// ComponentToModule 根据前端组件路径前缀推断所属业务功能模块。
+// 用于默认菜单和存量菜单的 module 字段回填（套餐白名单依赖此字段过滤）。
+// catalog 容器节点（component 为 "BasicLayout" 或空）返回 UNSPECIFIED，不参与白名单过滤。
+func ComponentToModule(component string) identityV1.Module {
+	switch {
+	case component == "BasicLayout" || component == "":
+		return identityV1.Module_MODULE_UNSPECIFIED
+	case len(component) >= 10 && component[:10] == "dashboard/":
+		return identityV1.Module_DASHBOARD
+	case len(component) >= 8 && component[:8] == "app/opm/":
+		return identityV1.Module_OPM
+	case len(component) >= 11 && component[:11] == "app/system/":
+		return identityV1.Module_SYSTEM
+	case len(component) >= 9 && component[:9] == "app/dict/":
+		return identityV1.Module_DICT
+	case len(component) >= 11 && component[:11] == "app/tenant/":
+		return identityV1.Module_TENANT
+	case len(component) >= 15 && component[:15] == "app/permission/":
+		return identityV1.Module_PERMISSION
+	case len(component) >= 9 && component[:9] == "app/log/":
+		return identityV1.Module_LOG
+	case len(component) >= 20 && component[:20] == "app/internal_message/":
+		return identityV1.Module_INTERNAL_MESSAGE
+	case len(component) >= 9 && component[:9] == "app/file/":
+		return identityV1.Module_FILE
+	case len(component) >= 9 && component[:9] == "app/task/":
+		return identityV1.Module_TASK
+	default:
+		return identityV1.Module_MODULE_UNSPECIFIED
+	}
+}
+
 // DefaultMenus 系统初始化默认菜单数据
 var DefaultMenus = []*permissionV1.Menu{
 	{

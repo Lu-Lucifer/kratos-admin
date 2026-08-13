@@ -22,6 +22,7 @@ import (
 	"go-wind-admin/app/admin/service/internal/data/ent/predicate"
 
 	permissionV1 "go-wind-admin/api/gen/go/permission/service/v1"
+	identityV1 "go-wind-admin/api/gen/go/identity/service/v1"
 )
 
 type MenuRepo struct {
@@ -31,6 +32,7 @@ type MenuRepo struct {
 	mapper          *mapper.CopierMapper[permissionV1.Menu, ent.Menu]
 	statusConverter *mapper.EnumTypeConverter[permissionV1.Menu_Status, menu.Status]
 	typeConverter   *mapper.EnumTypeConverter[permissionV1.Menu_Type, menu.Type]
+	moduleConverter *mapper.EnumTypeConverter[identityV1.Module, menu.Module]
 
 	repository *entCrud.Repository[
 		ent.MenuQuery, ent.MenuSelect,
@@ -49,6 +51,7 @@ func NewMenuRepo(ctx *bootstrap.Context, entClient *entCrud.EntClient[*ent.Clien
 		mapper:          mapper.NewCopierMapper[permissionV1.Menu, ent.Menu](),
 		statusConverter: mapper.NewEnumTypeConverter[permissionV1.Menu_Status, menu.Status](permissionV1.Menu_Status_name, permissionV1.Menu_Status_value),
 		typeConverter:   mapper.NewEnumTypeConverter[permissionV1.Menu_Type, menu.Type](permissionV1.Menu_Type_name, permissionV1.Menu_Type_value),
+		moduleConverter: mapper.NewEnumTypeConverter[identityV1.Module, menu.Module](identityV1.Module_name, identityV1.Module_value),
 	}
 
 	repo.init()
@@ -71,6 +74,7 @@ func (r *MenuRepo) init() {
 
 	r.mapper.AppendConverters(r.statusConverter.NewConverterPair())
 	r.mapper.AppendConverters(r.typeConverter.NewConverterPair())
+	r.mapper.AppendConverters(r.moduleConverter.NewConverterPair())
 }
 
 func (r *MenuRepo) Count(ctx context.Context, whereCond []func(s *sql.Selector)) (int, error) {
@@ -182,6 +186,7 @@ func (r *MenuRepo) Create(ctx context.Context, req *permissionV1.CreateMenuReque
 		SetNillableName(req.Data.Name).
 		SetNillableComponent(req.Data.Component).
 		SetNillableStatus(r.statusConverter.ToEntity(req.Data.Status)).
+		SetNillableModule(r.moduleConverter.ToEntity(req.Data.Module)).
 		SetNillableCreatedBy(req.Data.CreatedBy).
 		SetCreatedAt(time.Now())
 
@@ -217,6 +222,7 @@ func (r *MenuRepo) CreateReturn(ctx context.Context, req *permissionV1.CreateMen
 		SetNillableName(req.Data.Name).
 		SetNillableComponent(req.Data.Component).
 		SetNillableStatus(r.statusConverter.ToEntity(req.Data.Status)).
+		SetNillableModule(r.moduleConverter.ToEntity(req.Data.Module)).
 		SetNillableCreatedBy(req.Data.CreatedBy).
 		SetCreatedAt(time.Now())
 
@@ -280,6 +286,7 @@ func (r *MenuRepo) Update(ctx context.Context, req *permissionV1.UpdateMenuReque
 				SetNillableName(req.Data.Name).
 				SetNillableComponent(req.Data.Component).
 				SetNillableStatus(r.statusConverter.ToEntity(req.Data.Status)).
+				SetNillableModule(r.moduleConverter.ToEntity(req.Data.Module)).
 				SetNillableUpdatedBy(req.Data.UpdatedBy).
 				SetUpdatedAt(time.Now())
 

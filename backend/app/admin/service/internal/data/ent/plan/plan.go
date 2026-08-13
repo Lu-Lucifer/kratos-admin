@@ -42,6 +42,8 @@ const (
 	EdgeTenants = "tenants"
 	// EdgeQuotas holds the string denoting the quotas edge name in mutations.
 	EdgeQuotas = "quotas"
+	// EdgeModules holds the string denoting the modules edge name in mutations.
+	EdgeModules = "modules"
 	// Table holds the table name of the plan in the database.
 	Table = "sys_plans"
 	// TenantsTable is the table that holds the tenants relation/edge.
@@ -58,6 +60,13 @@ const (
 	QuotasInverseTable = "sys_plan_quotas"
 	// QuotasColumn is the table column denoting the quotas relation/edge.
 	QuotasColumn = "plan_id"
+	// ModulesTable is the table that holds the modules relation/edge.
+	ModulesTable = "sys_plan_modules"
+	// ModulesInverseTable is the table name for the PlanModule entity.
+	// It exists in this package in order to avoid circular dependency with the "planmodule" package.
+	ModulesInverseTable = "sys_plan_modules"
+	// ModulesColumn is the table column denoting the modules relation/edge.
+	ModulesColumn = "plan_id"
 )
 
 // Columns holds all SQL columns for plan fields.
@@ -243,6 +252,20 @@ func ByQuotas(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newQuotasStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByModulesCount orders the results by modules count.
+func ByModulesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newModulesStep(), opts...)
+	}
+}
+
+// ByModules orders the results by modules terms.
+func ByModules(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newModulesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newTenantsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -255,5 +278,12 @@ func newQuotasStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(QuotasInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, QuotasTable, QuotasColumn),
+	)
+}
+func newModulesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ModulesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ModulesTable, ModulesColumn),
 	)
 }

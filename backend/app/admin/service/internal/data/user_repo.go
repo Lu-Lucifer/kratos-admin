@@ -66,6 +66,9 @@ type UserRepo interface {
 	ListOrgUnitIDsByUserID(ctx context.Context, userID uint32) ([]uint32, error)
 
 	ListUserRelationIDs(ctx context.Context, userID uint32) (roleIDs []uint32, positionIDs []uint32, orgUnitIDs []uint32, err error)
+
+	// CountByTenantIDs 批量统计各租户下的用户数，用于回填 tenant.member_count。
+	CountByTenantIDs(ctx context.Context, tenantIDs []uint32) (map[uint32]int, error)
 }
 
 type userRepo struct {
@@ -1114,6 +1117,26 @@ func (r *userRepo) ListUsersByIds(ctx context.Context, ids []uint32) ([]*identit
 	}
 
 	return dtos, nil
+}
+
+// CountByTenantIDs 批量统计各租户下的用户数。
+// 仅返回存在的 tenant_id 计数，未出现的 tenant 隐含 0。
+func (r *userRepo) CountByTenantIDs(ctx context.Context, tenantIDs []uint32) (map[uint32]int, error) {
+	result := make(map[uint32]int, len(tenantIDs))
+	if len(tenantIDs) == 0 {
+		return result, nil
+	}
+	for _, tid := range tenantIDs {
+		cnt, err := r.entClient.Client().User.Query().
+			Where(user.TenantIDEQ(tid)).
+			Count(ctx)
+		if err != nil {
+			r.log.Errorf("count users by tenant %d failed: %s", tid, err.Error())
+			return nil, identityV1.ErrorInternalServerError("count users by tenant failed")
+		}
+		result[tid] = cnt
+	}
+	return result, nil
 }
 
 func (r *userRepo) ListRoleIDsByUserID(ctx context.Context, userID uint32) ([]uint32, error) {

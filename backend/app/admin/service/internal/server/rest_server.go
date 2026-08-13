@@ -34,6 +34,7 @@ import (
 func NewRestMiddleware(
 	ctx *bootstrap.Context,
 	accessTokenChecker auth.AccessTokenChecker,
+	tenantAccessChecker auth.TenantAccessChecker,
 	authorizer *authorizer.Authorizer,
 	apiAuditLogRepo *data.ApiAuditLogRepo,
 	loginLogRepo *data.LoginAuditLogRepo,
@@ -66,15 +67,16 @@ func NewRestMiddleware(
 	)
 
 	ms = append(ms, selector.Server(
-		auth.Server(
-			auth.WithAccessTokenChecker(accessTokenChecker),
-			auth.WithInjectMetadata(false),
-			auth.WithInjectEnt(true),
-		),
-		authz.Server(authorizer.Engine()),
-	).
-		Match(rpc.NewRestWhiteListMatcher()).
-		Build(),
+			auth.Server(
+				auth.WithAccessTokenChecker(accessTokenChecker),
+				auth.WithTenantAccessChecker(tenantAccessChecker),
+				auth.WithInjectMetadata(false),
+				auth.WithInjectEnt(true),
+			),
+			authz.Server(authorizer.Engine()),
+		).
+			Match(rpc.NewRestWhiteListMatcher()).
+			Build(),
 	)
 
 	return ms
@@ -103,6 +105,7 @@ func NewRestServer(
 	tenantService *service.TenantService,
 	planService *service.PlanService,
 	planQuotaService *service.PlanQuotaService,
+	planModuleService *service.PlanModuleService,
 	userService *service.UserService,
 	userProfileService *service.UserProfileService,
 	roleService *service.RoleService,
@@ -169,6 +172,7 @@ func NewRestServer(
 	adminV1.RegisterTenantServiceHTTPServer(srv, tenantService)
 	adminV1.RegisterPlanServiceHTTPServer(srv, planService)
 	adminV1.RegisterPlanQuotaServiceHTTPServer(srv, planQuotaService)
+	adminV1.RegisterPlanModuleServiceHTTPServer(srv, planModuleService)
 
 	adminV1.RegisterLoginAuditLogServiceHTTPServer(srv, loginAuditLogService)
 	adminV1.RegisterApiAuditLogServiceHTTPServer(srv, apiAuditLogService)

@@ -22,6 +22,7 @@ var (
 		{Name: "description", Type: field.TypeString, Nullable: true, Comment: "描述"},
 		{Name: "module", Type: field.TypeString, Nullable: true, Comment: "所属业务模块"},
 		{Name: "module_description", Type: field.TypeString, Nullable: true, Comment: "业务模块描述"},
+		{Name: "business_module", Type: field.TypeEnum, Nullable: true, Comment: "所属业务功能模块（用于套餐白名单过滤）", Enums: []string{"DASHBOARD", "OPM", "SYSTEM", "DICT", "TENANT", "PERMISSION", "LOG", "INTERNAL_MESSAGE", "FILE", "TASK"}},
 		{Name: "operation", Type: field.TypeString, Nullable: true, Comment: "接口操作名"},
 		{Name: "path", Type: field.TypeString, Nullable: true, Comment: "接口路径"},
 		{Name: "method", Type: field.TypeString, Nullable: true, Comment: "请求方法"},
@@ -37,7 +38,7 @@ var (
 			{
 				Name:    "idx_sys_api_res_module_path_method_scope",
 				Unique:  true,
-				Columns: []*schema.Column{SysApisColumns[9], SysApisColumns[12], SysApisColumns[13], SysApisColumns[14]},
+				Columns: []*schema.Column{SysApisColumns[9], SysApisColumns[13], SysApisColumns[14], SysApisColumns[15]},
 			},
 			{
 				Name:    "idx_sys_api_res_module",
@@ -47,12 +48,17 @@ var (
 			{
 				Name:    "idx_sys_api_res_scope",
 				Unique:  false,
-				Columns: []*schema.Column{SysApisColumns[14]},
+				Columns: []*schema.Column{SysApisColumns[15]},
+			},
+			{
+				Name:    "idx_sys_api_res_business_module",
+				Unique:  false,
+				Columns: []*schema.Column{SysApisColumns[11]},
 			},
 			{
 				Name:    "idx_sys_api_res_path_method",
 				Unique:  false,
-				Columns: []*schema.Column{SysApisColumns[12], SysApisColumns[13]},
+				Columns: []*schema.Column{SysApisColumns[13], SysApisColumns[14]},
 			},
 			{
 				Name:    "idx_sys_api_res_created_by_created_at",
@@ -1247,6 +1253,7 @@ var (
 		{Name: "name", Type: field.TypeString, Nullable: true, Comment: "路由命名，然后我们可以使用 name 而不是 path 来传递 to 属性给 <router-link>。"},
 		{Name: "component", Type: field.TypeString, Nullable: true, Comment: "前端页面组件", Default: ""},
 		{Name: "meta", Type: field.TypeJSON, Nullable: true, Comment: "路由元信息"},
+		{Name: "module", Type: field.TypeEnum, Nullable: true, Comment: "所属业务功能模块（用于套餐白名单过滤）", Enums: []string{"DASHBOARD", "OPM", "SYSTEM", "DICT", "TENANT", "PERMISSION", "LOG", "INTERNAL_MESSAGE", "FILE", "TASK"}},
 		{Name: "parent_id", Type: field.TypeUint32, Nullable: true, Comment: "父节点ID"},
 	}
 	// SysMenusTable holds the schema information for the "sys_menus" table.
@@ -1258,7 +1265,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "sys_menus_sys_menus_children",
-				Columns:    []*schema.Column{SysMenusColumns[16]},
+				Columns:    []*schema.Column{SysMenusColumns[17]},
 				RefColumns: []*schema.Column{SysMenusColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -1267,12 +1274,12 @@ var (
 			{
 				Name:    "idx_sys_menu_parent_name",
 				Unique:  true,
-				Columns: []*schema.Column{SysMenusColumns[16], SysMenusColumns[13]},
+				Columns: []*schema.Column{SysMenusColumns[17], SysMenusColumns[13]},
 			},
 			{
 				Name:    "idx_sys_menu_parent_path",
 				Unique:  true,
-				Columns: []*schema.Column{SysMenusColumns[16], SysMenusColumns[10]},
+				Columns: []*schema.Column{SysMenusColumns[17], SysMenusColumns[10]},
 			},
 			{
 				Name:    "idx_sys_menu_path",
@@ -1295,6 +1302,11 @@ var (
 				Columns: []*schema.Column{SysMenusColumns[9]},
 			},
 			{
+				Name:    "idx_sys_menu_module",
+				Unique:  false,
+				Columns: []*schema.Column{SysMenusColumns[16]},
+			},
+			{
 				Name:    "idx_sys_menu_status",
 				Unique:  false,
 				Columns: []*schema.Column{SysMenusColumns[8]},
@@ -1302,7 +1314,7 @@ var (
 			{
 				Name:    "idx_sys_menu_parent",
 				Unique:  false,
-				Columns: []*schema.Column{SysMenusColumns[16]},
+				Columns: []*schema.Column{SysMenusColumns[17]},
 			},
 			{
 				Name:    "idx_sys_menu_created_by_created_at",
@@ -1852,6 +1864,40 @@ var (
 				Name:    "idx_sys_plans_created_at",
 				Unique:  false,
 				Columns: []*schema.Column{SysPlansColumns[1]},
+			},
+		},
+	}
+	// SysPlanModulesColumns holds the columns for the "sys_plan_modules" table.
+	SysPlanModulesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint32, Increment: true, Comment: "id"},
+		{Name: "created_at", Type: field.TypeTime, Nullable: true, Comment: "创建时间"},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true, Comment: "更新时间"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, Comment: "删除时间"},
+		{Name: "created_by", Type: field.TypeUint32, Nullable: true, Comment: "创建者ID"},
+		{Name: "updated_by", Type: field.TypeUint32, Nullable: true, Comment: "更新者ID"},
+		{Name: "deleted_by", Type: field.TypeUint32, Nullable: true, Comment: "删除者ID"},
+		{Name: "module", Type: field.TypeEnum, Nullable: true, Comment: "功能模块", Enums: []string{"DASHBOARD", "OPM", "SYSTEM", "DICT", "TENANT", "PERMISSION", "LOG", "INTERNAL_MESSAGE", "FILE", "TASK"}},
+		{Name: "plan_id", Type: field.TypeUint32, Nullable: true},
+	}
+	// SysPlanModulesTable holds the schema information for the "sys_plan_modules" table.
+	SysPlanModulesTable = &schema.Table{
+		Name:       "sys_plan_modules",
+		Comment:    "套餐功能模块白名单表",
+		Columns:    SysPlanModulesColumns,
+		PrimaryKey: []*schema.Column{SysPlanModulesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "sys_plan_modules_sys_plans_modules",
+				Columns:    []*schema.Column{SysPlanModulesColumns[8]},
+				RefColumns: []*schema.Column{SysPlansColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idx_sys_plan_modules_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{SysPlanModulesColumns[1]},
 			},
 		},
 	}
@@ -2901,6 +2947,7 @@ var (
 		SysPermissionMenusTable,
 		SysPermissionPoliciesTable,
 		SysPlansTable,
+		SysPlanModulesTable,
 		SysPlanQuotasTable,
 		SysPolicyEvaluationLogsTable,
 		SysPositionsTable,
@@ -3055,6 +3102,12 @@ func init() {
 	}
 	SysPlansTable.Annotation = &entsql.Annotation{
 		Table:     "sys_plans",
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	SysPlanModulesTable.ForeignKeys[0].RefTable = SysPlansTable
+	SysPlanModulesTable.Annotation = &entsql.Annotation{
+		Table:     "sys_plan_modules",
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

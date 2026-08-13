@@ -7,6 +7,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"go-wind-admin/app/admin/service/internal/data/ent/plan"
+	"go-wind-admin/app/admin/service/internal/data/ent/planmodule"
 	"go-wind-admin/app/admin/service/internal/data/ent/planquota"
 	"go-wind-admin/app/admin/service/internal/data/ent/predicate"
 	"go-wind-admin/app/admin/service/internal/data/ent/tenant"
@@ -28,6 +29,7 @@ type PlanQuery struct {
 	predicates  []predicate.Plan
 	withTenants *TenantQuery
 	withQuotas  *PlanQuotaQuery
+	withModules *PlanModuleQuery
 	modifiers   []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -102,6 +104,28 @@ func (_q *PlanQuery) QueryQuotas() *PlanQuotaQuery {
 			sqlgraph.From(plan.Table, plan.FieldID, selector),
 			sqlgraph.To(planquota.Table, planquota.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, plan.QuotasTable, plan.QuotasColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryModules chains the current query on the "modules" edge.
+func (_q *PlanQuery) QueryModules() *PlanModuleQuery {
+	query := (&PlanModuleClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plan.Table, plan.FieldID, selector),
+			sqlgraph.To(planmodule.Table, planmodule.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, plan.ModulesTable, plan.ModulesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -303,6 +327,7 @@ func (_q *PlanQuery) Clone() *PlanQuery {
 		predicates:  append([]predicate.Plan{}, _q.predicates...),
 		withTenants: _q.withTenants.Clone(),
 		withQuotas:  _q.withQuotas.Clone(),
+		withModules: _q.withModules.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
 		path:      _q.path,
@@ -329,6 +354,17 @@ func (_q *PlanQuery) WithQuotas(opts ...func(*PlanQuotaQuery)) *PlanQuery {
 		opt(query)
 	}
 	_q.withQuotas = query
+	return _q
+}
+
+// WithModules tells the query-builder to eager-load the nodes that are connected to
+// the "modules" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PlanQuery) WithModules(opts ...func(*PlanModuleQuery)) *PlanQuery {
+	query := (&PlanModuleClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withModules = query
 	return _q
 }
 
@@ -410,9 +446,10 @@ func (_q *PlanQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Plan, e
 	var (
 		nodes       = []*Plan{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			_q.withTenants != nil,
 			_q.withQuotas != nil,
+			_q.withModules != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -447,6 +484,13 @@ func (_q *PlanQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Plan, e
 		if err := _q.loadQuotas(ctx, query, nodes,
 			func(n *Plan) { n.Edges.Quotas = []*PlanQuota{} },
 			func(n *Plan, e *PlanQuota) { n.Edges.Quotas = append(n.Edges.Quotas, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withModules; query != nil {
+		if err := _q.loadModules(ctx, query, nodes,
+			func(n *Plan) { n.Edges.Modules = []*PlanModule{} },
+			func(n *Plan, e *PlanModule) { n.Edges.Modules = append(n.Edges.Modules, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -497,6 +541,37 @@ func (_q *PlanQuery) loadQuotas(ctx context.Context, query *PlanQuotaQuery, node
 	query.withFKs = true
 	query.Where(predicate.PlanQuota(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(plan.QuotasColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.plan_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "plan_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "plan_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PlanQuery) loadModules(ctx context.Context, query *PlanModuleQuery, nodes []*Plan, init func(*Plan), assign func(*Plan, *PlanModule)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uint32]*Plan)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.PlanModule(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(plan.ModulesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

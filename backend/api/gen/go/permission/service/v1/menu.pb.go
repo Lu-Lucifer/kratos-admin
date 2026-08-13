@@ -8,7 +8,8 @@ package permissionpb
 
 import (
 	_ "github.com/google/gnostic/openapiv3"
-	v1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
+	v11 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
+	v1 "go-wind-admin/api/gen/go/identity/service/v1"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -142,6 +143,7 @@ type Menu struct {
 	Name          *string                `protobuf:"bytes,13,opt,name=name,proto3,oneof" json:"name,omitempty"`                                            // 路由命名，然后我们可以使用 name 而不是 path 来传递 to 属性给 <router-link>。
 	Component     *string                `protobuf:"bytes,14,opt,name=component,proto3,oneof" json:"component,omitempty"`                                  // 指向的组件
 	Meta          *MenuMeta              `protobuf:"bytes,15,opt,name=meta,proto3,oneof" json:"meta,omitempty"`                                            // 路由元信息
+	Module        *v1.Module             `protobuf:"varint,16,opt,name=module,proto3,enum=identity.service.v1.Module,oneof" json:"module,omitempty"`       // 所属业务功能模块
 	ParentId      *uint32                `protobuf:"varint,50,opt,name=parent_id,json=parentId,proto3,oneof" json:"parent_id,omitempty"`                   // 父节点ID
 	Children      []*Menu                `protobuf:"bytes,51,rep,name=children,proto3" json:"children,omitempty"`                                          // 子节点树
 	CreatedBy     *uint32                `protobuf:"varint,100,opt,name=created_by,json=createdBy,proto3,oneof" json:"created_by,omitempty"`               // 创建者ID
@@ -245,6 +247,13 @@ func (x *Menu) GetMeta() *MenuMeta {
 		return x.Meta
 	}
 	return nil
+}
+
+func (x *Menu) GetModule() v1.Module {
+	if x != nil && x.Module != nil {
+		return *x.Module
+	}
+	return v1.Module(0)
 }
 
 func (x *Menu) GetParentId() uint32 {
@@ -1026,7 +1035,7 @@ var File_permission_service_v1_menu_proto protoreflect.FileDescriptor
 
 const file_permission_service_v1_menu_proto_rawDesc = "" +
 	"\n" +
-	" permission/service/v1/menu.proto\x12\x15permission.service.v1\x1a$gnostic/openapi/v3/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a google/protobuf/field_mask.proto\x1a\x1epagination/v1/pagination.proto\"\xd5\v\n" +
+	" permission/service/v1/menu.proto\x12\x15permission.service.v1\x1a$gnostic/openapi/v3/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a google/protobuf/field_mask.proto\x1a\x1epagination/v1/pagination.proto\x1a identity/service/v1/module.proto\"\xbd\f\n" +
 	"\x04Menu\x12&\n" +
 	"\x02id\x18\x01 \x01(\rB\x11\xe0A\x01\xbaG\v\x92\x02\b菜单IDH\x00R\x02id\x88\x01\x01\x12S\n" +
 	"\x06status\x18\x02 \x01(\x0e2\".permission.service.v1.Menu.StatusB\x12\xbaG\x0f\x92\x02\f菜单状态H\x01R\x06status\x88\x01\x01\x12M\n" +
@@ -1037,22 +1046,23 @@ const file_permission_service_v1_menu_proto_rawDesc = "" +
 	"\x05alias\x18\f \x01(\tB\x15\xe0A\x01\xbaG\x0f\x92\x02\f路由别名H\x05R\x05alias\x88\x01\x01\x12\x85\x01\n" +
 	"\x04name\x18\r \x01(\tBl\xe0A\x01\xbaGf\x92\x02c路由命名，然后我们可以使用 name 而不是 path 来传递 to 属性给 <router-link>。H\x06R\x04name\x88\x01\x01\x12;\n" +
 	"\tcomponent\x18\x0e \x01(\tB\x18\xe0A\x01\xbaG\x12\x92\x02\x0f指向的组件H\aR\tcomponent\x88\x01\x01\x12R\n" +
-	"\x04meta\x18\x0f \x01(\v2\x1f.permission.service.v1.MenuMetaB\x18\xe0A\x01\xbaG\x12\x92\x02\x0f路由元信息H\bR\x04meta\x88\x01\x01\x123\n" +
-	"\tparent_id\x182 \x01(\rB\x11\xbaG\x0e\x92\x02\v父节点IDH\tR\bparentId\x88\x01\x01\x12K\n" +
+	"\x04meta\x18\x0f \x01(\v2\x1f.permission.service.v1.MenuMetaB\x18\xe0A\x01\xbaG\x12\x92\x02\x0f路由元信息H\bR\x04meta\x88\x01\x01\x12[\n" +
+	"\x06module\x18\x10 \x01(\x0e2\x1b.identity.service.v1.ModuleB!\xe0A\x01\xbaG\x1b\x92\x02\x18所属业务功能模块H\tR\x06module\x88\x01\x01\x123\n" +
+	"\tparent_id\x182 \x01(\rB\x11\xbaG\x0e\x92\x02\v父节点IDH\n" +
+	"R\bparentId\x88\x01\x01\x12K\n" +
 	"\bchildren\x183 \x03(\v2\x1b.permission.service.v1.MenuB\x12\xbaG\x0f\x92\x02\f子节点树R\bchildren\x125\n" +
 	"\n" +
-	"created_by\x18d \x01(\rB\x11\xbaG\x0e\x92\x02\v创建者IDH\n" +
-	"R\tcreatedBy\x88\x01\x01\x125\n" +
+	"created_by\x18d \x01(\rB\x11\xbaG\x0e\x92\x02\v创建者IDH\vR\tcreatedBy\x88\x01\x01\x125\n" +
 	"\n" +
-	"updated_by\x18e \x01(\rB\x11\xbaG\x0e\x92\x02\v更新者IDH\vR\tupdatedBy\x88\x01\x01\x12;\n" +
+	"updated_by\x18e \x01(\rB\x11\xbaG\x0e\x92\x02\v更新者IDH\fR\tupdatedBy\x88\x01\x01\x12;\n" +
 	"\n" +
-	"deleted_by\x18f \x01(\rB\x17\xbaG\x14\x92\x02\x11删除者用户IDH\fR\tdeletedBy\x88\x01\x01\x12S\n" +
+	"deleted_by\x18f \x01(\rB\x17\xbaG\x14\x92\x02\x11删除者用户IDH\rR\tdeletedBy\x88\x01\x01\x12S\n" +
 	"\n" +
-	"created_at\x18\xc8\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f创建时间H\rR\tcreatedAt\x88\x01\x01\x12S\n" +
+	"created_at\x18\xc8\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f创建时间H\x0eR\tcreatedAt\x88\x01\x01\x12S\n" +
 	"\n" +
-	"updated_at\x18\xc9\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f更新时间H\x0eR\tupdatedAt\x88\x01\x01\x12S\n" +
+	"updated_at\x18\xc9\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f更新时间H\x0fR\tupdatedAt\x88\x01\x01\x12S\n" +
 	"\n" +
-	"deleted_at\x18\xca\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f删除时间H\x0fR\tdeletedAt\x88\x01\x01\"A\n" +
+	"deleted_at\x18\xca\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x12\xbaG\x0f\x92\x02\f删除时间H\x10R\tdeletedAt\x88\x01\x01\"A\n" +
 	"\x04Type\x12\v\n" +
 	"\aCATALOG\x10\x00\x12\b\n" +
 	"\x04MENU\x10\x01\x12\n" +
@@ -1072,7 +1082,8 @@ const file_permission_service_v1_menu_proto_rawDesc = "" +
 	"\x05_nameB\f\n" +
 	"\n" +
 	"_componentB\a\n" +
-	"\x05_metaB\f\n" +
+	"\x05_metaB\t\n" +
+	"\a_moduleB\f\n" +
 	"\n" +
 	"_parent_idB\r\n" +
 	"\v_created_byB\r\n" +
@@ -1224,46 +1235,48 @@ var file_permission_service_v1_menu_proto_goTypes = []any{
 	(*DeleteMenuRequest)(nil),     // 9: permission.service.v1.DeleteMenuRequest
 	(*CountMenuResponse)(nil),     // 10: permission.service.v1.CountMenuResponse
 	(*SyncMenusRequest)(nil),      // 11: permission.service.v1.SyncMenusRequest
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil), // 13: google.protobuf.FieldMask
-	(*v1.PagingRequest)(nil),      // 14: pagination.PagingRequest
-	(*emptypb.Empty)(nil),         // 15: google.protobuf.Empty
+	(v1.Module)(0),                // 12: identity.service.v1.Module
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil), // 14: google.protobuf.FieldMask
+	(*v11.PagingRequest)(nil),     // 15: pagination.PagingRequest
+	(*emptypb.Empty)(nil),         // 16: google.protobuf.Empty
 }
 var file_permission_service_v1_menu_proto_depIdxs = []int32{
 	1,  // 0: permission.service.v1.Menu.status:type_name -> permission.service.v1.Menu.Status
 	0,  // 1: permission.service.v1.Menu.type:type_name -> permission.service.v1.Menu.Type
 	3,  // 2: permission.service.v1.Menu.meta:type_name -> permission.service.v1.MenuMeta
-	2,  // 3: permission.service.v1.Menu.children:type_name -> permission.service.v1.Menu
-	12, // 4: permission.service.v1.Menu.created_at:type_name -> google.protobuf.Timestamp
-	12, // 5: permission.service.v1.Menu.updated_at:type_name -> google.protobuf.Timestamp
-	12, // 6: permission.service.v1.Menu.deleted_at:type_name -> google.protobuf.Timestamp
-	4,  // 7: permission.service.v1.MenuRouteItem.children:type_name -> permission.service.v1.MenuRouteItem
-	3,  // 8: permission.service.v1.MenuRouteItem.meta:type_name -> permission.service.v1.MenuMeta
-	2,  // 9: permission.service.v1.ListMenuResponse.items:type_name -> permission.service.v1.Menu
-	13, // 10: permission.service.v1.GetMenuRequest.view_mask:type_name -> google.protobuf.FieldMask
-	2,  // 11: permission.service.v1.CreateMenuRequest.data:type_name -> permission.service.v1.Menu
-	2,  // 12: permission.service.v1.UpdateMenuRequest.data:type_name -> permission.service.v1.Menu
-	13, // 13: permission.service.v1.UpdateMenuRequest.update_mask:type_name -> google.protobuf.FieldMask
-	2,  // 14: permission.service.v1.SyncMenusRequest.items:type_name -> permission.service.v1.Menu
-	14, // 15: permission.service.v1.MenuService.List:input_type -> pagination.PagingRequest
-	14, // 16: permission.service.v1.MenuService.Count:input_type -> pagination.PagingRequest
-	6,  // 17: permission.service.v1.MenuService.Get:input_type -> permission.service.v1.GetMenuRequest
-	7,  // 18: permission.service.v1.MenuService.Create:input_type -> permission.service.v1.CreateMenuRequest
-	8,  // 19: permission.service.v1.MenuService.Update:input_type -> permission.service.v1.UpdateMenuRequest
-	9,  // 20: permission.service.v1.MenuService.Delete:input_type -> permission.service.v1.DeleteMenuRequest
-	11, // 21: permission.service.v1.MenuService.SyncMenus:input_type -> permission.service.v1.SyncMenusRequest
-	5,  // 22: permission.service.v1.MenuService.List:output_type -> permission.service.v1.ListMenuResponse
-	10, // 23: permission.service.v1.MenuService.Count:output_type -> permission.service.v1.CountMenuResponse
-	2,  // 24: permission.service.v1.MenuService.Get:output_type -> permission.service.v1.Menu
-	15, // 25: permission.service.v1.MenuService.Create:output_type -> google.protobuf.Empty
-	15, // 26: permission.service.v1.MenuService.Update:output_type -> google.protobuf.Empty
-	15, // 27: permission.service.v1.MenuService.Delete:output_type -> google.protobuf.Empty
-	15, // 28: permission.service.v1.MenuService.SyncMenus:output_type -> google.protobuf.Empty
-	22, // [22:29] is the sub-list for method output_type
-	15, // [15:22] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	12, // 3: permission.service.v1.Menu.module:type_name -> identity.service.v1.Module
+	2,  // 4: permission.service.v1.Menu.children:type_name -> permission.service.v1.Menu
+	13, // 5: permission.service.v1.Menu.created_at:type_name -> google.protobuf.Timestamp
+	13, // 6: permission.service.v1.Menu.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 7: permission.service.v1.Menu.deleted_at:type_name -> google.protobuf.Timestamp
+	4,  // 8: permission.service.v1.MenuRouteItem.children:type_name -> permission.service.v1.MenuRouteItem
+	3,  // 9: permission.service.v1.MenuRouteItem.meta:type_name -> permission.service.v1.MenuMeta
+	2,  // 10: permission.service.v1.ListMenuResponse.items:type_name -> permission.service.v1.Menu
+	14, // 11: permission.service.v1.GetMenuRequest.view_mask:type_name -> google.protobuf.FieldMask
+	2,  // 12: permission.service.v1.CreateMenuRequest.data:type_name -> permission.service.v1.Menu
+	2,  // 13: permission.service.v1.UpdateMenuRequest.data:type_name -> permission.service.v1.Menu
+	14, // 14: permission.service.v1.UpdateMenuRequest.update_mask:type_name -> google.protobuf.FieldMask
+	2,  // 15: permission.service.v1.SyncMenusRequest.items:type_name -> permission.service.v1.Menu
+	15, // 16: permission.service.v1.MenuService.List:input_type -> pagination.PagingRequest
+	15, // 17: permission.service.v1.MenuService.Count:input_type -> pagination.PagingRequest
+	6,  // 18: permission.service.v1.MenuService.Get:input_type -> permission.service.v1.GetMenuRequest
+	7,  // 19: permission.service.v1.MenuService.Create:input_type -> permission.service.v1.CreateMenuRequest
+	8,  // 20: permission.service.v1.MenuService.Update:input_type -> permission.service.v1.UpdateMenuRequest
+	9,  // 21: permission.service.v1.MenuService.Delete:input_type -> permission.service.v1.DeleteMenuRequest
+	11, // 22: permission.service.v1.MenuService.SyncMenus:input_type -> permission.service.v1.SyncMenusRequest
+	5,  // 23: permission.service.v1.MenuService.List:output_type -> permission.service.v1.ListMenuResponse
+	10, // 24: permission.service.v1.MenuService.Count:output_type -> permission.service.v1.CountMenuResponse
+	2,  // 25: permission.service.v1.MenuService.Get:output_type -> permission.service.v1.Menu
+	16, // 26: permission.service.v1.MenuService.Create:output_type -> google.protobuf.Empty
+	16, // 27: permission.service.v1.MenuService.Update:output_type -> google.protobuf.Empty
+	16, // 28: permission.service.v1.MenuService.Delete:output_type -> google.protobuf.Empty
+	16, // 29: permission.service.v1.MenuService.SyncMenus:output_type -> google.protobuf.Empty
+	23, // [23:30] is the sub-list for method output_type
+	16, // [16:23] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_permission_service_v1_menu_proto_init() }
