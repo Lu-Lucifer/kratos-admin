@@ -17,6 +17,7 @@
   "expiredAt": "Expires At",
   "expiredAtPlaceholder": "Select expiry time",
   "createdAt": "Created At",
+  "memberCount": "Member Count",
   "remark": "Remark",
   "remarkPlaceholder": "Enter remark",
   "action": "Actions",
@@ -79,5 +80,18 @@
     "EXPIRED": "Expired",
     "FREEZE": "Frozen"
   },
-  "statusUnknown": "Unknown"
+  "statusUnknown": "Unknown",
+  "usageSection": "Usage & Quotas",
+  "usageUserCount": "Current User Count",
+  "usageStorage": "Storage Used",
+  "usageApiCalls": "API Call Count",
+  "usagePlan": "Subscription Plan",
+  "usageNoPlan": "No plan associated",
+  "quotaType": "Quota Type",
+  "quotaValue": "Quota Limit",
+  "cleanupData": "Cleanup Data",
+  "cleanupConfirmTitle": "Confirm Tenant Data Cleanup",
+  "cleanupConfirmDesc": "This will hard-delete all business data for this tenant (users, roles, orgs, files, etc.), keeping the tenant record but setting its status to OFF. This is irreversible. Continue?",
+  "cleanupSuccess": "Tenant data cleaned up",
+  "cleanupFailed": "Cleanup failed"
 }

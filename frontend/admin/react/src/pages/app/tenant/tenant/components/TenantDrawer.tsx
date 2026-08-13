@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DrawerForm, ProFormText, ProFormSelect, ProFormTextArea, ProFormDateTimePicker } from '@ant-design/pro-components';
 import type { ProFormInstance } from '@ant-design/pro-components';
-import { Button, message, Divider } from 'antd';
+import { Button, message, Divider, Popconfirm, Descriptions, Tag, Progress } from 'antd';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useUpdateTenant, useCreateTenantWithAdminUser } from '@/api/hooks/tenant';
+import { useUpdateTenant, useCreateTenantWithAdminUser, useGetTenantUsage, useCleanupTenantData } from '@/api/hooks/tenant';
 import { fetchListPlans } from '@/api/hooks/plan';
 import { PaginationQuery } from '@/core';
 import type {
@@ -44,6 +44,13 @@ const TenantDrawer: React.FC<TenantDrawerProps> = ({
 
   const updateMutation = useUpdateTenant();
   const createMutation = useCreateTenantWithAdminUser();
+
+  // 编辑模式下加载租户用量与配额对比数据。
+  const usageQuery = useGetTenantUsage(
+    { id: data?.id ?? 0 },
+    { enabled: open && mode === 'edit' && !!data?.id },
+  );
+  const cleanupMutation = useCleanupTenantData();
 
   // 套餐下拉数据
   const [planOptions, setPlanOptions] = useState<{ label: string; value: number }[]>([]);
@@ -273,6 +280,78 @@ const TenantDrawer: React.FC<TenantDrawerProps> = ({
           showCount: true,
         }}
       />
+
+      {/* 编辑模式下显示用量与配额对比 + 清理数据按钮 */}
+      {mode === 'edit' && usageQuery.data && (
+        <>
+          <Divider style={{ margin: '24px 0 16px' }}>{t('usageSection')}</Divider>
+          <Descriptions column={1} size="small" bordered>
+            <Descriptions.Item label={t('usageUserCount')}>
+              {usageQuery.data.userCount ?? 0}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('usageStorage')}>
+              {usageQuery.data.storageUsedBytes ?? 0} bytes
+            </Descriptions.Item>
+            <Descriptions.Item label={t('usageApiCalls')}>
+              {usageQuery.data.apiCallCount ?? 0}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('usagePlan')}>
+              {usageQuery.data.planName ?? t('usageNoPlan')}
+            </Descriptions.Item>
+          </Descriptions>
+          {usageQuery.data.quotas && usageQuery.data.quotas.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              {usageQuery.data.quotas.map((q, idx) => {
+                let label = q.quotaType?.toString() ?? '';
+                let current = 0;
+                let limit = q.quotaValue ?? 0;
+                if (q.quotaType === 1) {
+                  label = t('usageUserCount');
+                  current = usageQuery.data.userCount ?? 0;
+                } else if (q.quotaType === 2) {
+                  label = t('usageStorage');
+                  current = usageQuery.data.storageUsedBytes ?? 0;
+                } else if (q.quotaType === 3) {
+                  label = t('usageApiCalls');
+                  current = usageQuery.data.apiCallCount ?? 0;
+                }
+                const pct = limit > 0 ? Math.min(100, (current / limit) * 100) : 0;
+                return (
+                  <div key={idx} style={{ marginBottom: 12 }}>
+                    <div style={{ marginBottom: 4 }}>
+                      {label}: {current} / {limit}
+                    </div>
+                    <Progress percent={pct} size="small" />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div style={{ marginTop: 24 }}>
+            <Popconfirm
+              title={t('cleanupConfirmTitle')}
+              description={t('cleanupConfirmDesc')}
+              okText={t('common:button.confirm')}
+              okButtonProps={{ danger: true }}
+              cancelText={t('common:button.cancel')}
+              onConfirm={async () => {
+                try {
+                  await cleanupMutation.mutateAsync({ id: data?.id ?? 0 });
+                  message.success(t('cleanupSuccess'));
+                  queryClient.invalidateQueries({ queryKey: ['listTenants'] });
+                  onClose();
+                } catch (err: any) {
+                  message.error(err?.message || t('cleanupFailed'));
+                }
+              }}
+            >
+              <Button danger loading={cleanupMutation.isPending}>
+                {t('cleanupData')}
+              </Button>
+            </Popconfirm>
+          </div>
+        </>
+      )}
 
       {/* 创建模式下显示管理员账号配置 */}
       {mode === 'create' && (

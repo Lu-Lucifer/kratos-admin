@@ -52,5 +52,20 @@
     "USER_LIMIT": "用户上限",
     "STORAGE": "存储空间",
     "API_CALL": "API 调用量"
+  },
+  "moduleWhitelist": "模块白名单",
+  "moduleWhitelistPlaceholder": "请选择允许的功能模块",
+  "moduleCount": "模块数",
+  "module": {
+    "DASHBOARD": "仪表盘",
+    "OPM": "组织与人员",
+    "SYSTEM": "系统配置",
+    "DICT": "字典管理",
+    "TENANT": "租户管理",
+    "PERMISSION": "权限管理",
+    "LOG": "审计日志",
+    "INTERNAL_MESSAGE": "站内消息",
+    "FILE": "文件管理",
+    "TASK": "任务调度"
   }
 }

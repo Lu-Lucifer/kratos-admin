@@ -97,6 +97,51 @@
         />
       </ElFormItem>
 
+      <!-- 编辑模式下显示用量与配额 + 清理数据按钮 -->
+      <template v-if="!isCreate && usageData">
+        <ElDivider>{{ $t("pages.tenant.usageSection") }}</ElDivider>
+        <ElDescriptions :column="1" size="small" border>
+          <ElDescriptionsItem :label="$t('pages.tenant.usageUserCount')">
+            {{ usageData.userCount ?? 0 }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem :label="$t('pages.tenant.usageStorage')">
+            {{ usageData.storageUsedBytes ?? 0 }} bytes
+          </ElDescriptionsItem>
+          <ElDescriptionsItem :label="$t('pages.tenant.usageApiCalls')">
+            {{ usageData.apiCallCount ?? 0 }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem :label="$t('pages.tenant.usagePlan')">
+            {{ usageData.planName ?? $t("pages.tenant.usageNoPlan") }}
+          </ElDescriptionsItem>
+        </ElDescriptions>
+        <div v-if="usageData.quotas && usageData.quotas.length" style="margin-top: 16px">
+          <div v-for="(q, idx) in usageData.quotas" :key="idx" style="margin-bottom: 12px">
+            <div style="margin-bottom: 4px">
+              {{ getQuotaLabel(q.quotaType) }}: {{ getQuotaCurrent(q.quotaType) }} /
+              {{ q.quotaValue ?? 0 }}
+            </div>
+            <ElProgress
+              :percentage="getQuotaPercent(q.quotaType, q.quotaValue ?? 0)"
+              :stroke-width="6"
+            />
+          </div>
+        </div>
+        <div style="margin-top: 24px">
+          <ElPopconfirm
+            :title="$t('pages.tenant.cleanupConfirmTitle')"
+            :content="$t('pages.tenant.cleanupConfirmDesc')"
+            confirm-button-type="danger"
+            @confirm="handleCleanup"
+          >
+            <template #reference>
+              <ElButton type="danger" :loading="cleanupLoading">
+                {{ $t("pages.tenant.cleanupData") }}
+              </ElButton>
+            </template>
+          </ElPopconfirm>
+        </div>
+      </template>
+
       <!-- 管理员设置（仅创建时显示） -->
       <ElDivider v-if="isCreate">{{ $t("pages.tenant.adminSetting") }}</ElDivider>
 
@@ -167,6 +212,8 @@ import {
   useCreateTenantWithAdminUser,
   useUpdateTenant,
   useUserExists,
+  useGetTenantUsage,
+  useCleanupTenantData,
   fetchListTenants,
   fetchListPlans,
 } from "@/api/composables";
@@ -197,6 +244,53 @@ const visible = computed({
 const { mutateAsync: createTenantWithAdminUserMut } = useCreateTenantWithAdminUser();
 const { mutateAsync: updateTenantMut } = useUpdateTenant();
 const { mutateAsync: userExists } = useUserExists();
+
+// 编辑模式下加载租户用量数据（usageData）和清理 mutation。
+// usageQuery 在 setup 顶层声明，refetch 在 watch 中按需触发。
+const tenantIdForUsage = computed(() => data.value.row?.id ?? 0);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const usageQuery = useGetTenantUsage({ id: tenantIdForUsage.value } as any);
+const usageData = computed(() => usageQuery.data.value);
+const cleanupLoading = ref(false);
+const { mutateAsync: cleanupMut } = useCleanupTenantData();
+
+// 辅助函数：根据配额类型返回标签/当前值/百分比。
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getQuotaLabel(qt: any): string {
+  if (qt === 1) return $t("pages.tenant.usageUserCount");
+  if (qt === 2) return $t("pages.tenant.usageStorage");
+  if (qt === 3) return $t("pages.tenant.usageApiCalls");
+  return $t("pages.tenant.quotaType");
+}
+// eslint-disable-next-line @typescript-messages/no-explicit-any
+function getQuotaCurrent(qt: any): number {
+  const ud = usageData.value as any;
+  if (!ud) return 0;
+  if (qt === 1) return ud.userCount ?? 0;
+  if (qt === 2) return ud.storageUsedBytes ?? 0;
+  if (qt === 3) return ud.apiCallCount ?? 0;
+  return 0;
+}
+// eslint-disable-next-line @typescript-messages/no-explicit-any
+function getQuotaPercent(qt: any, limit: number): number {
+  const current = getQuotaCurrent(qt);
+  if (limit <= 0) return 0;
+  return Math.min(100, (current / limit) * 100);
+}
+
+async function handleCleanup() {
+  if (!data.value.row?.id) return;
+  try {
+    cleanupLoading.value = true;
+    await cleanupMut({ id: data.value.row.id });
+    ElMessage.success($t("pages.tenant.cleanupSuccess"));
+    modalApi.close();
+  } catch (err: any) {
+    ElMessage.error(err?.message || $t("pages.tenant.cleanupFailed"));
+  } finally {
+    cleanupLoading.value = false;
+  }
+}
 
 // 加载状态
 const loading = ref(false);
@@ -289,6 +383,13 @@ watch(visible, async (val) => {
         password: "",
         passwordConfirm: "",
       };
+
+      // 加载该租户的用量与配额对比数据
+      try {
+        await usageQuery.refetch();
+      } catch {
+        // 忽略错误
+      }
     } else {
       // 创建模式
       resetForm();

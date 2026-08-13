@@ -8,11 +8,14 @@ import {
 import type {
   identityservicev1_DeletePlanQuotaRequest,
   identityservicev1_DeletePlanRequest,
+  identityservicev1_DeletePlanModuleRequest,
   identityservicev1_GetPlanRequest,
   identityservicev1_ListPlanQuotaResponse,
   identityservicev1_ListPlanResponse,
+  identityservicev1_ListPlanModuleResponse,
   identityservicev1_Plan,
   identityservicev1_PlanQuota,
+  identityservicev1_PlanModule,
   identityservicev1_Plan_ExpiryPolicy as Plan_ExpiryPolicy,
   identityservicev1_Plan_Version as Plan_Version,
   identityservicev1_PlanQuota_QuotaType as PlanQuota_QuotaType,
@@ -153,8 +156,65 @@ export function useDeletePlanQuota(
 }
 
 // ==============================
+// 套餐模块白名单管理
+// ==============================
+
+export function useListPlanModules(
+  query: PaginationQuery,
+  options?: UseQueryOptions<identityservicev1_ListPlanModuleResponse, Error>
+) {
+  return useQuery({
+    queryKey: ["listPlanModules", query],
+    queryFn: () => apiClient.planModuleService.List(query.toRawParams()),
+    ...options,
+  });
+}
+
+export async function fetchListPlanModules(params: PaginationQuery) {
+  return queryClient.fetchQuery({
+    queryKey: ["listPlanModules", params],
+    queryFn: () => apiClient.planModuleService.List(params.toRawParams()),
+    staleTime: 0,
+    retry: 0,
+  });
+}
+
+export function useCreatePlanModule(
+  options?: UseMutationOptions<{}, Error, identityservicev1_PlanModule>
+) {
+  return useMutation({
+    mutationFn: (data) =>
+      apiClient.planModuleService.Create({ data } as any),
+    ...options,
+  });
+}
+
+export function useDeletePlanModule(
+  options?: UseMutationOptions<{}, Error, identityservicev1_DeletePlanModuleRequest>
+) {
+  return useMutation({
+    mutationFn: (req) => apiClient.planModuleService.Delete(req),
+    ...options,
+  });
+}
+
+// ==============================
 // 套餐枚举与工具函数
 // ==============================
+
+// 模块白名单多选选项列表（对齐 identityservicev1_Module 枚举字符串值）
+export const planModuleList = computed(() => [
+  { value: "DASHBOARD", label: t("enum.module.DASHBOARD") },
+  { value: "OPM", label: t("enum.module.OPM") },
+  { value: "SYSTEM", label: t("enum.module.SYSTEM") },
+  { value: "DICT", label: t("enum.module.DICT") },
+  { value: "TENANT", label: t("enum.module.TENANT") },
+  { value: "PERMISSION", label: t("enum.module.PERMISSION") },
+  { value: "LOG", label: t("enum.module.LOG") },
+  { value: "INTERNAL_MESSAGE", label: t("enum.module.INTERNAL_MESSAGE") },
+  { value: "FILE", label: t("enum.module.FILE") },
+  { value: "TASK", label: t("enum.module.TASK") },
+]);
 
 export const planVersionList = computed(() => [
   { value: "FREE", label: t("enum.plan.version.FREE") },

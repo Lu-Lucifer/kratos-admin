@@ -269,6 +269,17 @@
     "adminPasswordConfirm": "Confirm Password",
     "adminMobile": "Admin Mobile",
     "adminEmail": "Admin Email",
+    "usageSection": "Usage & Quotas",
+    "usageUserCount": "Current User Count",
+    "usageStorage": "Storage Used",
+    "usageApiCalls": "API Call Count",
+    "usagePlan": "Subscription Plan",
+    "usageNoPlan": "No plan associated",
+    "cleanupData": "Cleanup Data",
+    "cleanupConfirmTitle": "Confirm Tenant Data Cleanup",
+    "cleanupConfirmDesc": "This will hard-delete all business data for this tenant, keeping the tenant record but setting its status to OFF. This is irreversible. Continue?",
+    "cleanupSuccess": "Tenant data cleaned up",
+    "cleanupFailed": "Cleanup failed",
     "button": {
       "create": "Create Tenant"
     },
@@ -511,6 +522,7 @@
     "quotaType": "Quota Type",
     "quotaValue": "Quota Value",
     "plan": "Associated Plan",
+    "moduleWhitelist": "Module Whitelist",
     "button": {
       "create": "Create"
     }

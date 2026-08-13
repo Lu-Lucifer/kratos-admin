@@ -151,6 +151,11 @@ const TenantList = () => {
       sorter: true,
     },
     {
+      title: t('memberCount'),
+      dataIndex: 'memberCount',
+      hideInSearch: true,
+    },
+    {
       title: t('remark'),
       dataIndex: 'remark',
       hideInSearch: true,

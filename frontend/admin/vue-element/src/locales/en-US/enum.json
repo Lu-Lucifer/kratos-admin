@@ -237,5 +237,17 @@
       "USER_LIMIT": "User Limit",
       "PLAN_QUOTA_TYPE_UNSPECIFIED": "Unspecified"
     }
+  },
+  "module": {
+    "DASHBOARD": "Dashboard",
+    "OPM": "Org & Personnel",
+    "SYSTEM": "System Config",
+    "DICT": "Dictionary",
+    "TENANT": "Tenant Management",
+    "PERMISSION": "Permission",
+    "LOG": "Audit Log",
+    "INTERNAL_MESSAGE": "Internal Message",
+    "FILE": "File Management",
+    "TASK": "Task Scheduler"
   }
 }

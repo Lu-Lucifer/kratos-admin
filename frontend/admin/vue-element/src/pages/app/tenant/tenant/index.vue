@@ -151,6 +151,7 @@ const pageConfig = computed<ProPageConfig>(() => ({
         cellType: "date",
         dateFormat: "YYYY-MM-DD HH:mm:ss",
       },
+      { prop: "memberCount", label: $t("pages.tenant.memberCount"), minWidth: 80 },
       { prop: "remark", label: $t("common.table.remark"), minWidth: 150 },
       {
         prop: "action",

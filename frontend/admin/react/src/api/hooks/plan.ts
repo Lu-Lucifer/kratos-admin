@@ -13,6 +13,9 @@ import {
   type identityservicev1_GetPlanRequest,
   type identityservicev1_CreatePlanQuotaRequest,
   type identityservicev1_DeletePlanQuotaRequest,
+  type identityservicev1_ListPlanModuleResponse,
+  type identityservicev1_CreatePlanModuleRequest,
+  type identityservicev1_DeletePlanModuleRequest,
 } from '@/api/generated/admin/service/v1';
 import { makeUpdateMask, type PaginationQuery } from '@/core/transport/rest';
 import { queryClient } from '@/core';
@@ -139,6 +142,47 @@ export function useDeletePlanQuota(
 ) {
   return useMutation({
     mutationFn: (data) => apiClient.planQuotaService.Delete(data),
+    ...options,
+  });
+}
+
+// ==============================
+// 套餐模块白名单管理
+// ==============================
+
+export function useListPlanModules(
+  query: PaginationQuery,
+  options?: UseQueryOptions<identityservicev1_ListPlanModuleResponse, Error>,
+) {
+  return useQuery({
+    queryKey: ['listPlanModules', query],
+    queryFn: () => apiClient.planModuleService.List(query.toRawParams()),
+    ...options,
+  });
+}
+
+export async function fetchListPlanModules(params: PaginationQuery) {
+  return queryClient.fetchQuery({
+    queryKey: ['listPlanModules', params],
+    queryFn: () => apiClient.planModuleService.List(params.toRawParams()),
+    retry: 0,
+  });
+}
+
+export function useCreatePlanModule(
+  options?: UseMutationOptions<{}, Error, identityservicev1_CreatePlanModuleRequest>,
+) {
+  return useMutation({
+    mutationFn: (data) => apiClient.planModuleService.Create(data),
+    ...options,
+  });
+}
+
+export function useDeletePlanModule(
+  options?: UseMutationOptions<{}, Error, identityservicev1_DeletePlanModuleRequest>,
+) {
+  return useMutation({
+    mutationFn: (data) => apiClient.planModuleService.Delete(data),
     ...options,
   });
 }

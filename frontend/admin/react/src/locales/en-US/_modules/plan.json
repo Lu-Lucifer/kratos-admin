@@ -52,5 +52,20 @@
     "USER_LIMIT": "User Limit",
     "STORAGE": "Storage",
     "API_CALL": "API Calls"
+  },
+  "moduleWhitelist": "Module Whitelist",
+  "moduleWhitelistPlaceholder": "Please select allowed modules",
+  "moduleCount": "Module Count",
+  "module": {
+    "DASHBOARD": "Dashboard",
+    "OPM": "Org & Personnel",
+    "SYSTEM": "System Config",
+    "DICT": "Dictionary",
+    "TENANT": "Tenant Management",
+    "PERMISSION": "Permission",
+    "LOG": "Audit Log",
+    "INTERNAL_MESSAGE": "Internal Message",
+    "FILE": "File Management",
+    "TASK": "Task Scheduler"
   }
 }

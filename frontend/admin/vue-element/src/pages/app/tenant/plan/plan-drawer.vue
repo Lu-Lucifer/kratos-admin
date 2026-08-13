@@ -41,6 +41,23 @@
         </ElSelect>
       </ElFormItem>
 
+      <ElFormItem :label="$t('pages.plan.moduleWhitelist')" prop="moduleWhitelist">
+        <ElSelect
+          v-model="formData.moduleWhitelist"
+          multiple
+          filterable
+          :placeholder="$t('pages.plan.moduleWhitelistPlaceholder')"
+          class="w-full"
+        >
+          <ElOption
+            v-for="item in planModuleList"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </ElSelect>
+      </ElFormItem>
+
       <ElFormItem :label="$t('pages.plan.dataRetentionDays')" prop="dataRetentionDays">
         <ElInputNumber
           v-model="formData.dataRetentionDays"
@@ -89,10 +106,16 @@ import type { FormInstance, FormRules } from "element-plus";
 import {
   planExpiryPolicyList,
   planVersionList,
+  planModuleList,
   useCreatePlan,
   useUpdatePlan,
+  useListPlanModules,
+  useCreatePlanModule,
+  useDeletePlanModule,
+  fetchListPlanModules,
 } from "@/api/composables";
 import type { identityservicev1_Plan as Plan } from "@/api/generated/admin/service/v1";
+import { PaginationQuery } from "@/core/transport/rest";
 import { $t } from "@/core/i18n";
 import { DRAWER_WIDTH } from "@/constants";
 import { injectProModalApi } from "@/components/Pro";
@@ -116,9 +139,14 @@ const visible = computed({
 
 const { mutateAsync: createPlanMut } = useCreatePlan();
 const { mutateAsync: updatePlanMut } = useUpdatePlan();
+const { mutateAsync: createModuleMut } = useCreatePlanModule();
+const { mutateAsync: deleteModuleMut } = useDeletePlanModule();
 
 // 加载状态
 const loading = ref(false);
+
+// 当前套餐已有的模块白名单（编辑模式下从后端加载，用于 diff）
+const existingModules = ref<string[]>([]);
 
 // 表单数据
 const formData = ref({
@@ -128,6 +156,7 @@ const formData = ref({
   dataRetentionDays: 0,
   description: "",
   remark: "",
+  moduleWhitelist: [] as string[],
 });
 
 const formRef = ref<FormInstance>();
@@ -149,7 +178,7 @@ const title = computed(() =>
 );
 
 // 监听弹窗打开/关闭
-watch(visible, (val) => {
+watch(visible, async (val) => {
   if (val) {
     if (!isCreate.value && data.value.row) {
       // 编辑模式
@@ -161,7 +190,32 @@ watch(visible, (val) => {
         dataRetentionDays: row.dataRetentionDays ?? 0,
         description: row.description || "",
         remark: row.remark || "",
+        moduleWhitelist: [],
       };
+
+      // 加载该套餐已有的模块白名单
+      try {
+        const resp = await fetchListPlanModules(
+          new PaginationQuery({
+            paging: { page: 1, pageSize: 999 },
+            formValues: { plan_id: row.id },
+          })
+        );
+        const names: string[] = [];
+        if (resp?.items) {
+          for (const item of resp.items) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const mod = (item as any)?.module;
+            if (typeof mod === "string" && mod.length > 0) {
+              names.push(mod);
+            }
+          }
+        }
+        existingModules.value = names;
+        formData.value.moduleWhitelist = [...names];
+      } catch {
+        existingModules.value = [];
+      }
     } else {
       // 创建模式
       resetForm();
@@ -181,7 +235,9 @@ const resetForm = () => {
     dataRetentionDays: 0,
     description: "",
     remark: "",
+    moduleWhitelist: [],
   };
+  existingModules.value = [];
 };
 
 // 关闭弹窗
@@ -225,6 +281,37 @@ const handleSubmit = async () => {
         },
       });
       ElMessage.success($t("common.notification.update_success"));
+
+      // 同步模块白名单 diff（编辑模式）
+      const planId = data.value.row!.id;
+      const selected = formData.value.moduleWhitelist;
+      const toAdd = selected.filter((m) => !existingModules.value.includes(m));
+      const toRemove = existingModules.value.filter((m) => !selected.includes(m));
+
+      // 查找已有模块记录以获取删除所需的 ID
+      let existingItems: any[] = [];
+      try {
+        const resp = await fetchListPlanModules(
+          new PaginationQuery({
+            paging: { page: 1, pageSize: 999 },
+            formValues: { plan_id: planId },
+          })
+        );
+        existingItems = resp?.items || [];
+      } catch {
+        existingItems = [];
+      }
+
+      for (const mod of toAdd) {
+        await createModuleMut({ planId: planId, module: mod as any } as any);
+      }
+      for (const mod of toRemove) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const item = existingItems.find((it: any) => it?.module === mod);
+        if (item?.id) {
+          await deleteModuleMut({ id: item.id } as any);
+        }
+      }
     }
 
     modalApi.close();

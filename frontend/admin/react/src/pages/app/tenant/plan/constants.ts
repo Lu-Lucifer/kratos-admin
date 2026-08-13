@@ -103,3 +103,27 @@ export const SELECT_FILTER_PROPS = {
   filterOption: (input: string, option: any) =>
     (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
 };
+
+// ========== 模块白名单（多选） ==========
+// 用于套餐 drawer 中的模块白名单多选框，选项标签来自 i18n module.* 枚举。
+// 值对齐 identityservicev1_Module 枚举（数字），由调用方与后端 PlanModule.entity 交互。
+
+export const MODULE_LABEL_KEYS: string[] = [
+  'DASHBOARD',
+  'OPM',
+  'SYSTEM',
+  'DICT',
+  'TENANT',
+  'PERMISSION',
+  'LOG',
+  'INTERNAL_MESSAGE',
+  'FILE',
+  'TASK',
+];
+
+export function getModuleOptions(t: TFn) {
+  return MODULE_LABEL_KEYS.map((k) => ({
+    label: t(`module.${k}`),
+    value: k,
+  }));
+}

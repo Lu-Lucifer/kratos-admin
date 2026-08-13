@@ -162,6 +162,10 @@ const gridOptions: VxeGridProps<Tenant> = {
       formatter: 'formatDateTime',
       width: 140,
     },
+    {
+      title: $t('page.tenant.memberCount'),
+      field: 'memberCount',
+    },
     { title: $t('ui.table.remark'), field: 'remark' },
     {
       title: $t('ui.table.action'),

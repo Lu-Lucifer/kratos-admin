@@ -256,5 +256,17 @@
       "USER_LIMIT": "User Limit",
       "API_CALL": "API Call"
     }
+  },
+  "module": {
+    "DASHBOARD": "Dashboard",
+    "OPM": "Org & Personnel",
+    "SYSTEM": "System Config",
+    "DICT": "Dictionary",
+    "TENANT": "Tenant Management",
+    "PERMISSION": "Permission",
+    "LOG": "Audit Log",
+    "INTERNAL_MESSAGE": "Internal Message",
+    "FILE": "File Management",
+    "TASK": "Task Scheduler"
   }
 }

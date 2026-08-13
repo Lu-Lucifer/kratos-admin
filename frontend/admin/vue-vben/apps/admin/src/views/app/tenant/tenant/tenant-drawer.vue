@@ -4,11 +4,19 @@ import { computed, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { notification } from 'ant-design-vue';
+import {
+  Button,
+  Descriptions,
+  DescriptionsItem,
+  Popconfirm,
+  Progress,
+  notification,
+} from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import {
   fetchListPlans,
+  fetchTenantUsage,
   PaginationQuery,
   tenantAuditStatusList,
   tenantStatusList,
@@ -17,14 +25,60 @@ import {
   useTenantExists,
   useUpdateTenant,
   useUserExists,
+  useCleanupTenantData,
 } from '#/api';
 
 const { mutateAsync: doCreateTenant } = useCreateTenantWithAdminUser();
 const { mutateAsync: doUpdateTenant } = useUpdateTenant();
 const { mutateAsync: tenantExists } = useTenantExists();
 const { mutateAsync: userExists } = useUserExists();
+const { mutateAsync: cleanupMut } = useCleanupTenantData();
 
 const data = ref();
+const usageData = ref<any>(null);
+const cleanupLoading = ref(false);
+
+// 辅助函数：根据配额类型返回标签/当前值/百分比。
+// eslint-disable-next-line @typescript-messages/no-explicit-any
+function getQuotaLabel(qt: any): string {
+  if (qt === 1) return $t('page.tenant.usageUserCount');
+  if (qt === 2) return $t('page.tenant.usageStorage');
+  if (qt === 3) return $t('page.tenant.usageApiCalls');
+  return $t('page.tenant.quotaType');
+}
+// eslint-disable-next-line @typescript-messages/no-explicit-any
+function getQuotaCurrent(qt: any): number {
+  const ud = usageData.value as any;
+  if (!ud) return 0;
+  if (qt === 1) return ud.userCount ?? 0;
+  if (qt === 2) return ud.storageUsedBytes ?? 0;
+  if (qt === 3) return ud.apiCallCount ?? 0;
+  return 0;
+}
+// eslint-disable-next-line @typescript-messages/no-explicit-any
+function getQuotaPercent(qt: any, limit: number): number {
+  const current = getQuotaCurrent(qt);
+  if (limit <= 0) return 0;
+  return Math.min(100, (current / limit) * 100);
+}
+
+async function handleCleanup() {
+  // eslint-disable-next-line @typescript-messages/no-explicit-any
+  const rowId = (data.value?.row as any)?.id;
+  if (!rowId) return;
+  try {
+    cleanupLoading.value = true;
+    await cleanupMut({ id: rowId });
+    notification.success({ message: $t('page.tenant.cleanupSuccess') });
+    drawerApi.close();
+  } catch (err: any) {
+    notification.error({
+      message: err?.message || $t('page.tenant.cleanupFailed'),
+    });
+  } finally {
+    cleanupLoading.value = false;
+  }
+}
 
 const getTitle = computed(() =>
   data.value?.create
@@ -287,6 +341,21 @@ const [Drawer, drawerApi] = useVbenDrawer({
       // 为表单赋值
       baseFormApi.setValues(data.value?.row);
 
+      // 编辑模式下加载该租户的用量与配额对比数据
+      // eslint-disable-next-line @typescript-messages/no-explicit-any
+      const rowId = (data.value?.row as any)?.id;
+      if (!data.value?.create && rowId) {
+        fetchTenantUsage({ id: rowId } as any)
+          .then((res: any) => {
+            usageData.value = res ?? null;
+          })
+          .catch(() => {
+            usageData.value = null;
+          });
+      } else {
+        usageData.value = null;
+      }
+
       setLoading(false);
 
       console.log('onOpenChange', data.value, data.value?.create);
@@ -418,5 +487,67 @@ async function updateTenant(values: any) {
 <template>
   <Drawer :title="getTitle">
     <BaseForm />
+    <template v-if="!data?.create && usageData">
+      <div class="usage-divider">{{ $t('page.tenant.usageSection') }}</div>
+      <Descriptions :column="1" size="small" bordered>
+        <DescriptionsItem :label="$t('page.tenant.usageUserCount')">
+          {{ usageData.userCount ?? 0 }}
+        </DescriptionsItem>
+        <DescriptionsItem :label="$t('page.tenant.usageStorage')">
+          {{ usageData.storageUsedBytes ?? 0 }} bytes
+        </DescriptionsItem>
+        <DescriptionsItem :label="$t('page.tenant.usageApiCalls')">
+          {{ usageData.apiCallCount ?? 0 }}
+        </DescriptionsItem>
+        <DescriptionsItem :label="$t('page.tenant.usagePlan')">
+          {{ usageData.planName ?? $t('page.tenant.usageNoPlan') }}
+        </DescriptionsItem>
+      </Descriptions>
+      <div v-if="usageData.quotas && usageData.quotas.length" class="quota-list">
+        <div v-for="(q, idx) in usageData.quotas" :key="idx" class="quota-item">
+          <div class="quota-label">
+            {{ getQuotaLabel(q.quotaType) }}: {{ getQuotaCurrent(q.quotaType) }} /
+            {{ q.quotaValue ?? 0 }}
+          </div>
+          <Progress
+            :percent="getQuotaPercent(q.quotaType, q.quotaValue ?? 0)"
+            size="small"
+          />
+        </div>
+      </div>
+      <div class="cleanup-btn-wrapper">
+        <Popconfirm
+          :title="$t('page.tenant.cleanupConfirmTitle')"
+          :content="$t('page.tenant.cleanupConfirmDesc')"
+          ok-type="danger"
+          @confirm="handleCleanup"
+        >
+          <Button danger :loading="cleanupLoading">
+            {{ $t('page.tenant.cleanupData') }}
+          </Button>
+        </Popconfirm>
+      </div>
+    </template>
   </Drawer>
 </template>
+
+<style scoped>
+.usage-divider {
+  margin: 24px 0 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.quota-list {
+  margin-top: 16px;
+}
+.quota-item {
+  margin-bottom: 12px;
+}
+.quota-label {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+.cleanup-btn-wrapper {
+  margin-top: 24px;
+}
+</style>

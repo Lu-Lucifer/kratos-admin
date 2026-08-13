@@ -7,5 +7,7 @@
   "dataRetentionDays": "Data Retention Days",
   "planId": "Parent Plan",
   "quotaType": "Quota Type",
-  "quotaValue": "Quota Value"
+  "quotaValue": "Quota Value",
+  "moduleWhitelist": "Module Whitelist",
+  "moduleWhitelistPlaceholder": "Please select allowed modules"
 }

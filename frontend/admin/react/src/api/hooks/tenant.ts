@@ -11,6 +11,9 @@ import {
   type identityservicev1_GetTenantRequest,
   type identityservicev1_ListTenantResponse,
   type identityservicev1_Tenant,
+  type identityservicev1_TenantUsage,
+  type identityservicev1_GetTenantUsageRequest,
+  type identityservicev1_CleanupTenantDataRequest,
 } from '@/api/generated/admin/service/v1';
 import { makeUpdateMask, type PaginationQuery } from '@/core/transport/rest';
 import { apiClient } from '@/api/client';
@@ -101,6 +104,32 @@ export function useCreateTenantWithAdminUser(
 ) {
   return useMutation({
     mutationFn: (req) => apiClient.tenantService.CreateTenantWithAdminUser(req),
+    ...options,
+  });
+}
+
+// ==============================
+// 租户用量查询
+// ==============================
+export function useGetTenantUsage(
+  req: identityservicev1_GetTenantUsageRequest,
+  options?: UseQueryOptions<identityservicev1_TenantUsage, Error>,
+) {
+  return useQuery({
+    queryKey: ['getTenantUsage', req],
+    queryFn: () => apiClient.tenantService.GetUsage(req),
+    ...options,
+  });
+}
+
+// ==============================
+// 清理租户数据（保留租户记录，状态改为 OFF）
+// ==============================
+export function useCleanupTenantData(
+  options?: UseMutationOptions<{}, Error, identityservicev1_CleanupTenantDataRequest>,
+) {
+  return useMutation({
+    mutationFn: (req) => apiClient.tenantService.CleanupData(req),
     ...options,
   });
 }

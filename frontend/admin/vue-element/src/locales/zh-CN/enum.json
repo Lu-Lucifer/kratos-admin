@@ -237,5 +237,17 @@
       "USER_LIMIT": "用户数量上限",
       "PLAN_QUOTA_TYPE_UNSPECIFIED": "未指定"
     }
+  },
+  "module": {
+    "DASHBOARD": "仪表盘",
+    "OPM": "组织与人员",
+    "SYSTEM": "系统配置",
+    "DICT": "字典管理",
+    "TENANT": "租户管理",
+    "PERMISSION": "权限管理",
+    "LOG": "审计日志",
+    "INTERNAL_MESSAGE": "站内消息",
+    "FILE": "文件管理",
+    "TASK": "任务调度"
   }
 }

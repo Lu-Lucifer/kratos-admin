@@ -7,10 +7,24 @@ import { $t } from '@vben/locales';
 import { notification } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import { planExpiryPolicyList, planVersionList, useCreatePlan, useUpdatePlan } from '#/api';
+import {
+  planExpiryPolicyList,
+  planVersionList,
+  planModuleList,
+  useCreatePlan,
+  useUpdatePlan,
+  useCreatePlanModule,
+  useDeletePlanModule,
+  fetchListPlanModules,
+} from '#/api';
+import { PaginationQuery } from '#/transport/rest';
 
 const { mutateAsync: createPlan } = useCreatePlan();
 const { mutateAsync: updatePlan } = useUpdatePlan();
+const { mutateAsync: createModuleMut } = useCreatePlanModule();
+const { mutateAsync: deleteModuleMut } = useDeletePlanModule();
+
+const existingModules = ref<string[]>([]);
 
 const data = ref();
 
@@ -79,6 +93,20 @@ const [BaseForm, baseFormApi] = useVbenForm({
       },
     },
     {
+      component: 'Select',
+      fieldName: 'moduleWhitelist',
+      label: $t('page.plan.moduleWhitelist'),
+      componentProps: {
+        placeholder: $t('ui.placeholder.select'),
+        options: planModuleList,
+        mode: 'multiple',
+        allowClear: true,
+        showSearch: true,
+        filterOption: (input: string, option: any) =>
+          option.label.toLowerCase().includes(input.toLowerCase()),
+      },
+    },
+    {
       component: 'Textarea',
       fieldName: 'description',
       label: $t('ui.table.description'),
@@ -119,18 +147,60 @@ const [Drawer, drawerApi] = useVbenDrawer({
     // 获取表单数据
     const values = await baseFormApi.getValues();
 
-    console.log(getTitle.value, Object.keys(values));
+    // 剥离模块白名单字段，不传入套餐主体 CRUD。
+    const { moduleWhitelist, ...planValues } = values;
+    const selectedModules: string[] = Array.isArray(moduleWhitelist)
+      ? moduleWhitelist
+      : [];
+
+    console.log(getTitle.value, Object.keys(planValues));
 
     try {
       await (data.value?.create
-        ? createPlan({ data: { ...values } })
-        : updatePlan({ id: data.value.row.id, values }));
+        ? createPlan({ data: { ...planValues } })
+        : updatePlan({ id: data.value.row.id, values: planValues }));
 
       notification.success({
         message: data.value?.create
           ? $t('ui.notification.create_success')
           : $t('ui.notification.update_success'),
       });
+
+      // 编辑模式下同步模块白名单 diff
+      if (!data.value?.create && data.value.row?.id) {
+        const planId = data.value.row.id;
+        const toAdd = selectedModules.filter(
+          (m) => !existingModules.value.includes(m),
+        );
+        const toRemove = existingModules.value.filter(
+          (m) => !selectedModules.includes(m),
+        );
+
+        // 查找已有模块记录以获取删除所需的 ID
+        let existingItems: any[] = [];
+        try {
+          const resp = await fetchListPlanModules(
+            new PaginationQuery({
+              paging: { page: 1, pageSize: 999 },
+              formValues: { plan_id: planId },
+            }),
+          );
+          existingItems = resp?.items || [];
+        } catch {
+          existingItems = [];
+        }
+
+        for (const mod of toAdd) {
+          await createModuleMut({ planId: planId, module: mod as any } as any);
+        }
+        for (const mod of toRemove) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const item = existingItems.find((it: any) => it?.module === mod);
+          if (item?.id) {
+            await deleteModuleMut({ id: item.id } as any);
+          }
+        }
+      }
     } catch {
       notification.error({
         message: data.value?.create
@@ -152,6 +222,31 @@ const [Drawer, drawerApi] = useVbenDrawer({
       // 为表单赋值
       if (data.value.row !== undefined) {
         baseFormApi.setValues(data.value?.row);
+
+        // 加载该套餐已有的模块白名单
+        try {
+          fetchListPlanModules(
+            new PaginationQuery({
+              paging: { page: 1, pageSize: 999 },
+              formValues: { plan_id: data.value.row.id },
+            }),
+          ).then((resp: any) => {
+            const names: string[] = [];
+            if (resp?.items) {
+              for (const item of resp.items) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const mod = (item as any)?.module;
+                if (typeof mod === 'string' && mod.length > 0) {
+                  names.push(mod);
+                }
+              }
+            }
+            existingModules.value = names;
+            baseFormApi.setValues({ moduleWhitelist: [...names] });
+          });
+        } catch {
+          existingModules.value = [];
+        }
       }
 
       setLoading(false);
