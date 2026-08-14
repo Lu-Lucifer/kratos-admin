@@ -1,8 +1,12 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import type {
+  redis_cacheservicev1_RedisCacheMonitorInfo,
+  redis_cacheservicev1_SlowLogEntry,
+} from '#/api/generated/admin/service/v1';
+
+import { computed, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
-import { $t } from '#/locales';
 import { formatDateTime } from '@vben/utils';
 
 import {
@@ -15,25 +19,36 @@ import {
 } from 'ant-design-vue';
 
 import { useRedisCacheMonitorInfo } from '#/api';
-import type {
-  redis_cacheservicev1_RedisCacheMonitorInfo,
-  redis_cacheservicev1_SlowLogEntry,
-} from '#/api/generated/admin/service/v1';
+import { $t } from '#/locales';
 
-const { data, isLoading } = useRedisCacheMonitorInfo();
+const { data } = useRedisCacheMonitorInfo();
 
 const expandedSections = ref<Record<string, boolean>>({});
 function toggleSection(key: string) {
-  expandedSections.value = { ...expandedSections.value, [key]: !expandedSections.value[key] };
+  expandedSections.value = {
+    ...expandedSections.value,
+    [key]: !expandedSections.value[key],
+  };
 }
 
-const info = (data.value as redis_cacheservicev1_RedisCacheMonitorInfo | undefined) ?? undefined;
-const sections = (info?.sections ?? []) as {
-  name: string;
-  entries: { key: string; value: string }[];
-}[];
-const dbSize = info?.dbSize ?? 0;
-const slowlog = (info?.slowlog ?? []) as redis_cacheservicev1_SlowLogEntry[];
+// data 是 vue-query 异步解析的 Ref：必须在 setup 时用 computed 派生，
+// 否则快照到的是 undefined，数据返回后页面也不会更新（永远显示空态）。
+const info = computed(
+  () =>
+    (data.value as redis_cacheservicev1_RedisCacheMonitorInfo | undefined) ??
+    undefined,
+);
+const sections = computed(() => {
+  const raw = info.value?.sections ?? [];
+  return raw as {
+    entries: { key: string; value: string }[];
+    name: string;
+  }[];
+});
+const dbSize = computed(() => info.value?.dbSize ?? 0);
+const slowlog = computed(
+  () => (info.value?.slowlog ?? []) as redis_cacheservicev1_SlowLogEntry[],
+);
 
 const slowLogColumns = [
   {
@@ -74,18 +89,24 @@ const slowLogColumns = [
     <div class="redis-cache-monitor-page">
       <Card class="mb-4">
         <template #title>
-          <span class="card-title">{{ $t('page.redisCacheMonitor.dbSizeCardTitle') }}</span>
+          <span class="card-title">{{
+            $t('page.redisCacheMonitor.dbSizeCardTitle')
+          }}</span>
         </template>
         <Descriptions :column="1" bordered>
           <DescriptionsItem :label="$t('page.redisCacheMonitor.dbSize')">
-            <Tag :color="dbSize > 0 ? 'orange' : 'default'">{{ String(dbSize) }}</Tag>
+            <Tag :color="dbSize > 0 ? 'orange' : 'default'">
+              {{ String(dbSize) }}
+            </Tag>
           </DescriptionsItem>
         </Descriptions>
       </Card>
 
       <Card v-if="sections.length === 0" class="mb-4">
         <template #title>
-          <span class="card-title">{{ $t('page.redisCacheMonitor.infoCardTitle') }}</span>
+          <span class="card-title">{{
+            $t('page.redisCacheMonitor.infoCardTitle')
+          }}</span>
         </template>
         <Empty :description="$t('page.redisCacheMonitor.noInfo')" />
       </Card>
@@ -96,7 +117,10 @@ const slowLogColumns = [
         class="mb-4"
       >
         <template #title>
-          <div class="section-header" @click="toggleSection(`${section.name}-${idx}`)">
+          <div
+            class="section-header"
+            @click="toggleSection(`${section.name}-${idx}`)"
+          >
             <span class="card-title">{{ section.name }}</span>
             <Tag>{{ section.entries.length }}</Tag>
             <span class="toggle-hint">
@@ -108,10 +132,14 @@ const slowLogColumns = [
             </span>
           </div>
         </template>
-        <Empty
+        <!-- 收起态用轻量提示行，不用 Empty 插画——Empty 语义是"无数据"，
+             大片收起时会让整页看起来像加载失败/空表 -->
+        <div
           v-if="!expandedSections[`${section.name}-${idx}`]"
-          :description="$t('page.redisCacheMonitor.collapsed')"
-        />
+          class="collapsed-hint"
+        >
+          {{ $t('page.redisCacheMonitor.collapsed') }}
+        </div>
         <Empty
           v-else-if="section.entries.length === 0"
           :description="$t('page.redisCacheMonitor.noEntries')"
@@ -129,7 +157,9 @@ const slowLogColumns = [
 
       <Card>
         <template #title>
-          <span class="card-title">{{ $t('page.redisCacheMonitor.slowlogCardTitle') }}</span>
+          <span class="card-title">{{
+            $t('page.redisCacheMonitor.slowlogCardTitle')
+          }}</span>
         </template>
         <Empty
           v-if="slowlog.length === 0"
@@ -145,7 +175,9 @@ const slowLogColumns = [
         />
       </Card>
 
-      <div class="disclaimer">{{ $t('page.redisCacheMonitor.disclaimer') }}</div>
+      <div class="disclaimer">
+        {{ $t('page.redisCacheMonitor.disclaimer') }}
+      </div>
     </div>
   </Page>
 </template>
@@ -167,6 +199,11 @@ const slowLogColumns = [
   font-size: 12px;
   color: var(--muted-foreground);
   margin-left: auto;
+}
+.collapsed-hint {
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
 }
 .entry-value {
   word-break: break-all;

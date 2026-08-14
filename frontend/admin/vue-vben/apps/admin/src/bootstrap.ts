@@ -6,6 +6,8 @@ import { initStores, useAccessStore } from '@vben/stores';
 import '@vben/styles';
 import '@vben/styles/antd';
 
+import lucide from '@iconify/json/json/lucide.json';
+import { addCollection } from '@iconify/vue';
 import { useTitle } from '@vueuse/core';
 
 import { $t, setupI18n } from '#/locales';
@@ -17,6 +19,11 @@ import App from './app.vue';
 import { registerGlobComp } from './registerGlobComp';
 import { router } from './router';
 import { useAuthStore } from './stores';
+
+// 菜单 meta.icon 统一使用 lucide:* 图标。@iconify/vue 默认从 api.iconify.design 在线加载，
+// 网络不可达时（内网/国内环境常见）未被浏览器缓存的图标会渲染失败——新加的菜单尤其容易中招。
+// 这里在启动时离线注册完整 lucide 集合，保证菜单图标不依赖外网（menu-drawer 的图标选择器同理复用）。
+addCollection(lucide);
 
 async function bootstrap(namespace: string) {
   // 初始化组件适配器
