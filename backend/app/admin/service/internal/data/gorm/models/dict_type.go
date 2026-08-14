@@ -13,7 +13,6 @@ type DictType struct {
 	mixin.OperatorID
 	mixin.IsEnabled
 	mixin.SortOrder
-	mixin.Description
 	mixin.TenantID
 
 	// 关联字典项，DictEntry 需在同一包中定义并包含 TypeID 字段

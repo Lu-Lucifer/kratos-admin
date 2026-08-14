@@ -16,7 +16,7 @@ type File struct {
 	Size          *uint64 `gorm:"column:size;type:bigint unsigned;comment:文件字节长度"`
 	SizeFormat    *string `gorm:"column:size_format;type:varchar(64);comment:文件大小格式化"`
 	LinkURL       *string `gorm:"column:link_url;type:varchar(1024);comment:链接地址"`
-	MD5           *string `gorm:"column:md5;type:varchar(64);comment:md5码，防止上传重复文件"`
+	ContentHash   *string `gorm:"column:content_hash;type:varchar(255);comment:文件内容哈希"`
 
 	mixin.TimeAt
 	mixin.OperatorID

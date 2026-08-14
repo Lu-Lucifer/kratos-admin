@@ -9,6 +9,7 @@ type LoginPolicy struct {
 	mixin.AutoIncrementID
 	mixin.TimeAt
 	mixin.OperatorID
+	mixin.TenantID
 
 	TargetID *uint32 `gorm:"column:target_id;type:int unsigned;comment:目标用户ID"`
 	Value    *string `gorm:"column:value;type:varchar(255);comment:限制值（如IP地址、MAC地址或地区代码）"`

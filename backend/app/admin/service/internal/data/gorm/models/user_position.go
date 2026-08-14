@@ -15,5 +15,5 @@ type UserPosition struct {
 
 // TableName 指定表名
 func (UserPosition) TableName() string {
-	return "sys_user_position"
+	return "sys_user_positions"
 }

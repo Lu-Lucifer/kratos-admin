@@ -15,5 +15,5 @@ type UserRole struct {
 
 // TableName 指定表名
 func (UserRole) TableName() string {
-	return "sys_user_role"
+	return "sys_user_roles"
 }

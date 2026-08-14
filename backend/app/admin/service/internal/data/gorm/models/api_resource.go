@@ -13,9 +13,11 @@ type Api struct {
 	Path              *string `gorm:"column:path;type:varchar(255);comment:接口路径"`
 	Method            *string `gorm:"column:method;type:varchar(16);comment:请求方法"`
 	Scope             *string `gorm:"column:scope;type:varchar(32);default:ADMIN;comment:作用域"`
+	BusinessModule    *string `gorm:"column:business_module;type:varchar(128);comment:业务模块"`
 
 	mixin.TimeAt
 	mixin.OperatorID
+	mixin.SwitchStatus
 }
 
 // TableName 指定表名

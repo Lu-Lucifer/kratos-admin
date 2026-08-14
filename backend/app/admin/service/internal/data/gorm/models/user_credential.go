@@ -13,11 +13,11 @@ type UserCredential struct {
 	mixin.AutoIncrementID
 
 	UserID                 *uint32         `gorm:"column:user_id;type:int unsigned;comment:关联主表的用户ID;index:idx_sys_user_credential_user_id;uniqueIndex:idx_sys_user_credential_uid_identity_identifier,priority:1"`
-	IdentityType           *string         `gorm:"column:identity_type;type:enum('USERNAME','USERID','EMAIL','PHONE','SOCIAL_OAUTH','ENTERPRISE_SSO','IDENTITY_API_KEY','DEVICE_ID','CUSTOM');comment:认证方式类型;index:idx_sys_user_credential_identity_type;uniqueIndex:idx_sys_user_credential_uid_identity_identifier,priority:2"`
+	IdentityType           *string         `gorm:"column:identity_type;type:varchar(128);comment:认证方式类型;index:idx_sys_user_credential_identity_type;uniqueIndex:idx_sys_user_credential_uid_identity_identifier,priority:2"`
 	Identifier             *string         `gorm:"column:identifier;type:varchar(255);comment:身份唯一标识符;index:idx_sys_user_credential_identifier;uniqueIndex:idx_sys_user_credential_uid_identity_identifier,priority:3"`
 	Credential             *string         `gorm:"column:credential;type:varchar(1024);comment:凭证"`
 	IsPrimary              *bool           `gorm:"column:is_primary;type:tinyint(1);comment:是否主认证方式;index:idx_sys_user_credential_is_primary"`
-	Status                 *string         `gorm:"column:status;type:enum('DISABLED','ENABLED','EXPIRED','UNVERIFIED','REMOVED','BLOCKED','TEMPORARY');comment:凭证状态;index:idx_sys_user_credential_status"`
+	Status                 *string         `gorm:"column:status;type:varchar(128);comment:凭证状态;index:idx_sys_user_credential_status"`
 	ExtraInfo              *datatypes.JSON `gorm:"column:extra_info;type:json;comment:扩展信息"`
 	Provider               *string         `gorm:"column:provider;type:varchar(255);comment:第三方平台标识;index:idx_sys_user_credential_provider;uniqueIndex:idx_sys_user_credential_provider_account,priority:1"`
 	ProviderAccountID      *string         `gorm:"column:provider_account_id;type:varchar(255);comment:第三方平台的账号唯一ID;uniqueIndex:idx_sys_user_credential_provider_account,priority:2"`
