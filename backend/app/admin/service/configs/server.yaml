@@ -26,8 +26,8 @@ server:
         - "https://react.admin.gowind.cloud"
         # 本地开发端口（与 README 启动命令一致）
         - "http://localhost:5666"
-        - "http://localhost:3000"
-        - "http://localhost:7000"
+        - "http://localhost:5777"
+        - "http://localhost:5888"
     middleware:
       enable_logging: true
       enable_recovery: true
