@@ -81,7 +81,14 @@ const ContentContainer: React.FC<ContentContainerProps> = ({
         flex: heightMode === 'fixed' ? 1 : undefined,
         height: heightMode === 'auto' ? 'auto' : undefined,
         minHeight: 0,
-        overflow: heightMode === 'fixed' ? 'hidden' : 'visible',
+        // scrollable 必须在内联样式里生效：内联优先级高于 CSS class，
+        // 此前 overflow 只看 heightMode，导致 --scrollable 类的 overflow:auto
+        // 永远被内联覆盖，scrollable prop 实际是死功能（页面长内容无滚动条）。
+        overflow: scrollable
+          ? 'auto'
+          : heightMode === 'fixed'
+            ? 'hidden'
+            : 'visible',
         // padding 和 margin 由 props 控制
         padding: typeof padding === 'number' ? `${padding}px` : padding,
         marginBottom: heightMode === 'fixed' ? bottomMarginValue : undefined,

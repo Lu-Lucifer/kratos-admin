@@ -26,7 +26,7 @@ const RedisCacheMonitor = () => {
 
   if (isLoading) {
     return (
-      <ContentContainer>
+      <ContentContainer heightMode="auto" scrollable padding="16px">
         <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
           <Spin size="large" />
         </div>
@@ -40,7 +40,10 @@ const RedisCacheMonitor = () => {
   const slowlog = info?.slowlog ?? [];
 
   return (
-    <ContentContainer>
+    // 长卡片流页面：fixed 模式的高度约束链（flex:1 占满内容区）与表格页一致、可靠；
+    // scrollable 让容器自身 overflow:auto 整页滚动——十几个 INFO 卡片+慢日志表
+    // 超出视口时必须能滚，默认 fixed 是 overflow:hidden 会直接裁掉内容。
+    <ContentContainer heightMode="fixed" scrollable padding="16px">
       {/* 单值指标：DBSIZE */}
       <Card
         size="small"
@@ -108,7 +111,11 @@ const RedisCacheMonitor = () => {
                   </Descriptions>
                 )
               ) : (
-                <Empty description={t('collapsed')} />
+                // 收起态用轻量提示行，不用 Empty 插画——Empty 语义是“无数据”，
+                // 大片收起时会让整页看起来像加载失败/空表
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {t('collapsed')}
+                </Text>
               )}
             </Card>
           );

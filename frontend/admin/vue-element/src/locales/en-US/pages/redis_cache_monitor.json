@@ -8,6 +8,7 @@
   "noEntries": "No entries in this section",
   "collapsed": "Collapsed, click title to expand",
   "slowlogCardTitle": "Slow Log",
+  "noSlowlog": "No slow log entries",
   "slowlogId": "Log ID",
   "createdAt": "Occurred At",
   "durationUsec": "Duration (μs)",

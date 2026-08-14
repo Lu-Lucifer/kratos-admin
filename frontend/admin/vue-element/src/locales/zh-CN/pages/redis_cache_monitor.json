@@ -8,6 +8,7 @@
   "noEntries": "该段无条目",
   "collapsed": "已收起，点击标题展开",
   "slowlogCardTitle": "慢日志",
+  "noSlowlog": "暂无慢日志",
   "slowlogId": "日志ID",
   "createdAt": "发生时间",
   "durationUsec": "耗时(μs)",
