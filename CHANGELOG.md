@@ -18,7 +18,8 @@ GoWind Admin 当前处于 `0.x` 阶段，尚无正式发布版本。
 下列条目为近期（以 Git 提交记录为准）对使用者有影响的变更摘要。
 
 ### 新增
-- 基于多租户的 RBAC 体系：用户、租户、角色、权限、菜单、组织、部门、职位管理。
+- 基于多租户的 RBAC 体系：用户、租户、角色、权限、菜单、组织、职位管理。
+- 套餐与配额管理：租户订阅套餐及其资源配额（模块白名单、用量上限等）的计量与管控。
 - 三套前端：React 19 + Ant Design V6、Vue3 + Element Plus、Vue3 + Vben（Ant Design Vue），
   共享同一套由 proto 生成的 TypeScript HTTP 客户端。
 - 代码生成管线：proto → Go HTTP/gRPC + OpenAPI + TS 客户端；Ent schema → ORM；

@@ -241,8 +241,8 @@ make run
 | 版本 | 目录 | 启动命令 | 本地端口 |
 |------|------|---------|--------|
 | Vue Vben | `frontend/admin/vue-vben` | `pnpm dev:antd` | 5666 |
-| Vue Element | `frontend/admin/vue-element` | `pnpm dev` | 3000 |
-| React | `frontend/admin/react` | `pnpm dev` | 7000 |
+| Vue Element | `frontend/admin/vue-element` | `pnpm dev` | 5777 |
+| React | `frontend/admin/react` | `pnpm dev` | 5888 |
 
 以 Vue Vben 版本为例：
 
@@ -290,8 +290,8 @@ pnpm install
 | 服务 | URL | 说明 |
 |------|-----|------|
 | Vue Vben 前端 | http://localhost:5666 | Vite 开发服务器（Vben 版） |
-| Vue Element 前端 | http://localhost:3000 | Vite 开发服务器（Element 版） |
-| React 前端 | http://localhost:7000 | Vite 开发服务器（React 版） |
+| Vue Element 前端 | http://localhost:5777 | Vite 开发服务器（Element 版） |
+| React 前端 | http://localhost:5888 | Vite 开发服务器（React 版） |
 | 后端 REST API | http://localhost:7788 | HTTP 接口 |
 | 后端 SSE | http://localhost:7789/events | 服务端推送事件 |
 | MinIO Console | http://localhost:9001 | 对象存储管理界面 |
