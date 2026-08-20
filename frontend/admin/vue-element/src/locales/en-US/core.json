@@ -39,7 +39,7 @@
     "copyright": "Copyright © 2026 GoWind",
     "login": "Login",
     "register": "Register",
-    "username": "Username",
+    "username": "Username / Email / Mobile",
     "password": "Password",
     "tenantCode": "Tenant code (leave empty for platform)",
     "captchaCode": "Captcha",

@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -73,6 +74,53 @@ func (r *LoginPolicyRepo) init() {
 
 	r.mapper.AppendConverters(r.typeConverter.NewConverterPair())
 	r.mapper.AppendConverters(r.methodConverter.NewConverterPair())
+}
+
+// EffectivePolicy 登录闸门用的策略条目（ent 实体的精简视图，避免服务层依赖生成代码）。
+type EffectivePolicy struct {
+	TargetID uint32 // 0 表示全局策略（不限定用户）
+	Value    string
+	Type     string // BLACK_LIST / WHITE_LIST
+	Method   string // IP / MAC / REGION / TIME / DEVICE
+	Reason   string
+}
+
+// ListForLogin 拉取租户内全部登录策略，供登录闸门在内存中按
+// 全局（target_id 为空）/ 用户定向（target_id = userId）两批匹配。
+// 策略量级小（管理配置项），全量拉取 + 内存过滤即可，无需按用户建索引。
+func (r *LoginPolicyRepo) ListForLogin(ctx context.Context, tenantID uint32) ([]EffectivePolicy, error) {
+	entities, err := r.entClient.Client().LoginPolicy.Query().
+		Where(loginpolicy.TenantIDEQ(tenantID)).
+		All(ctx)
+	if err != nil {
+		r.log.Errorf("list login policies for login failed: %s", err.Error())
+		return nil, fmt.Errorf("list login policies failed")
+	}
+	policies := make([]EffectivePolicy, 0, len(entities))
+	for _, e := range entities {
+		policies = append(policies, EffectivePolicy{
+			TargetID: derefUint32(e.TargetID),
+			Value:    derefStr(e.Value),
+			Type:     derefStrP(e.Type),
+			Method:   derefStrP(e.Method),
+			Reason:   derefStr(e.Reason),
+		})
+	}
+	return policies, nil
+}
+
+func derefUint32(p *uint32) uint32 {
+	if p == nil {
+		return 0
+	}
+	return *p
+}
+
+func derefStrP[T ~string](p *T) string {
+	if p == nil {
+		return ""
+	}
+	return string(*p)
 }
 
 func (r *LoginPolicyRepo) Count(ctx context.Context, whereCond []func(s *sql.Selector)) (int, error) {

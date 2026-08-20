@@ -9,7 +9,7 @@
   "loginSubtitle": "请输入您的帐户信息以开始管理您的系统",
   "selectAccount": "快速选择账号",
   "tenantCode": "租户编号（留空为平台登录）",
-  "username": "账号",
+  "username": "用户名 / 邮箱 / 手机号",
   "password": "密码",
   "usernameTip": "请输入用户名",
   "passwordTip": "请输入密码",

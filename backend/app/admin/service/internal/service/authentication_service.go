@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/tx7do/go-crud/viewer"
@@ -67,6 +68,8 @@ type AuthenticationService struct {
 	captchaClient *captcha.Captcha
 	rateLimiter   *data.LoginRateLimiter
 
+	loginPolicyRepo *data.LoginPolicyRepo
+
 	mfaFactorRepo     *data.UserMfaFactorRepo
 	mfaChallengeCache *data.MfaChallengeCache
 }
@@ -84,6 +87,7 @@ func NewAuthenticationService(
 	clientType authenticationV1.ClientType,
 	captchaClient *captcha.Captcha,
 	rateLimiter *data.LoginRateLimiter,
+	loginPolicyRepo *data.LoginPolicyRepo,
 	mfaFactorRepo *data.UserMfaFactorRepo,
 	mfaChallengeCache *data.MfaChallengeCache,
 ) *AuthenticationService {
@@ -100,9 +104,23 @@ func NewAuthenticationService(
 		clientType:         clientType,
 		captchaClient:      captchaClient,
 		rateLimiter:        rateLimiter,
+		loginPolicyRepo:    loginPolicyRepo,
 		mfaFactorRepo:      mfaFactorRepo,
 		mfaChallengeCache:  mfaChallengeCache,
 	}
+}
+
+// checkLoginPolicies 拉取租户登录策略并按当前上下文匹配。
+// userId 传 0 时只匹配全局条目（target_id 为空）；密码校验前与取到 user 后各调用一次。
+// 匹配逻辑见 data.MatchLoginPolicy（纯函数，含单测）。
+// 策略查询失败时 fail-open（仅告警）——登录可用性优先于策略拦截，与验证码开关的容错取向一致。
+func (s *AuthenticationService) checkLoginPolicies(ctx context.Context, tenantID, userId uint32, clientIP, deviceId string) (bool, string) {
+	policies, err := s.loginPolicyRepo.ListForLogin(ctx, tenantID)
+	if err != nil {
+		s.log.Errorf("list login policies failed for tenant [%d]: %s", tenantID, err.Error())
+		return false, ""
+	}
+	return data.MatchLoginPolicy(policies, userId, clientIP, deviceId, time.Now())
 }
 
 func (s *AuthenticationService) resetContextForLogin(ctx context.Context) context.Context {
@@ -405,6 +423,25 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		tenantID = tenant.GetId()
 	}
 
+	// ===== identifier 智能解析：输入含 @ 视为 email、纯数字视为 mobile， =====
+	// ===== 经 user 表反查得到真实 username 后仍走 USERNAME 维度凭证校验。
+	// 未命中时原样返回，交由凭证校验走统一失败路径（防枚举）；mobile 多行歧义直接拒绝。
+	if resolved, _, rerr := s.userRepo.FindUsernameByIdentifier(ctx, tenantID, username); rerr != nil {
+		return nil, rerr
+	} else if resolved != username {
+		username = resolved
+	}
+
+	// ===== 登录策略闸门（全局部分）：target_id 为空的策略不依赖用户身份， =====
+	// ===== 在密码校验前拦截，省去被封锁者的 bcrypt 校验成本。
+	// ===== 用户定向策略（target_id = userId）在取到 user 后二次检查。
+	if s.loginPolicyRepo != nil {
+		if blocked, reason := s.checkLoginPolicies(ctx, tenantID, 0, clientIP, req.GetDeviceId()); blocked {
+			s.log.Warnf("login blocked by policy: ip=%s username=%s reason=%s", clientIP, username, reason)
+			return nil, authenticationV1.ErrorForbidden("login blocked by security policy")
+		}
+	}
+
 	// ===== 凭证校验：在解析出的 tenant 范围内查单条凭证并校验密码 =====
 	var matchedUserID uint32
 	var err error
@@ -437,6 +474,15 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		s.log.Errorf("tenant mismatch for user [%d]: credential tenant [%d] vs user tenant [%d]",
 			matchedUserID, tenantID, user.GetTenantId())
 		return nil, authenticationV1.ErrorBadRequest("invalid tenant")
+	}
+
+	// ===== 登录策略闸门（用户定向部分）：密码已通过、userId 已知， =====
+	// ===== 检查 target_id 约束到该用户的策略条目。
+	if s.loginPolicyRepo != nil {
+		if blocked, reason := s.checkLoginPolicies(ctx, tenantID, user.GetId(), clientIP, req.GetDeviceId()); blocked {
+			s.log.Warnf("login blocked by user-targeted policy: uid=%d ip=%s reason=%s", user.GetId(), clientIP, reason)
+			return nil, authenticationV1.ErrorForbidden("login blocked by security policy")
+		}
 	}
 
 	tokenPayload := &authenticationV1.UserTokenPayload{

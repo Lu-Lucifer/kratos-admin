@@ -39,7 +39,7 @@
     "copyright": "Copyright © 2026 GoWind",
     "login": "登 录",
     "register": "注 册",
-    "username": "用户名",
+    "username": "用户名 / 邮箱 / 手机号",
     "password": "密码",
     "tenantCode": "租户编号（留空为平台登录）",
     "captchaCode": "验证码",

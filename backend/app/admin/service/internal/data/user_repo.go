@@ -5,6 +5,7 @@ import (
 
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -69,6 +70,11 @@ type UserRepo interface {
 
 	// CountByTenantIDs 批量统计各租户下的用户数，用于回填 tenant.member_count。
 	CountByTenantIDs(ctx context.Context, tenantIDs []uint32) (map[uint32]int, error)
+
+	// FindUsernameByIdentifier 登录 identifier 智能解析：含 @ 按 email 查、
+	// 纯数字按 mobile 查，其余原样视为 username 返回（userId=0 表示未反查）。
+	// mobile 在租户内非唯一，命中多行时返回错误（数据歧义应拒绝登录而非随机取一）。
+	FindUsernameByIdentifier(ctx context.Context, tenantID uint32, identifier string) (username string, userId uint32, err error)
 }
 
 type userRepo struct {
@@ -1137,6 +1143,70 @@ func (r *userRepo) CountByTenantIDs(ctx context.Context, tenantIDs []uint32) (ma
 		result[tid] = cnt
 	}
 	return result, nil
+}
+
+// FindUsernameByIdentifier 登录 identifier 智能解析。
+// 凭证表只存 USERNAME 维度的密码行，email/mobile 登录通过 user 表反查得到 username
+// 后仍走现有凭证校验，不改凭证数据模型。
+// mobile 在租户内非唯一索引：命中多行属于数据歧义，返回错误拒绝登录（而非随机取一行）。
+func (r *userRepo) FindUsernameByIdentifier(ctx context.Context, tenantID uint32, identifier string) (string, uint32, error) {
+	switch {
+	case strings.Contains(identifier, "@"):
+		entity, err := r.entClient.Client().User.Query().
+			Select(user.FieldID, user.FieldUsername, user.FieldStatus).
+			Where(
+				user.TenantIDEQ(tenantID),
+				user.EmailEQ(identifier),
+			).
+			Only(ctx)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return identifier, 0, nil
+			}
+			r.log.Errorf("find user by email failed: %s", err.Error())
+			return "", 0, identityV1.ErrorInternalServerError("find user by email failed")
+		}
+		return *entity.Username, entity.ID, nil
+
+	case isDigits(identifier):
+		entities, err := r.entClient.Client().User.Query().
+			Select(user.FieldID, user.FieldUsername, user.FieldStatus).
+			Where(
+				user.TenantIDEQ(tenantID),
+				user.MobileEQ(identifier),
+			).
+			All(ctx)
+		if err != nil {
+			r.log.Errorf("find user by mobile failed: %s", err.Error())
+			return "", 0, identityV1.ErrorInternalServerError("find user by mobile failed")
+		}
+		switch len(entities) {
+		case 0:
+			// 未命中：原样返回，交给后续凭证校验走统一失败路径（防枚举）
+			return identifier, 0, nil
+		case 1:
+			return *entities[0].Username, entities[0].ID, nil
+		default:
+			r.log.Errorf("ambiguous mobile login: tenant=%d mobile=%s rows=%d", tenantID, identifier, len(entities))
+			return "", 0, identityV1.ErrorInternalServerError("ambiguous account identifier")
+		}
+
+	default:
+		return identifier, 0, nil
+	}
+}
+
+// isDigits 判断字符串是否全为数字（手机号判定）。
+func isDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func (r *userRepo) ListRoleIDsByUserID(ctx context.Context, userID uint32) ([]uint32, error) {

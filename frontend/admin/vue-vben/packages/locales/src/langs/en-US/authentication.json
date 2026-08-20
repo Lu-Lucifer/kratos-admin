@@ -9,7 +9,7 @@
   "loginSubtitle": "Enter your account details to manage your projects",
   "selectAccount": "Quick Select Account",
   "tenantCode": "Tenant code (leave empty for platform)",
-  "username": "Username",
+  "username": "Username / Email / Mobile",
   "password": "Password",
   "usernameTip": "Please enter username",
   "passwordErrorTip": "Password is incorrect",
