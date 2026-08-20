@@ -28,6 +28,19 @@ const (
 
 var ErrMfaChallengeNotFound = errors.New("mfa challenge not found or expired")
 
+// takeAndDeleteScript 原子取出并删除挑战上下文（GET+DEL 单次调用）。
+// 防止同一 operation_id 的并发请求都 GET 成功、双双通过校验换到多个 token
+// 的 TOCTOU 竞态——与 authenticator.go 的 verifyAndRevokeRefreshTokenScript 同一模式。
+// 返回值: nil=键不存在, 否则为键值。
+var takeAndDeleteScript = redis.NewScript(`
+	local stored = redis.call('GET', KEYS[1])
+	if not stored then
+		return false
+	end
+	redis.call('DEL', KEYS[1])
+	return stored
+`)
+
 // MfaLoginChallengeContext 登录挑战上下文。
 // 密码校验通过且用户绑定 TOTP 后，由 doGrantTypePassword 写入；
 // VerifyMFAChallenge 取出并用于签发真 token。
@@ -81,19 +94,13 @@ func (c *MfaChallengeCache) SetLoginChallenge(ctx context.Context, payload *auth
 	return opId, nil
 }
 
-// TakeLoginChallenge 取出并删除登录挑战上下文。
+// TakeLoginChallenge 原子取出并删除登录挑战上下文（单次有效）。
 func (c *MfaChallengeCache) TakeLoginChallenge(ctx context.Context, opId string) (*MfaLoginChallengeContext, error) {
 	key := fmt.Sprintf(mfaLoginChallengeKeyFmt, opId)
-	raw, err := c.rdb.Get(ctx, key).Result()
+	raw, err := c.takeAndDelete(ctx, key)
 	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil, ErrMfaChallengeNotFound
-		}
-		c.log.Errorf("get login challenge failed: %s", err.Error())
-		return nil, fmt.Errorf("get login challenge failed")
+		return nil, err
 	}
-	// verify-and-delete：取出后立即删除，保证单次有效
-	c.rdb.Del(ctx, key)
 
 	var envelope mfaLoginChallengeEnvelope
 	if err := json.Unmarshal([]byte(raw), &envelope); err != nil {
@@ -129,25 +136,38 @@ func (c *MfaChallengeCache) SetEnrollChallenge(ctx context.Context, secret strin
 	return opId, nil
 }
 
-// TakeEnrollChallenge 取出并删除注册上下文。
+// TakeEnrollChallenge 原子取出并删除注册上下文（单次有效）。
 func (c *MfaChallengeCache) TakeEnrollChallenge(ctx context.Context, opId string) (*MfaEnrollChallengeContext, error) {
 	key := fmt.Sprintf(mfaEnrollChallengeKeyFmt, opId)
-	raw, err := c.rdb.Get(ctx, key).Result()
+	raw, err := c.takeAndDelete(ctx, key)
 	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil, ErrMfaChallengeNotFound
-		}
-		c.log.Errorf("get enroll challenge failed: %s", err.Error())
-		return nil, fmt.Errorf("get enroll challenge failed")
+		return nil, err
 	}
-	// verify-and-delete
-	c.rdb.Del(ctx, key)
 
 	var envelope MfaEnrollChallengeContext
 	if err := json.Unmarshal([]byte(raw), &envelope); err != nil {
 		return nil, fmt.Errorf("unmarshal enroll challenge envelope failed: %w", err)
 	}
 	return &envelope, nil
+}
+
+// takeAndDelete 用 Lua 脚本原子取出并删除 key 的值，保证 verify-and-delete
+// 单次有效语义在并发下也成立。
+func (c *MfaChallengeCache) takeAndDelete(ctx context.Context, key string) (string, error) {
+	res, err := takeAndDeleteScript.Run(ctx, c.rdb, []string{key}).Result()
+	if err != nil {
+		c.log.Errorf("take and delete challenge failed: %s", err.Error())
+		return "", fmt.Errorf("take mfa challenge failed")
+	}
+	// Lua 的 false（键不存在）经 go-redis 解码为 nil
+	if res == nil {
+		return "", ErrMfaChallengeNotFound
+	}
+	raw, ok := res.(string)
+	if !ok {
+		return "", fmt.Errorf("unexpected mfa challenge value type")
+	}
+	return raw, nil
 }
 
 // mfaLoginChallengeEnvelope 是登录挑战上下文的传输封装。

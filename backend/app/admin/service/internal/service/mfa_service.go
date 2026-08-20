@@ -117,6 +117,15 @@ func (s *MfaService) StartEnrollMethod(ctx context.Context, req *authenticationV
 		return nil, err
 	}
 
+	// 预检：已绑定 TOTP 时拒绝重复注册（(tenant,user,method) 唯一约束兜底，
+	// 但提前返回友好错误，避免 Confirm 阶段撞唯一索引报笼统 500）。
+	// 重新绑定需先 DisableMFA 解绑。
+	if has, herr := s.mfaFactorRepo.HasEnabledTotp(ctx, operator.GetTenantId(), operator.GetUserId()); herr != nil {
+		return nil, authenticationV1.ErrorInternalServerError("check mfa status failed")
+	} else if has {
+		return nil, authenticationV1.ErrorBadRequest("totp already enrolled, disable it first")
+	}
+
 	// 生成 TOTP key：issuer 标识发行方，account 用 userId 防 App 内同名冲突。
 	key, err := otpTotp.Generate(otpTotp.GenerateOpts{
 		Issuer:      mfaTotpIssuer,
