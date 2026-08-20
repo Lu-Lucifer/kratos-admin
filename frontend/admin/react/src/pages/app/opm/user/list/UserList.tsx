@@ -12,6 +12,7 @@ import { TABLE } from '@/config/constants';
 import { useProTableScrollY } from '@/hooks/useProTableScrollY';
 import { fetchListUsers, useDeleteUser } from '@/api/hooks/user';
 import { useAdminResetMfa } from '@/api/hooks/mfa';
+import { useAuthStore } from '@/stores';
 import { getUserStatusMap, getUserStatusOptions } from '../constants';
 import UserDrawer from './UserDrawer';
 
@@ -57,6 +58,8 @@ const UserList: React.FC<UserListProps> = ({ tenantId, orgUnitId }) => {
 
   // 列配置
   // 管理端救援重置：清空目标用户 TOTP 因子（认证器丢失解锁用，仅平台管理员生效）
+  // 仅平台侧操作者（tenantId=0）显示救援重置；非平台用户由后端 403 兜底
+  const isPlatformSide = Number(useAuthStore((s) => s.userInfo?.tenantId ?? 0)) === 0;
   const adminResetMfa = useAdminResetMfa({
     onSuccess: () => {
       message.success(t('resetMfaSuccess'));
@@ -200,6 +203,7 @@ const UserList: React.FC<UserListProps> = ({ tenantId, orgUnitId }) => {
         >
           <EditOutlined />
         </a>,
+        isPlatformSide ? (
         <Popconfirm
           key="reset-mfa"
           title={t('resetMfaConfirmTitle')}
@@ -213,7 +217,8 @@ const UserList: React.FC<UserListProps> = ({ tenantId, orgUnitId }) => {
           <a title={t('resetMfa')}>
             <SafetyOutlined />
           </a>
-        </Popconfirm>,
+        </Popconfirm>
+        ) : null,
         <Popconfirm
           key="delete"
           title={t('deleteConfirmTitle')}

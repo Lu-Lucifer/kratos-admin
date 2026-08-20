@@ -2,7 +2,9 @@ package oss
 
 import (
 	"fmt"
+	"net"
 	"testing"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +29,21 @@ func createTestClient() *MinIOClient {
 	}, log.DefaultLogger)
 }
 
+// minioAvailable 探测本地 MinIO 是否可达：这两个测试依赖真实 MinIO 服务
+// （127.0.0.1:9000），无环境时 skip 而非失败——环境依赖测试不应拖红常规回归。
+func minioAvailable() bool {
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:9000", 500*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
+}
+
 func TestMinIoClient(t *testing.T) {
+	if !minioAvailable() {
+		t.Skip("local MinIO (127.0.0.1:9000) not available, skipping environment-dependent test")
+	}
 	cli := createTestClient()
 	assert.NotNil(t, cli)
 
@@ -56,6 +72,9 @@ func TestListFile(t *testing.T) {
 }
 
 func TestDownloadFile(t *testing.T) {
+	if !minioAvailable() {
+		t.Skip("local MinIO (127.0.0.1:9000) not available, skipping environment-dependent test")
+	}
 	cli := createTestClient()
 	assert.NotNil(t, cli)
 

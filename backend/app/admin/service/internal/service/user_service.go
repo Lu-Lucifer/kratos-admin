@@ -535,8 +535,16 @@ func (s *UserService) Update(ctx context.Context, req *identityV1.UpdateUserRequ
 			// 否则攻击者可用 id=本租户用户 + username=他租户用户 绕过上面的租户校验。
 			targetUsername = targetUser.GetUsername()
 		} else {
-			// 平台管理员：信任请求体 username（无跨租户风险），但仍需从 DB 校验用户存在
-			targetUsername = req.Data.GetUsername()
+			// 平台管理员：无跨租户限制，但仍按 id 从 DB 取 username——
+			// 既校验目标用户存在，也保证重置目标与请求 id 严格一致
+			// （避免 id=甲 + username=乙 的参数错位实际重置了乙）
+			targetUser, gerr := s.userRepo.Get(ctx, &identityV1.GetUserRequest{
+				QueryBy: &identityV1.GetUserRequest_Id{Id: req.GetId()},
+			})
+			if gerr != nil {
+				return nil, gerr
+			}
+			targetUsername = targetUser.GetUsername()
 		}
 
 		if err = s.userCredentialRepo.ResetCredential(ctx, &authenticationV1.ResetCredentialRequest{

@@ -68,6 +68,10 @@ func (l *LoginAuditLogMiddleware) Handle(ctx context.Context, htr *http.Transpor
 		loginAuditLog.ActionType = trans.Ptr(auditV1.LoginAuditLog_LOGOUT)
 	}
 
+	// MFA 验证等免鉴权接口的请求体不含 username，由 handler 通过响应头
+	// 回传挑战上下文中的用户名（见 MfaService.VerifyMFAChallenge）。
+	auditUsername := htr.ReplyHeader().Get("X-Audit-Username")
+
 	clientIp := getClientRealIP(htr.Request())
 
 	loginAuditLog.IpAddress = trans.Ptr(clientIp)
@@ -86,6 +90,12 @@ func (l *LoginAuditLogMiddleware) Handle(ctx context.Context, htr *http.Transpor
 		if loginAuditLog.Username == nil {
 			loginAuditLog.Username = ut.Username
 		}
+	}
+
+	// 免鉴权接口（如 MFA 验证）请求体无 username 也无 token：以上两路都取不到，
+	// 用 handler 通过响应头回传的挑战上下文用户名兜底。
+	if loginAuditLog.Username == nil && auditUsername != "" {
+		loginAuditLog.Username = trans.Ptr(auditUsername)
 	}
 
 	// 用户设备信息

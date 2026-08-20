@@ -18,6 +18,9 @@ import (
 	"go-wind-admin/app/admin/service/internal/data"
 	"go-wind-admin/app/admin/service/internal/data/ent/privacy"
 	"go-wind-admin/app/admin/service/internal/data/ent/usermfafactor"
+	khttp "github.com/go-kratos/kratos/v2/transport/http"
+	ktransport "github.com/go-kratos/kratos/v2/transport"
+
 	"go-wind-admin/pkg/middleware/auth"
 	"go-wind-admin/pkg/netutil"
 
@@ -125,6 +128,11 @@ func (s *MfaService) StartEnrollMethod(ctx context.Context, req *authenticationV
 		return nil, err
 	}
 
+	// 频控：同一用户 30s 冷却期内只允许发起一次注册（防循环 Start 塞 Redis）
+	if !s.mfaChallengeCache.TryAcquireEnrollCooldown(ctx, operator.GetTenantId(), operator.GetUserId()) {
+		return nil, authenticationV1.ErrorBadRequest("enroll request too frequent, retry later")
+	}
+
 	// 预检：已绑定 TOTP 时拒绝重复注册（(tenant,user,method) 唯一约束兜底，
 	// 但提前返回友好错误，避免 Confirm 阶段撞唯一索引报笼统 500）。
 	// 重新绑定需先 DisableMFA 解绑。
@@ -218,7 +226,8 @@ func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authentication
 	ctx = viewer.WithContext(ctx, viewer.NewNoopContext())
 	ctx = privacy.DecisionContext(ctx, privacy.Allow)
 
-	challengeCtx, err := s.mfaChallengeCache.TakeLoginChallenge(ctx, req.GetOperationId())
+	// Peek 不消耗：允许失败重试（上限见 RecordLoginFailure），通过或超限才 Consume
+	challengeCtx, err := s.mfaChallengeCache.PeekLoginChallenge(ctx, req.GetOperationId())
 	if err != nil {
 		return nil, authenticationV1.ErrorBadRequest("invalid or expired mfa operation")
 	}
@@ -227,13 +236,23 @@ func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authentication
 	if payload == nil {
 		return nil, authenticationV1.ErrorInternalServerError("mfa challenge payload missing")
 	}
+
+	// 审计贯通：本接口请求体无 username（中间件解析不到），无论成功失败
+	// 都通过响应头把挑战上下文中的用户名回传给登录审计中间件（兜底填充）。
+	if tr, tok := ktransport.FromServerContext(ctx); tok {
+		if htr, hok := tr.(*khttp.Transport); hok && payload.GetUsername() != "" {
+			htr.ReplyHeader().Set("X-Audit-Username", payload.GetUsername())
+		}
+	}
 	uid := payload.GetUserId()
 	tid := payload.GetTenantId()
 
 	// 取该用户 ENABLED 的 TOTP 因子并解密 secret
 	factorId, plainSecret, err := s.mfaFactorRepo.FindEnabledTotpForUser(ctx, tid, uid)
 	if err != nil {
+		// 因子缺失（如验证期间被解绑/被管理员重置）：作废挑战走重新登录
 		s.log.Errorf("find totp factor for login mfa failed uid=%d: %s", uid, err.Error())
+		s.mfaChallengeCache.ConsumeLoginChallenge(ctx, req.GetOperationId())
 		return nil, authenticationV1.ErrorForbidden("mfa verification failed")
 	}
 
@@ -246,10 +265,21 @@ func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authentication
 		Algorithm: otp.AlgorithmSHA1,
 	})
 	if verr != nil || !ok {
+		// 错码：记失败计数，达上限作废挑战；同时计入登录限流（IP+用户名双维度）
+		exceeded := s.mfaChallengeCache.RecordLoginFailure(ctx, req.GetOperationId())
+		if s.rateLimiter != nil {
+			if _, _, _, cerr := s.rateLimiter.CheckAndIncr(ctx, netutil.ClientIPFromContext(ctx), payload.GetUsername()); cerr != nil {
+				s.log.Errorf("mfa rate limiter incr failed: %s", cerr.Error())
+			}
+		}
+		if exceeded {
+			return nil, authenticationV1.ErrorForbidden("too many invalid mfa attempts, please login again")
+		}
 		return nil, authenticationV1.ErrorForbidden("invalid mfa code")
 	}
 
-	// 通过：更新 last_used_at（best-effort），签发真 token
+	// 通过：消耗挑战、更新 last_used_at（best-effort）、清零限流，签发真 token
+	s.mfaChallengeCache.ConsumeLoginChallenge(ctx, req.GetOperationId())
 	_ = s.mfaFactorRepo.UpdateLastUsed(ctx, tid, uid, factorId, time.Now())
 
 	// 兑现登录 MFA 闸门的承诺："限流清零在 VerifyMFAChallenge 通过后"。
@@ -258,6 +288,7 @@ func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authentication
 	if s.rateLimiter != nil {
 		s.rateLimiter.Reset(ctx, netutil.ClientIPFromContext(ctx), payload.GetUsername())
 	}
+
 
 	accessToken, refreshToken, err := s.authenticator.CreateUserToken(ctx, challengeCtx.ClientType, payload)
 	if err != nil {

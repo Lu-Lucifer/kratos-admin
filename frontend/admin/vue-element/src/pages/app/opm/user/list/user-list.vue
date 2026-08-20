@@ -72,7 +72,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { ElMessageBox, ElNotification, ElTag } from "element-plus";
 
 import ProPage from "@/components/Pro/ProPage/index.vue";
@@ -93,6 +93,7 @@ import { $t } from "@/core/i18n";
 import { router } from "@/router";
 import { getRandomColor } from "@/utils/color";
 import { useUserViewStore } from "./user-view.state";
+import { useAppUserStore } from "@/stores";
 
 const { mutateAsync: deleteUser } = useDeleteUser();
 const userViewStore = useUserViewStore();
@@ -268,7 +269,9 @@ const pageConfig = computed<ProPageConfig>(() => ({
         buttons: [
           { name: "detail", label: $t("common.button.detail"), icon: "lucide:eye" },
           { name: "edit", label: $t("common.button.edit"), icon: "lucide:pen-line" },
-          { name: "resetMfa", label: $t("pages.user.resetMfa"), icon: "lucide:shield-off" },
+          ...(isPlatformSide.value
+            ? [{ name: "resetMfa", label: $t("pages.user.resetMfa"), icon: "lucide:shield-off" }]
+            : []),
           {
             name: "delete",
             label: $t("common.button.delete"),
@@ -280,6 +283,9 @@ const pageConfig = computed<ProPageConfig>(() => ({
     ],
   },
 }));
+
+// 仅平台侧操作者（tenantId=0）显示救援重置；非平台用户由后端 403 兜底
+const isPlatformSide = computed(() => Number(useAppUserStore().userInfo?.tenantId ?? 0) === 0);
 
 function handleAdd() {
   drawerRef.value?.open({ create: true });

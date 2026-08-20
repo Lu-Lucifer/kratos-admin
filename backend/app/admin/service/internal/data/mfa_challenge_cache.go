@@ -20,6 +20,9 @@ const (
 	// MfaChallengeTTL 挑战/注册操作上下文的有效期。
 	MfaChallengeTTL = 5 * time.Minute
 
+	// mfaEnrollCooldown 注册发起冷却（防已登录用户循环 Start 塞 Redis）。
+	mfaEnrollCooldown = 30 * time.Second
+
 	// 登录挑战上下文 key 前缀：mfa:login:<operation_id>
 	mfaLoginChallengeKeyFmt = "mfa:login:%s"
 	// 注册上下文 key 前缀：mfa:enroll：<operation_id>
@@ -27,19 +30,6 @@ const (
 )
 
 var ErrMfaChallengeNotFound = errors.New("mfa challenge not found or expired")
-
-// takeAndDeleteScript 原子取出并删除挑战上下文（GET+DEL 单次调用）。
-// 防止同一 operation_id 的并发请求都 GET 成功、双双通过校验换到多个 token
-// 的 TOCTOU 竞态——与 authenticator.go 的 verifyAndRevokeRefreshTokenScript 同一模式。
-// 返回值: nil=键不存在, 否则为键值。
-var takeAndDeleteScript = redis.NewScript(`
-	local stored = redis.call('GET', KEYS[1])
-	if not stored then
-		return false
-	end
-	redis.call('DEL', KEYS[1])
-	return stored
-`)
 
 // MfaLoginChallengeContext 登录挑战上下文。
 // 密码校验通过且用户绑定 TOTP 后，由 doGrantTypePassword 写入；
@@ -94,12 +84,25 @@ func (c *MfaChallengeCache) SetLoginChallenge(ctx context.Context, payload *auth
 	return opId, nil
 }
 
-// TakeLoginChallenge 原子取出并删除登录挑战上下文（单次有效）。
-func (c *MfaChallengeCache) TakeLoginChallenge(ctx context.Context, opId string) (*MfaLoginChallengeContext, error) {
+// mfaLoginFailKeyFmt 登录挑战失败计数 key：mfa:loginfail:<operation_id>
+const mfaLoginFailKeyFmt = "mfa:loginfail:%s"
+
+// MaxLoginChallengeFailures 单个登录挑战允许的验证失败次数上限。
+// 达到上限即作废挑战（用户需重新走密码登录）。TOTP 有效码空间 10^6、
+// 每窗口 ±1 共 3 个有效码，3 次失败内随机命中的概率约 3×3/10^6，
+// 兼顾"输错可重试"的体验与封死逐码暴破的安全。
+const MaxLoginChallengeFailures = 3
+
+// PeekLoginChallenge 只读登录挑战上下文（不删除，供失败重试）。
+func (c *MfaChallengeCache) PeekLoginChallenge(ctx context.Context, opId string) (*MfaLoginChallengeContext, error) {
 	key := fmt.Sprintf(mfaLoginChallengeKeyFmt, opId)
-	raw, err := c.takeAndDelete(ctx, key)
+	raw, err := c.rdb.Get(ctx, key).Result()
 	if err != nil {
-		return nil, err
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrMfaChallengeNotFound
+		}
+		c.log.Errorf("peek login challenge failed: %s", err.Error())
+		return nil, fmt.Errorf("peek mfa challenge failed")
 	}
 
 	var envelope mfaLoginChallengeEnvelope
@@ -114,6 +117,42 @@ func (c *MfaChallengeCache) TakeLoginChallenge(ctx context.Context, opId string)
 		Payload:    payload,
 		ClientType: authenticationV1.ClientType(envelope.ClientType),
 	}, nil
+}
+
+// RecordLoginFailure 记录一次验证失败并返回挑战是否已达失败上限。
+// 达上限时顺带作废挑战上下文（幂等：计数 key 与挑战 key 同 TTL 生命周期）。
+func (c *MfaChallengeCache) RecordLoginFailure(ctx context.Context, opId string) (exceeded bool) {
+	failKey := fmt.Sprintf(mfaLoginFailKeyFmt, opId)
+	n, err := c.rdb.Incr(ctx, failKey).Result()
+	if err != nil {
+		// Redis 异常按已达上限处理（fail-closed，防计数失效后的无限重试）
+		c.log.Errorf("incr login challenge fail count failed: %s", err.Error())
+		return true
+	}
+	c.rdb.Expire(ctx, failKey, MfaChallengeTTL)
+	if n >= MaxLoginChallengeFailures {
+		c.rdb.Del(ctx, fmt.Sprintf(mfaLoginChallengeKeyFmt, opId))
+		return true
+	}
+	return false
+}
+
+// ConsumeLoginChallenge 消耗登录挑战（验证通过或失败上限时调用，幂等）。
+func (c *MfaChallengeCache) ConsumeLoginChallenge(ctx context.Context, opId string) {
+	c.rdb.Del(ctx, fmt.Sprintf(mfaLoginChallengeKeyFmt, opId), fmt.Sprintf(mfaLoginFailKeyFmt, opId))
+}
+
+// TryAcquireEnrollCooldown 注册频控：同一用户冷却期内只允许发起一次 StartEnroll。
+// 防止已登录用户循环 Start 塞满 Redis（每条 5 分钟 TTL）的低成本 DoS。
+func (c *MfaChallengeCache) TryAcquireEnrollCooldown(ctx context.Context, tenantID, userID uint32) bool {
+	key := fmt.Sprintf("mfa:enrollcd:%d:%d", tenantID, userID)
+	ok, err := c.rdb.SetNX(ctx, key, 1, mfaEnrollCooldown).Result()
+	if err != nil {
+		// Redis 异常放行（频控是防御性优化，不阻断正常注册）
+		c.log.Errorf("acquire enroll cooldown failed: %s", err.Error())
+		return true
+	}
+	return ok
 }
 
 // SetEnrollChallenge 写入注册上下文，返回 operation_id。
@@ -134,25 +173,6 @@ func (c *MfaChallengeCache) SetEnrollChallenge(ctx context.Context, secret strin
 		return "", fmt.Errorf("set enroll challenge failed")
 	}
 	return opId, nil
-}
-
-// takeAndDelete 用 Lua 脚本原子取出并删除 key 的值，保证 verify-and-delete
-// 单次有效语义在并发下也成立。
-func (c *MfaChallengeCache) takeAndDelete(ctx context.Context, key string) (string, error) {
-	res, err := takeAndDeleteScript.Run(ctx, c.rdb, []string{key}).Result()
-	if err != nil {
-		c.log.Errorf("take and delete challenge failed: %s", err.Error())
-		return "", fmt.Errorf("take mfa challenge failed")
-	}
-	// Lua 的 false（键不存在）经 go-redis 解码为 nil
-	if res == nil {
-		return "", ErrMfaChallengeNotFound
-	}
-	raw, ok := res.(string)
-	if !ok {
-		return "", fmt.Errorf("unexpected mfa challenge value type")
-	}
-	return raw, nil
 }
 
 // PeekEnrollChallenge 只读注册上下文（不删除）。

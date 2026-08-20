@@ -33,13 +33,14 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { ElNotification } from "element-plus";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAuth } from "@/composables/use-auth";
 import { i18n } from "@/core/i18n";
 import { useAccessStore } from "@/stores";
 
 const t = i18n.global.t;
 const router = useRouter();
+const route = useRoute();
 const { completeMfaChallenge, loginLoading } = useAuth();
 const accessStore = useAccessStore();
 
@@ -68,7 +69,12 @@ const handleSubmit = async () => {
   }
   await mfaFormRef.value?.validate(async (valid: boolean) => {
     if (!valid) return;
-    const result = await completeMfaChallenge(mfaForm.value.code);
+    // 验证成功后回到进入登录流程前的原目标页（由 store 登录分支透传）
+    const redirect = (route.query.redirect as string) || "";
+    const safeRedirect = redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "";
+    const result = await completeMfaChallenge(mfaForm.value.code, async () => {
+      if (safeRedirect) await router.replace(safeRedirect);
+    });
     if (!result?.userInfo) {
       ElNotification({
         title: t("core.authentication.loginFailed"),

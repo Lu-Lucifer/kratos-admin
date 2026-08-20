@@ -2,6 +2,7 @@
 import type { VbenFormSchema } from '@vben/common-ui';
 
 import { computed, h, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { AuthenticationLogin, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
@@ -14,6 +15,7 @@ defineOptions({ name: 'MfaChallenge' });
 
 const authStore = useAuthStore();
 const accessStore = useAccessStore();
+const route = useRoute();
 
 // 顶部标题与说明（AuthenticationLogin 自带 header 插槽能力有限，用副标题提示）
 const subtitle = ref($t('authentication.mfaDesc'));
@@ -43,7 +45,12 @@ async function handleSubmit(values: Record<string, any>) {
     await router.push({ name: 'Login' });
     return;
   }
-  const result = await authStore.completeMfaChallenge(values.totpCode);
+  // 验证成功后回到进入登录流程前的原目标页（由 store 登录分支透传）
+  const redirect = (route.query.redirect as string) || '';
+  const safeRedirect = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '';
+  const result = await authStore.completeMfaChallenge(values.totpCode, async () => {
+    if (safeRedirect) await router.replace(safeRedirect);
+  });
   if (!result?.userInfo) {
     // 验证失败：completeMfaChallenge 内部已通知错误并清理状态，回登录页重新走流程
     await router.push({ name: 'Login' });

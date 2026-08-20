@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Form, Input, Button, App } from 'antd';
 import { SafetyOutlined } from '@ant-design/icons';
 import { useAuthStore } from '@/stores';
+import { useSearchParams } from 'react-router-dom';
 
 const MfaChallenge: React.FC = () => {
   const { t } = useTranslation('auth');
   const { completeMfaChallenge, loginLoading, mfaOperationId } = useAuthStore();
   const { message } = App.useApp();
   const [submitting, setSubmitting] = useState(false);
+  const [searchParams] = useSearchParams();
 
   // 退出 MFA 挑战：清状态并回登录页
   const cancelMfa = () => {
@@ -23,10 +25,18 @@ const MfaChallenge: React.FC = () => {
       return;
     }
     setSubmitting(true);
+    // 验证成功后回到进入登录流程前的原目标页（由登录 store 整页跳转时透传）
+    const redirect = searchParams.get('redirect') || '';
+    const safeRedirect =
+      typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')
+        ? redirect
+        : '';
     try {
-      // completeMfaChallenge 内部会存 token + 跳首页，无需此处再跳。
-      // 传 onSuccess 走完整登录成功路径。
-      await completeMfaChallenge(values.totpCode);
+      await completeMfaChallenge(values.totpCode, () => {
+        if (safeRedirect) {
+          window.location.href = safeRedirect;
+        }
+      });
     } catch (error: any) {
       message.error(error?.message || t('mfaVerifyFailed'));
     } finally {

@@ -1,7 +1,7 @@
 ﻿<script lang="ts" setup>
 import type { VxeGridListeners, VxeGridProps } from '#/adapter/vxe-table';
 
-import { h, watch } from 'vue';
+import { computed, h, watch } from 'vue';
 
 import { useVbenDrawer, type VbenFormProps } from '@vben/common-ui';
 import { LucideFilePenLine, LucideInfo, LucideShieldOff, LucideTrash2 } from '@vben/icons';
@@ -10,6 +10,7 @@ import { isEqual } from '@vben/utils';
 import { notification } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useUserStore } from '@vben/stores';
 import { type identityservicev1_User as User } from '#/api';
 import {
   disableMfa,
@@ -294,6 +295,9 @@ function handleEdit(row: any) {
 }
 
 /* 删除 */
+// 仅平台侧操作者（tenantId=0）显示救援重置；非平台用户由后端 403 兜底
+const isPlatformSide = computed(() => Number(useUserStore().userInfo?.tenantId ?? 0) === 0);
+
 // 管理端救援重置：清空目标用户 TOTP 因子（仅平台管理员生效，后端强制校验）
 async function handleResetMfa(row: any) {
   try {
@@ -405,6 +409,7 @@ watch(
         @click.stop="handleEdit(row)"
       />
       <a-popconfirm
+        v-if="isPlatformSide"
         :cancel-text="$t('ui.button.cancel')"
         :ok-text="$t('ui.button.ok')"
         :title="$t('page.user.resetMfaConfirmTitle')"

@@ -96,9 +96,11 @@ export const useAuthStore = defineStore('auth', () => {
       // 不写任何 token，记录 operation_id 并跳转 MFA 挑战页（路由守卫亦据此强制跳转）。
       if ((resp as any).mfa_operation_id) {
         accessStore.mfaOperationId = (resp as any).mfa_operation_id as string;
-        await router.push({ name: 'MfaChallenge' });
+        // 携带当前 redirect 到挑战页，验证通过后回到原目标页
+        const redirect = (router.currentRoute.value.query.redirect as string) || '';
+        await router.push({ name: 'MfaChallenge', query: redirect ? { redirect } : {} });
         return { userInfo: null };
-      }
+        }
 
       userInfo = await applySuccessfulLogin(resp as any, onSuccess);
     } catch (error) {
@@ -198,6 +200,7 @@ export const useAuthStore = defineStore('auth', () => {
   // completeMfaChallenge 用 operation_id + TOTP 码调后端验证，通过则复用 applySuccessfulLogin。
   async function completeMfaChallenge(
     totpCode: string,
+    onSuccess?: () => Promise<void> | void,
   ): Promise<{ userInfo: null | UserInfo } | null> {
     let userInfo: null | UserInfo = null;
     const opId = accessStore.mfaOperationId;
@@ -211,7 +214,7 @@ export const useAuthStore = defineStore('auth', () => {
         totpCode: totpCode,
       } as any);
       accessStore.mfaOperationId = null;
-      userInfo = await applySuccessfulLogin(resp as any);
+      userInfo = await applySuccessfulLogin(resp as any, onSuccess);
     } catch (error) {
       await _doLogout();
 
