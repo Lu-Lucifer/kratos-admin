@@ -42,6 +42,12 @@ interface AccessState {
   loginExpired: boolean;
 
   /**
+   * MFA 挑战操作标识：登录密码校验通过但需二次验证时，后端返回。
+   * 非空表示当前处于 MFA 挑战待验证阶段，前端据此跳挑战页。
+   */
+  mfaOperationId: string | null;
+
+  /**
    * 登录 accessToken
    */
   refreshToken: AccessToken;
@@ -65,6 +71,7 @@ export const useAccessStore = defineStore('core-access', {
       this.accessRoutes = [];
       this.isAccessChecked = false;
       this.loginExpired = false;
+      this.mfaOperationId = null;
       this.accessTokenExpireTime = undefined;
       this.refreshTokenExpireTime = undefined;
     },
@@ -133,6 +140,7 @@ export const useAccessStore = defineStore('core-access', {
     accessTokenExpireTime: undefined,
     isAccessChecked: false,
     loginExpired: false,
+    mfaOperationId: null,
     refreshToken: null,
     refreshTokenExpireTime: undefined,
   }),

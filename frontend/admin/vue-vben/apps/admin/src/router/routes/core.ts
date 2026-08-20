@@ -48,6 +48,17 @@ const coreRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        name: 'MfaChallenge',
+        path: 'mfa-challenge',
+        component: () =>
+          import('#/views/_core/authentication/mfa-challenge.vue'),
+        meta: {
+          title: $t('page.auth.mfaChallenge'),
+          hideInMenu: true,
+          hideInTab: true,
+        },
+      },
+      {
         name: 'CodeLogin',
         path: 'code-login',
         component: () => import('#/views/_core/authentication/code-login.vue'),

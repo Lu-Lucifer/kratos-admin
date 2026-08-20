@@ -10,7 +10,7 @@ import { notification } from 'ant-design-vue';
 import CryptoJS from 'crypto-js';
 import { defineStore } from 'pinia';
 
-import { fetchMyPermissionCode, fetchUserProfile, loginMutation, logoutMutation, refreshTokenMutation } from '#/api/composables';
+import { fetchMyPermissionCode, fetchUserProfile, loginMutation, logoutMutation, refreshTokenMutation, verifyMfaMutation } from '#/api/composables';
 import { $t } from '#/locales';
 import { queryClient } from '#/plugins/vue-query';
 import { router } from '#/router';
@@ -92,66 +92,15 @@ export const useAuthStore = defineStore('auth', () => {
         grant_type: 'password',
       });
 
-      const accessToken = (resp as any).access_token;
-      const refresh_token = (resp as any).refresh_token;
-      let expiresAt = (resp as any).expires_in;
-      let refreshExpiresAt = (resp as any).refresh_expires_in;
-
-      const expiresAtSec = Number(expiresAt);
-      expiresAt =
-        !Number.isFinite(expiresAtSec) || expiresAtSec <= 0
-          ? Date.now() + ACCESS_TOKEN_REFRESH_INTERVAL
-          : Date.now() + Math.floor(expiresAtSec * 1000);
-
-      const refreshExpiresAtSec = Number(refreshExpiresAt);
-      refreshExpiresAt =
-        !Number.isFinite(refreshExpiresAtSec) || refreshExpiresAtSec <= 0
-          ? Date.now() + REFRESH_TOKEN_REFRESH_INTERVAL
-          : Date.now() + Math.floor(refreshExpiresAtSec * 1000);
-
-      // 如果成功获取到 accessToken
-      if (accessToken) {
-        accessStore.setAccessToken(accessToken);
-        accessStore.setAccessTokenExpireTime(expiresAt);
-
-        if (refresh_token) {
-          accessStore.setRefreshToken(refresh_token);
-          accessStore.setRefreshTokenExpireTime(refreshExpiresAt);
-          startRefreshTimer();
-        }
-
-        // 获取用户信息并存储到 accessStore 中
-        const [fetchUserInfoResult, fetchAccessCodeResult] = await Promise.all([
-          fetchUserInfo(),
-          fetchAccessCodes(),
-        ]);
-
-        // console.log('fetchUserInfoResult', fetchUserInfoResult);
-
-        userInfo = fetchUserInfoResult;
-        if (!userInfo) {
-          throw new Error($t('authentication.loginFailedDesc'));
-        }
-
-        userStore.setUserInfo(userInfo);
-        accessStore.setAccessCodes(fetchAccessCodeResult.codes ?? []);
-
-        if (accessStore.loginExpired) {
-          accessStore.setLoginExpired(false);
-        } else {
-          onSuccess
-            ? await onSuccess?.()
-            : await router.push(userInfo.homePath || DEFAULT_HOME_PATH);
-        }
-
-        if (userInfo?.realname) {
-          notification.success({
-            description: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realname}`,
-            duration: 3,
-            message: $t('authentication.loginSuccess'),
-          });
-        }
+      // ===== MFA 闸门：后端在密码校验通过、需二次验证时返回 mfa_operation_id，access_token 为空。
+      // 不写任何 token，记录 operation_id 并跳转 MFA 挑战页（路由守卫亦据此强制跳转）。
+      if ((resp as any).mfa_operation_id) {
+        accessStore.mfaOperationId = (resp as any).mfa_operation_id as string;
+        await router.push({ name: 'MfaChallenge' });
+        return { userInfo: null };
       }
+
+      userInfo = await applySuccessfulLogin(resp as any, onSuccess);
     } catch (error) {
       await _doLogout();
 
@@ -174,6 +123,112 @@ export const useAuthStore = defineStore('auth', () => {
     return {
       userInfo,
     };
+  }
+
+  // applySuccessfulLogin 处理"已拿到含真 token 的 LoginResponse"后的统一流程：
+  // 存 token → 拉用户信息/权限码 → 跳转。
+  // 登录成功与 MFA 验证成功都复用此函数。返回 userInfo（失败抛错）。
+  async function applySuccessfulLogin(
+    resp: any,
+    onSuccess?: () => Promise<void> | void,
+  ): Promise<UserInfo | null> {
+    const accessToken = resp.access_token;
+    const refresh_token = resp.refresh_token;
+    let expiresAt = resp.expires_in;
+    let refreshExpiresAt = resp.refresh_expires_in;
+
+    const expiresAtSec = Number(expiresAt);
+    expiresAt =
+      !Number.isFinite(expiresAtSec) || expiresAtSec <= 0
+        ? Date.now() + ACCESS_TOKEN_REFRESH_INTERVAL
+        : Date.now() + Math.floor(expiresAtSec * 1000);
+
+    const refreshExpiresAtSec = Number(refreshExpiresAt);
+    refreshExpiresAt =
+      !Number.isFinite(refreshExpiresAtSec) || refreshExpiresAtSec <= 0
+        ? Date.now() + REFRESH_TOKEN_REFRESH_INTERVAL
+        : Date.now() + Math.floor(refreshExpiresAtSec * 1000);
+
+    if (!accessToken) {
+      return null;
+    }
+
+    accessStore.setAccessToken(accessToken);
+    accessStore.setAccessTokenExpireTime(expiresAt);
+
+    if (refresh_token) {
+      accessStore.setRefreshToken(refresh_token);
+      accessStore.setRefreshTokenExpireTime(refreshExpiresAt);
+      startRefreshTimer();
+    }
+
+    // 获取用户信息并存储到 accessStore 中
+    const [fetchUserInfoResult, fetchAccessCodeResult] = await Promise.all([
+      fetchUserInfo(),
+      fetchAccessCodes(),
+    ]);
+
+    const userInfo = fetchUserInfoResult;
+    if (!userInfo) {
+      throw new Error($t('authentication.loginFailedDesc'));
+    }
+
+    userStore.setUserInfo(userInfo);
+    accessStore.setAccessCodes(fetchAccessCodeResult.codes ?? []);
+
+    if (accessStore.loginExpired) {
+      accessStore.setLoginExpired(false);
+    } else {
+      onSuccess
+        ? await onSuccess?.()
+        : await router.push(userInfo.homePath || DEFAULT_HOME_PATH);
+    }
+
+    if (userInfo?.realname) {
+      notification.success({
+        description: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realname}`,
+        duration: 3,
+        message: $t('authentication.loginSuccess'),
+      });
+    }
+
+    return userInfo;
+  }
+
+  // completeMfaChallenge 用 operation_id + TOTP 码调后端验证，通过则复用 applySuccessfulLogin。
+  async function completeMfaChallenge(
+    totpCode: string,
+  ): Promise<{ userInfo: null | UserInfo } | null> {
+    let userInfo: null | UserInfo = null;
+    const opId = accessStore.mfaOperationId;
+    if (!opId) {
+      return null;
+    }
+    try {
+      loginLoading.value = true;
+      const resp = await verifyMfaMutation.execute({
+        operationId: opId,
+        totpCode: totpCode,
+      } as any);
+      accessStore.mfaOperationId = null;
+      userInfo = await applySuccessfulLogin(resp as any);
+    } catch (error) {
+      await _doLogout();
+
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : (error as any)?.message || $t('authentication.loginFailedDesc');
+
+      notification.error({
+        message: $t('authentication.loginFailed'),
+        description: errorMsg,
+      });
+      return null;
+    } finally {
+      loginLoading.value = false;
+    }
+    return { userInfo };
   }
 
   /**
@@ -516,6 +571,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     $reset,
     authLogin,
+    completeMfaChallenge,
     fetchUserInfo,
     fetchAccessCodes,
     loginLoading,

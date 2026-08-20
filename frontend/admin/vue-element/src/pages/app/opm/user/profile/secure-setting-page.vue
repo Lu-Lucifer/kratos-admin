@@ -10,12 +10,19 @@
         </div>
         <div class="item-description">{{ item.description }}</div>
       </div>
+
+      <!-- MFA（TOTP）绑定/解绑：真实功能组件，绑定后登录需二次验证 -->
+      <div class="setting-item">
+        <MfaManagement />
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { $t } from "@/core/i18n";
+
+import MfaManagement from "./MfaManagement.vue";
 
 interface SettingItem {
   key: string;
@@ -47,12 +54,6 @@ const secureSettingList: SettingItem[] = [
     key: "4",
     title: $t("pages.user.secureSetting.backupEmail"),
     description: $t("pages.user.secureSetting.backupEmailDesc"),
-    extra: $t("common.button.edit"),
-  },
-  {
-    key: "5",
-    title: $t("pages.user.secureSetting.mfaDevice"),
-    description: $t("pages.user.secureSetting.mfaDeviceDesc"),
     extra: $t("common.button.edit"),
   },
 ];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { ConfigProvider, Button, Tooltip } from 'antd';
 import { GlobalOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,8 @@ interface UserLayoutProps {
 
 export const UserLayout = ({ requireAuth = false }: UserLayoutProps) => {
   const { accessToken } = useAuthStore();
+  const mfaOperationId = useAuthStore((s) => s.mfaOperationId);
+  const location = useLocation();
   const preferences = usePreferencesStore((state) => state.preferences);
   const themeConfig = useThemeConfig();
   const { locale, toggleLocale } = useLocale();
@@ -34,7 +36,7 @@ export const UserLayout = ({ requireAuth = false }: UserLayoutProps) => {
 
   // 监听系统主题变化
   React.useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark');
     const handleChange = () => {
       if (preferences.theme.mode === 'auto') {
         // 触发重新渲染以更新 isLightMode
@@ -45,6 +47,13 @@ export const UserLayout = ({ requireAuth = false }: UserLayoutProps) => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [preferences.theme.mode]);
 
+  // MFA 待验证态收敛：mfaOperationId 非空表示密码已通过但需二次验证。
+  // 此时用户无有效 token，唯一允许的页面是 MFA 挑战页；其余一律强制跳过去。
+  // 这与 AuthGuard 中的同名收敛逻辑配合，确保半登录态被锁死在唯一出口。
+  if (mfaOperationId && location.pathname !== '/auth/mfa-challenge') {
+    return <Navigate to="/auth/mfa-challenge" replace />;
+  }
+
   // 未登录保护
   if (requireAuth && !accessToken) {
     const redirect = encodeURIComponent(window.location.pathname + window.location.search);
@@ -52,7 +61,7 @@ export const UserLayout = ({ requireAuth = false }: UserLayoutProps) => {
   }
 
   // 已登录跳转（用于登录页）
-  if (!requireAuth && accessToken) {
+  if (!requireAuth && accessToken && !mfaOperationId) {
     return <Navigate to="/" replace />;
   }
 

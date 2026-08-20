@@ -11,6 +11,7 @@ import {
 import { useAuthStore } from '@/stores';
 import ContentContainer from '@/layouts/components/PageContainer/ContentContainer';
 import { getGenderOptions } from '../constants';
+import MfaManagement from './MfaManagement';
 
 /** 格式化 wellKnownTimestamp */
 function formatTimestamp(ts: any): string {
@@ -274,13 +275,14 @@ const UserProfile = () => {
                       <Input.Password placeholder={t('confirmPasswordPlaceholder')} />
                     </Form.Item>
 
-                    <Form.Item>
-                      <Button type="primary" loading={changingPwd} onClick={handleChangePassword}>
-                        {t('changePassword')}
-                      </Button>
-                    </Form.Item>
-                  </Form>
-                </div>
+                      <Form.Item>
+                        <Button type="primary" loading={changingPwd} onClick={handleChangePassword}>
+                          {t('changePassword')}
+                        </Button>
+                      </Form.Item>
+                    </Form>
+                  </div>
+                  <MfaManagement />
               ),
             },
           ]}

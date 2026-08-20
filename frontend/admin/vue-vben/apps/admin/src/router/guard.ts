@@ -51,6 +51,12 @@ function setupAccessGuard(router: Router) {
     const authStore = useAuthStore();
     const dictStore = useDictStore();
 
+    // MFA 待验证态收敛：mfaOperationId 非空表示密码已通过但需二次验证。
+    // 此时用户无有效 token，唯一允许的目标是 MfaChallenge；其余一律强制跳过去。
+    if (accessStore.mfaOperationId && to.name !== 'MfaChallenge') {
+      return { name: 'MfaChallenge', replace: true } as any;
+    }
+
     // 基本路由，这些路由不需要进入权限拦截
     if (coreRouteNames.includes(to.name as string)) {
       if (to.path === LOGIN_PATH && accessStore.accessToken) {

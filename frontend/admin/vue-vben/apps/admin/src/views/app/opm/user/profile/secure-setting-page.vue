@@ -3,6 +3,8 @@ import { Page } from '@vben/common-ui';
 
 import { List } from 'ant-design-vue';
 
+import MfaManagement from './MfaManagement.vue';
+
 const ListItem = List.Item;
 const ListItemMeta = List.Item.Meta;
 
@@ -31,12 +33,6 @@ const secureSettingList = [
     description: '已绑定邮箱：：ant***sign.com',
     extra: '修改',
   },
-  {
-    key: '5',
-    title: 'MFA 设备',
-    description: '未绑定 MFA 设备，绑定后，可以进行二次确认',
-    extra: '修改',
-  },
 ];
 </script>
 
@@ -58,6 +54,11 @@ const secureSettingList = [
           </ListItemMeta>
         </ListItem>
       </template>
+
+      <!-- MFA（TOTP）绑定/解绑：真实功能组件，绑定后登录需二次验证 -->
+      <ListItem>
+        <MfaManagement />
+      </ListItem>
     </List>
   </Page>
 </template>

@@ -1,6 +1,7 @@
 {
   "auth": {
     "login": "Login",
+    "mfaChallenge": "MFA Verification",
     "register": "Register",
     "codeLogin": "Verification Code Login",
     "qrcodeLogin": "QR Code Login",

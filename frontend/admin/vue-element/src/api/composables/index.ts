@@ -9,6 +9,9 @@ export * from "./shared";
 // 认证相关
 export * from "./auth";
 
+// MFA 相关
+export * from "./mfa";
+
 // 管理门户相关
 export * from "./admin-portal";
 

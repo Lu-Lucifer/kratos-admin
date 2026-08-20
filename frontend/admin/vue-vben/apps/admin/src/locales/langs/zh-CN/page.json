@@ -1,6 +1,7 @@
 {
   "auth": {
     "login": "登录",
+    "mfaChallenge": "MFA 验证",
     "register": "注册",
     "codeLogin": "验证码登录",
     "qrcodeLogin": "二维码登录",

@@ -13,6 +13,9 @@ export * from './api-audit-log';
 // 认证相关
 export * from './auth';
 
+// MFA 相关
+export * from './mfa';
+
 export * from './data-access-audit-log';
 
 export * from './dict';
