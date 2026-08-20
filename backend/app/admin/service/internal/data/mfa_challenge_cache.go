@@ -136,21 +136,6 @@ func (c *MfaChallengeCache) SetEnrollChallenge(ctx context.Context, secret strin
 	return opId, nil
 }
 
-// TakeEnrollChallenge 原子取出并删除注册上下文（单次有效）。
-func (c *MfaChallengeCache) TakeEnrollChallenge(ctx context.Context, opId string) (*MfaEnrollChallengeContext, error) {
-	key := fmt.Sprintf(mfaEnrollChallengeKeyFmt, opId)
-	raw, err := c.takeAndDelete(ctx, key)
-	if err != nil {
-		return nil, err
-	}
-
-	var envelope MfaEnrollChallengeContext
-	if err := json.Unmarshal([]byte(raw), &envelope); err != nil {
-		return nil, fmt.Errorf("unmarshal enroll challenge envelope failed: %w", err)
-	}
-	return &envelope, nil
-}
-
 // takeAndDelete 用 Lua 脚本原子取出并删除 key 的值，保证 verify-and-delete
 // 单次有效语义在并发下也成立。
 func (c *MfaChallengeCache) takeAndDelete(ctx context.Context, key string) (string, error) {
@@ -168,6 +153,33 @@ func (c *MfaChallengeCache) takeAndDelete(ctx context.Context, key string) (stri
 		return "", fmt.Errorf("unexpected mfa challenge value type")
 	}
 	return raw, nil
+}
+
+// PeekEnrollChallenge 只读注册上下文（不删除）。
+// 注册流程允许首码输错重试：ConfirmEnrollMethod 校验失败后 operation 仍有效，
+// 仅在落库成功后调用 DeleteEnrollChallenge 消耗。并发重复 Confirm 由
+// (tenant,user,method) 唯一索引 + StartEnrollMethod 已绑定预检兜底。
+func (c *MfaChallengeCache) PeekEnrollChallenge(ctx context.Context, opId string) (*MfaEnrollChallengeContext, error) {
+	key := fmt.Sprintf(mfaEnrollChallengeKeyFmt, opId)
+	raw, err := c.rdb.Get(ctx, key).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrMfaChallengeNotFound
+		}
+		c.log.Errorf("peek enroll challenge failed: %s", err.Error())
+		return nil, fmt.Errorf("peek mfa challenge failed")
+	}
+	var envelope MfaEnrollChallengeContext
+	if err := json.Unmarshal([]byte(raw), &envelope); err != nil {
+		return nil, fmt.Errorf("unmarshal enroll challenge envelope failed: %w", err)
+	}
+	return &envelope, nil
+}
+
+// DeleteEnrollChallenge 删除注册上下文（注册成功后消耗）。
+func (c *MfaChallengeCache) DeleteEnrollChallenge(ctx context.Context, opId string) {
+	key := fmt.Sprintf(mfaEnrollChallengeKeyFmt, opId)
+	c.rdb.Del(ctx, key)
 }
 
 // mfaLoginChallengeEnvelope 是登录挑战上下文的传输封装。

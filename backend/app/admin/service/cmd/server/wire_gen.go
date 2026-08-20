@@ -72,7 +72,7 @@ func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 	userMfaFactorRepo := data.NewUserMfaFactorRepo(context, entClient)
 	mfaChallengeCache := data.NewMfaChallengeCache(context, client)
 	authenticationService := service.NewAuthenticationService(context, userRepo, userCredentialRepo, roleRepo, tenantRepo, membershipRepo, orgUnitRepo, permissionRepo, authenticator, clientType, captcha, loginRateLimiter, loginPolicyRepo, userMfaFactorRepo, mfaChallengeCache)
-	mfaService := service.NewMfaService(context, userMfaFactorRepo, mfaChallengeCache, authenticator)
+	mfaService := service.NewMfaService(context, userMfaFactorRepo, mfaChallengeCache, authenticator, loginRateLimiter)
 	loginPolicyService := service.NewLoginPolicyService(context, loginPolicyRepo)
 	menuRepo := data.NewMenuRepo(context, entClient)
 	planModuleRepo := data.NewPlanModuleRepo(context, entClient)

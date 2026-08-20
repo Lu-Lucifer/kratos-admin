@@ -54,7 +54,9 @@ service MfaService {
     };
   }
 
-  // 撤销指定 MFA 凭证（按 id）
+  // 撤销指定 MFA 凭证（按 id）。
+  // ⚠️ 当前无前端调用方：DELETE 请求体在 Go 生成器（恒 BindQuery）与 TS 生成器
+  // （发 body）之间不一致，贸然对接会静默丢参——需要时应改 POST（参见 DisableMFA）。
   rpc RevokeMFADevice (authentication.service.v1.RevokeMFADeviceRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/admin/v1/mfa/{credential_id}"

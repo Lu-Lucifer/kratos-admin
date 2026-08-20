@@ -19,6 +19,7 @@ import (
 	"go-wind-admin/app/admin/service/internal/data/ent/privacy"
 	"go-wind-admin/app/admin/service/internal/data/ent/usermfafactor"
 	"go-wind-admin/pkg/middleware/auth"
+	"go-wind-admin/pkg/netutil"
 
 	"github.com/tx7do/go-crud/viewer"
 
@@ -50,6 +51,7 @@ type MfaService struct {
 	mfaFactorRepo     *data.UserMfaFactorRepo
 	mfaChallengeCache *data.MfaChallengeCache
 	authenticator     *data.Authenticator
+	rateLimiter       *data.LoginRateLimiter
 }
 
 func NewMfaService(
@@ -57,12 +59,14 @@ func NewMfaService(
 	mfaFactorRepo *data.UserMfaFactorRepo,
 	mfaChallengeCache *data.MfaChallengeCache,
 	authenticator *data.Authenticator,
+	rateLimiter *data.LoginRateLimiter,
 ) *MfaService {
 	return &MfaService{
 		log:               ctx.NewLoggerHelper("mfa/service/admin-service"),
 		mfaFactorRepo:     mfaFactorRepo,
 		mfaChallengeCache: mfaChallengeCache,
 		authenticator:     authenticator,
+		rateLimiter:       rateLimiter,
 	}
 }
 
@@ -175,7 +179,10 @@ func (s *MfaService) ConfirmEnrollMethod(ctx context.Context, req *authenticatio
 		return nil, err
 	}
 
-	enrollCtx, err := s.mfaChallengeCache.TakeEnrollChallenge(ctx, req.GetOperationId())
+	// 注册流程允许首码输错重试：peek 不消耗，落库成功才删（与登录挑战的
+	// 取出即删不同——登录挑战失败必须作废防暴破，注册有登录态且首码空间同样 10^6，
+	// 重试面由 operation TTL + 已绑定预检 + 唯一索引共同约束）
+	enrollCtx, err := s.mfaChallengeCache.PeekEnrollChallenge(ctx, req.GetOperationId())
 	if err != nil {
 		return nil, authenticationV1.ErrorBadRequest("invalid or expired enroll operation")
 	}
@@ -193,6 +200,7 @@ func (s *MfaService) ConfirmEnrollMethod(ctx context.Context, req *authenticatio
 	if err != nil {
 		return nil, authenticationV1.ErrorInternalServerError("create mfa factor failed")
 	}
+	s.mfaChallengeCache.DeleteEnrollChallenge(ctx, req.GetOperationId())
 	return &authenticationV1.ConfirmEnrollMethodResponse{
 		Success:      true,
 		CredentialId: fmt.Sprintf("%d", factorId),
@@ -243,6 +251,13 @@ func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authentication
 
 	// 通过：更新 last_used_at（best-effort），签发真 token
 	_ = s.mfaFactorRepo.UpdateLastUsed(ctx, tid, uid, factorId, time.Now())
+
+	// 兑现登录 MFA 闸门的承诺："限流清零在 VerifyMFAChallenge 通过后"。
+	// 不清零会导致绑定 MFA 的用户失败计数只增不减（密码错误与 MFA 登录成功
+	// 都不 Reset），比未绑定用户更容易触发限流锁定。
+	if s.rateLimiter != nil {
+		s.rateLimiter.Reset(ctx, netutil.ClientIPFromContext(ctx), payload.GetUsername())
+	}
 
 	accessToken, refreshToken, err := s.authenticator.CreateUserToken(ctx, challengeCtx.ClientType, payload)
 	if err != nil {
@@ -312,7 +327,22 @@ func (s *MfaService) DisableMFA(ctx context.Context, req *authenticationV1.Disab
 		return &emptypb.Empty{}, nil
 	}
 
-	// 本人路径
+	// 本人路径：按 credential_id 精确解绑；未传 credential_id 时按 method 清空
+	// 本人该方法全部因子（兑现 proto 注释"指定凭证 id 或仅按方法禁用全部"的契约）
+	if req.GetCredentialId() == "" {
+		method, merr := methodToEntity(req.GetMethod())
+		if merr != nil {
+			return nil, authenticationV1.ErrorBadRequest("credential_id or method required")
+		}
+		n, derr := s.mfaFactorRepo.DeleteAllByUserMethod(ctx, operator.GetTenantId(), operator.GetUserId(), method)
+		if derr != nil {
+			return nil, authenticationV1.ErrorInternalServerError("disable mfa failed")
+		}
+		if n == 0 {
+			return nil, authenticationV1.ErrorNotFound("mfa credential not found")
+		}
+		return &emptypb.Empty{}, nil
+	}
 	factorId, err := parseFactorId(req.GetCredentialId())
 	if err != nil {
 		return nil, authenticationV1.ErrorBadRequest("invalid credential id")

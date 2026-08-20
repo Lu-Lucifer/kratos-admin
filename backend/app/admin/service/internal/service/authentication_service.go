@@ -360,6 +360,16 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		tenantID = tenant.GetId()
 	}
 
+	// ===== 登录策略闸门（全局部分）：target_id 为空的策略不依赖用户身份， =====
+	// ===== 在 identifier 反查与密码校验之前拦截，被封锁的 IP 连 user 表查询都省掉。
+	// ===== 用户定向策略（target_id = userId）在取到 user 后二次检查。
+	if s.loginPolicyRepo != nil {
+		if blocked, reason := s.checkLoginPolicies(ctx, tenantID, 0, clientIP, req.GetDeviceId()); blocked {
+			s.log.Warnf("login blocked by policy: ip=%s username=%s reason=%s", clientIP, username, reason)
+			return nil, authenticationV1.ErrorForbidden("login blocked by security policy")
+		}
+	}
+
 	// ===== identifier 智能解析：输入含 @ 视为 email、纯数字视为 mobile， =====
 	// ===== 经 user 表反查得到真实 username 后仍走 USERNAME 维度凭证校验。
 	// 未命中时原样返回，交由凭证校验走统一失败路径（防枚举）；mobile 多行歧义直接拒绝。
@@ -367,16 +377,6 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		return nil, rerr
 	} else if resolved != username {
 		username = resolved
-	}
-
-	// ===== 登录策略闸门（全局部分）：target_id 为空的策略不依赖用户身份， =====
-	// ===== 在密码校验前拦截，省去被封锁者的 bcrypt 校验成本。
-	// ===== 用户定向策略（target_id = userId）在取到 user 后二次检查。
-	if s.loginPolicyRepo != nil {
-		if blocked, reason := s.checkLoginPolicies(ctx, tenantID, 0, clientIP, req.GetDeviceId()); blocked {
-			s.log.Warnf("login blocked by policy: ip=%s username=%s reason=%s", clientIP, username, reason)
-			return nil, authenticationV1.ErrorForbidden("login blocked by security policy")
-		}
 	}
 
 	// ===== 凭证校验：在解析出的 tenant 范围内查单条凭证并校验密码 =====
