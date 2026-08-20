@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -139,4 +140,51 @@ func (p EffectivePolicy) describe(method string) string {
 		return p.Reason
 	}
 	return "hit " + strings.ToLower(method) + " blacklist: " + p.Value
+}
+
+// ValidateLoginPolicyValue 校验策略值格式（管理端 Create/Update 调用）。
+// 值格式配错会让匹配器静默不命中——尤其白名单：存在但永不命中 = 全员被锁。
+func ValidateLoginPolicyValue(method, value string) error {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fmt.Errorf("policy value is empty")
+	}
+	switch method {
+	case "IP":
+		if strings.Contains(value, "/") {
+			if _, _, err := net.ParseCIDR(value); err != nil {
+				return fmt.Errorf("invalid CIDR: %s", value)
+			}
+			return nil
+		}
+		if net.ParseIP(value) == nil {
+			return fmt.Errorf("invalid IP: %s", value)
+		}
+		return nil
+	case "TIME":
+		parts := strings.Split(value, "-")
+		if len(parts) != 2 {
+			return fmt.Errorf("time window must be HH:MM-HH:MM")
+		}
+		s1, ok1 := parseHHMM(parts[0])
+		s2, ok2 := parseHHMM(parts[1])
+		if !ok1 || !ok2 {
+			return fmt.Errorf("invalid time format: %s", value)
+		}
+		if s1 == s2 {
+			return fmt.Errorf("time window start equals end: %s", value)
+		}
+		return nil
+	case "DEVICE", "MAC":
+		if len(value) > 128 {
+			return fmt.Errorf("value too long")
+		}
+		return nil
+	case "REGION":
+		if len(value) > 32 {
+			return fmt.Errorf("region code too long")
+		}
+		return nil
+	}
+	return fmt.Errorf("unknown policy method: %s", method)
 }

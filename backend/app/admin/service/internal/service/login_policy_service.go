@@ -53,6 +53,11 @@ func (s *LoginPolicyService) Create(ctx context.Context, req *authenticationV1.C
 
 	req.Data.CreatedBy = trans.Ptr(operator.UserId)
 
+	// 值格式校验：配错格式会让匹配器静默不命中（白名单 = 全员被锁）
+	if verr := data.ValidateLoginPolicyValue(req.Data.GetMethod().String(), req.Data.GetValue()); verr != nil {
+		return nil, adminV1.ErrorBadRequest("%s", verr.Error())
+	}
+
 	if err = s.repo.Create(ctx, req); err != nil {
 		return nil, err
 	}
@@ -63,6 +68,11 @@ func (s *LoginPolicyService) Create(ctx context.Context, req *authenticationV1.C
 func (s *LoginPolicyService) Update(ctx context.Context, req *authenticationV1.UpdateLoginPolicyRequest) (*emptypb.Empty, error) {
 	if req == nil || req.Data == nil {
 		return nil, adminV1.ErrorBadRequest("invalid request")
+	}
+
+	// 值格式校验（理由同 Create）
+	if verr := data.ValidateLoginPolicyValue(req.Data.GetMethod().String(), req.Data.GetValue()); verr != nil {
+		return nil, adminV1.ErrorBadRequest("%s", verr.Error())
 	}
 
 	// 获取操作人信息

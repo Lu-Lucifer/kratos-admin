@@ -17,6 +17,7 @@ import (
 	"github.com/tx7do/go-utils/trans"
 	"google.golang.org/protobuf/proto"
 
+	adminV1 "go-wind-admin/api/gen/go/admin/service/v1"
 	auditV1 "go-wind-admin/api/gen/go/audit/service/v1"
 
 	appViewer "go-wind-admin/pkg/entgo/viewer"
@@ -59,6 +60,7 @@ func (l *LoginAuditLogMiddleware) Handle(ctx context.Context, htr *http.Transpor
 	// 获取错误码和是否成功
 	_, reason, success := getStatusCode(middleErr)
 
+
 	loginAuditLog := &auditV1.LoginAuditLog{}
 
 	switch {
@@ -66,6 +68,16 @@ func (l *LoginAuditLogMiddleware) Handle(ctx context.Context, htr *http.Transpor
 		loginAuditLog.ActionType = trans.Ptr(auditV1.LoginAuditLog_LOGIN)
 	case htr.Operation() == l.op.logoutOperation:
 		loginAuditLog.ActionType = trans.Ptr(auditV1.LoginAuditLog_LOGOUT)
+	}
+
+	// MFA 验证事件：填充 mfa_status（proto 预定义 VERIFIED/FAILED 语义，供
+	// 风险因子计算——此前全链路无人填充，MFA 相关风险因子从未生效）
+	if htr.Operation() == adminV1.OperationMfaServiceVerifyMFAChallenge {
+		if success {
+			loginAuditLog.MfaStatus = trans.Ptr("VERIFIED")
+		} else {
+			loginAuditLog.MfaStatus = trans.Ptr("FAILED")
+		}
 	}
 
 	// MFA 验证等免鉴权接口的请求体不含 username，由 handler 通过响应头
