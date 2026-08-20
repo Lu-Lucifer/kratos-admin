@@ -35,8 +35,11 @@ func (a *ApiAuditLogMiddleware) Name() string {
 }
 
 func (a *ApiAuditLogMiddleware) Handle(ctx context.Context, htr *http.Transport, middleErr error, latencyMs int64) {
-	if htr.Operation() == a.op.loginOperation {
-		return
+	// 登录类操作（含 MFA 二次验证）由 LoginAuditLog 负责审计，这里跳过避免重复记录。
+	for _, op := range a.op.loginOperations {
+		if htr.Operation() == op {
+			return
+		}
 	}
 
 	apiAuditLog := &auditV1.ApiAuditLog{}

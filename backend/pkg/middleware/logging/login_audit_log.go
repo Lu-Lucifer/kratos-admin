@@ -44,7 +44,15 @@ func (l *LoginAuditLogMiddleware) Handle(ctx context.Context, htr *http.Transpor
 		return
 	}
 
-	if htr.Operation() != l.op.loginOperation && htr.Operation() != l.op.logoutOperation {
+	// 登录类操作（含 MFA 二次验证）与登出操作才进登录审计。
+	isLoginOp := false
+	for _, op := range l.op.loginOperations {
+		if htr.Operation() == op {
+			isLoginOp = true
+			break
+		}
+	}
+	if !isLoginOp && htr.Operation() != l.op.logoutOperation {
 		return
 	}
 
@@ -53,10 +61,10 @@ func (l *LoginAuditLogMiddleware) Handle(ctx context.Context, htr *http.Transpor
 
 	loginAuditLog := &auditV1.LoginAuditLog{}
 
-	switch htr.Operation() {
-	case l.op.loginOperation:
+	switch {
+	case isLoginOp:
 		loginAuditLog.ActionType = trans.Ptr(auditV1.LoginAuditLog_LOGIN)
-	case l.op.logoutOperation:
+	case htr.Operation() == l.op.logoutOperation:
 		loginAuditLog.ActionType = trans.Ptr(auditV1.LoginAuditLog_LOGOUT)
 	}
 

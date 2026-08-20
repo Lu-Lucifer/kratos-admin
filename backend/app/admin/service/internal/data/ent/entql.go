@@ -42,6 +42,7 @@ import (
 	"go-wind-admin/app/admin/service/internal/data/ent/tenant"
 	"go-wind-admin/app/admin/service/internal/data/ent/user"
 	"go-wind-admin/app/admin/service/internal/data/ent/usercredential"
+	"go-wind-admin/app/admin/service/internal/data/ent/usermfafactor"
 	"go-wind-admin/app/admin/service/internal/data/ent/userorgunit"
 	"go-wind-admin/app/admin/service/internal/data/ent/userposition"
 	"go-wind-admin/app/admin/service/internal/data/ent/userrole"
@@ -54,7 +55,7 @@ import (
 
 // schemaGraph holds a representation of ent/schema at runtime.
 var schemaGraph = func() *sqlgraph.Schema {
-	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 41)}
+	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 42)}
 	graph.Nodes[0] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   api.Table,
@@ -1140,6 +1141,29 @@ var schemaGraph = func() *sqlgraph.Schema {
 	}
 	graph.Nodes[38] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
+			Table:   usermfafactor.Table,
+			Columns: usermfafactor.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUint32,
+				Column: usermfafactor.FieldID,
+			},
+		},
+		Type: "UserMfaFactor",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			usermfafactor.FieldCreatedAt:   {Type: field.TypeTime, Column: usermfafactor.FieldCreatedAt},
+			usermfafactor.FieldUpdatedAt:   {Type: field.TypeTime, Column: usermfafactor.FieldUpdatedAt},
+			usermfafactor.FieldDeletedAt:   {Type: field.TypeTime, Column: usermfafactor.FieldDeletedAt},
+			usermfafactor.FieldTenantID:    {Type: field.TypeUint32, Column: usermfafactor.FieldTenantID},
+			usermfafactor.FieldUserID:      {Type: field.TypeUint32, Column: usermfafactor.FieldUserID},
+			usermfafactor.FieldMethod:      {Type: field.TypeEnum, Column: usermfafactor.FieldMethod},
+			usermfafactor.FieldSecretHash:  {Type: field.TypeString, Column: usermfafactor.FieldSecretHash},
+			usermfafactor.FieldDisplayName: {Type: field.TypeString, Column: usermfafactor.FieldDisplayName},
+			usermfafactor.FieldStatus:      {Type: field.TypeEnum, Column: usermfafactor.FieldStatus},
+			usermfafactor.FieldLastUsedAt:  {Type: field.TypeTime, Column: usermfafactor.FieldLastUsedAt},
+		},
+	}
+	graph.Nodes[39] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userorgunit.Table,
 			Columns: userorgunit.Columns,
 			ID: &sqlgraph.FieldSpec{
@@ -1168,7 +1192,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			userorgunit.FieldStatus:     {Type: field.TypeEnum, Column: userorgunit.FieldStatus},
 		},
 	}
-	graph.Nodes[39] = &sqlgraph.Node{
+	graph.Nodes[40] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userposition.Table,
 			Columns: userposition.Columns,
@@ -1197,7 +1221,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			userposition.FieldStatus:     {Type: field.TypeEnum, Column: userposition.FieldStatus},
 		},
 	}
-	graph.Nodes[40] = &sqlgraph.Node{
+	graph.Nodes[41] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userrole.Table,
 			Columns: userrole.Columns,
@@ -6116,6 +6140,96 @@ func (f *UserCredentialFilter) WhereResetTokenUsedAt(p entql.TimeP) {
 }
 
 // addPredicate implements the predicateAdder interface.
+func (_q *UserMfaFactorQuery) addPredicate(pred func(s *sql.Selector)) {
+	_q.predicates = append(_q.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the UserMfaFactorQuery builder.
+func (_q *UserMfaFactorQuery) Filter() *UserMfaFactorFilter {
+	return &UserMfaFactorFilter{config: _q.config, predicateAdder: _q}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *UserMfaFactorMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the UserMfaFactorMutation builder.
+func (m *UserMfaFactorMutation) Filter() *UserMfaFactorFilter {
+	return &UserMfaFactorFilter{config: m.config, predicateAdder: m}
+}
+
+// UserMfaFactorFilter provides a generic filtering capability at runtime for UserMfaFactorQuery.
+type UserMfaFactorFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *UserMfaFactorFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql uint32 predicate on the id field.
+func (f *UserMfaFactorFilter) WhereID(p entql.Uint32P) {
+	f.Where(p.Field(usermfafactor.FieldID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *UserMfaFactorFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(usermfafactor.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *UserMfaFactorFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(usermfafactor.FieldUpdatedAt))
+}
+
+// WhereDeletedAt applies the entql time.Time predicate on the deleted_at field.
+func (f *UserMfaFactorFilter) WhereDeletedAt(p entql.TimeP) {
+	f.Where(p.Field(usermfafactor.FieldDeletedAt))
+}
+
+// WhereTenantID applies the entql uint32 predicate on the tenant_id field.
+func (f *UserMfaFactorFilter) WhereTenantID(p entql.Uint32P) {
+	f.Where(p.Field(usermfafactor.FieldTenantID))
+}
+
+// WhereUserID applies the entql uint32 predicate on the user_id field.
+func (f *UserMfaFactorFilter) WhereUserID(p entql.Uint32P) {
+	f.Where(p.Field(usermfafactor.FieldUserID))
+}
+
+// WhereMethod applies the entql string predicate on the method field.
+func (f *UserMfaFactorFilter) WhereMethod(p entql.StringP) {
+	f.Where(p.Field(usermfafactor.FieldMethod))
+}
+
+// WhereSecretHash applies the entql string predicate on the secret_hash field.
+func (f *UserMfaFactorFilter) WhereSecretHash(p entql.StringP) {
+	f.Where(p.Field(usermfafactor.FieldSecretHash))
+}
+
+// WhereDisplayName applies the entql string predicate on the display_name field.
+func (f *UserMfaFactorFilter) WhereDisplayName(p entql.StringP) {
+	f.Where(p.Field(usermfafactor.FieldDisplayName))
+}
+
+// WhereStatus applies the entql string predicate on the status field.
+func (f *UserMfaFactorFilter) WhereStatus(p entql.StringP) {
+	f.Where(p.Field(usermfafactor.FieldStatus))
+}
+
+// WhereLastUsedAt applies the entql time.Time predicate on the last_used_at field.
+func (f *UserMfaFactorFilter) WhereLastUsedAt(p entql.TimeP) {
+	f.Where(p.Field(usermfafactor.FieldLastUsedAt))
+}
+
+// addPredicate implements the predicateAdder interface.
 func (_q *UserOrgUnitQuery) addPredicate(pred func(s *sql.Selector)) {
 	_q.predicates = append(_q.predicates, pred)
 }
@@ -6144,7 +6258,7 @@ type UserOrgUnitFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserOrgUnitFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6269,7 +6383,7 @@ type UserPositionFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserPositionFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[40].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6389,7 +6503,7 @@ type UserRoleFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserRoleFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[40].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})

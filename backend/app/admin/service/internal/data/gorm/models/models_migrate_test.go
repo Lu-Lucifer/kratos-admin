@@ -47,7 +47,7 @@ func allMigrateModelsForTest() []interface{} {
 		&PermissionMenu{}, &PermissionPolicy{},
 		&Plan{}, &PlanModule{}, &PlanQuota{},
 		&PolicyEvaluationLog{}, &Position{}, &Role{}, &RoleMetadata{}, &RolePermission{},
-		&Task{}, &Tenant{}, &User{}, &UserCredential{},
+		&Task{}, &Tenant{}, &User{}, &UserCredential{}, &UserMfaFactor{},
 		&UserOrgUnit{}, &UserPosition{}, &UserRole{},
 	}
 }

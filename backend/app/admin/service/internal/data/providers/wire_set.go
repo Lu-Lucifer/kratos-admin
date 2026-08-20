@@ -37,6 +37,7 @@ var ProviderSet = wire.NewSet(
 
 	data.NewUserTokenCache,
 	data.NewLoginRateLimiter,
+	data.NewMfaChallengeCache,
 	data.NewRedisCacheMonitorRepo,
 
 	data.NewDictTypeRepo,
@@ -58,6 +59,7 @@ var ProviderSet = wire.NewSet(
 
 	data.NewUserRepo,
 	data.NewUserCredentialRepo,
+	data.NewUserMfaFactorRepo,
 	data.NewUserOrgUnitRepo,
 	data.NewUserPositionRepo,
 	data.NewUserRoleRepo,

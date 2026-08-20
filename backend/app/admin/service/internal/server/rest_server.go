@@ -61,6 +61,9 @@ func NewRestMiddleware(
 		adminV1.OperationAuthenticationServiceLogin,
 		adminV1.OperationAuthenticationServiceGenerateCaptcha,
 		adminV1.OperationAuthenticationServiceVerifyCaptcha,
+		// MFA 登录挑战验证免鉴权：operation_id 由登录流程签发，见 doGrantTypePassword 的 MFA 闸门。
+		// 仅此一个 MFA RPC 免鉴权；管理侧 RPC（GetMFAStatus 等）走正常 auth+authz。
+		adminV1.OperationMfaServiceVerifyMFAChallenge,
 		//OperationFileTransferServiceDownloadFile,
 		//OperationFileTransferServicePostUploadFile,
 		//OperationFileTransferServicePutUploadFile,
@@ -90,6 +93,7 @@ func NewRestServer(
 	authorizer *authorizer.Authorizer,
 
 	authenticationService *service.AuthenticationService,
+	mfaService *service.MfaService,
 	loginPolicyService *service.LoginPolicyService,
 
 	portalService *service.AdminPortalService,
@@ -147,6 +151,8 @@ func NewRestServer(
 	apiService.RegisterRouteWalker(srv)
 
 	adminV1.RegisterAuthenticationServiceHTTPServer(srv, authenticationService)
+
+	adminV1.RegisterMfaServiceHTTPServer(srv, mfaService)
 
 	adminV1.RegisterUserProfileServiceHTTPServer(srv, userProfileService)
 
