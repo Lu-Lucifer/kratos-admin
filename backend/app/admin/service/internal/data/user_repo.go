@@ -1161,6 +1161,7 @@ func (r *userRepo) FindUsernameByIdentifier(ctx context.Context, tenantID uint32
 			Only(ctx)
 		if err != nil {
 			if ent.IsNotFound(err) {
+				r.log.Warnf("login email [%s] not matched in tenant [%d], fallthrough to credential check", identifier, tenantID)
 				return identifier, 0, nil
 			}
 			r.log.Errorf("find user by email failed: %s", err.Error())

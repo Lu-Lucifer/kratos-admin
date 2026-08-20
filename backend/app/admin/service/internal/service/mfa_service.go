@@ -16,7 +16,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go-wind-admin/app/admin/service/internal/data"
+	"go-wind-admin/app/admin/service/internal/data/ent/privacy"
 	"go-wind-admin/pkg/middleware/auth"
+
+	"github.com/tx7do/go-crud/viewer"
 
 	"github.com/pquerna/otp"
 	otpTotp "github.com/pquerna/otp/totp"
@@ -198,6 +201,14 @@ func (s *MfaService) ConfirmEnrollMethod(ctx context.Context, req *authenticatio
 // VerifyMFAChallenge 验证登录 MFA 挑战。通过则签发真 token 并返回 LoginResponse。
 // 免鉴权：operation_id 由登录流程在密码校验通过、待二次验证阶段签发。
 func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authenticationV1.VerifyMFAChallengeRequest) (*authenticationV1.LoginResponse, error) {
+	// 本接口在鉴权白名单内、无 auth 中间件注入 viewer，而 ent 隐私层
+	// （TenantPrivacy mixin）要求 ViewerContext 存在——与登录流程的
+	// resetContextForLogin 同款处理：Noop viewer + privacy.Allow。
+	// 挑战上下文绑定的 userId/tenantId 来自密码校验通过后的 tokenPayload，
+	// 越权面由 operation_id 单次有效 + 归属校验兜住。
+	ctx = viewer.WithContext(ctx, viewer.NewNoopContext())
+	ctx = privacy.DecisionContext(ctx, privacy.Allow)
+
 	challengeCtx, err := s.mfaChallengeCache.TakeLoginChallenge(ctx, req.GetOperationId())
 	if err != nil {
 		return nil, authenticationV1.ErrorBadRequest("invalid or expired mfa operation")

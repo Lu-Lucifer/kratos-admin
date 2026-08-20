@@ -378,12 +378,13 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 	}
 
 	// ===== 凭证校验：在解析出的 tenant 范围内查单条凭证并校验密码 =====
+	// 注意用解析后的 username 局部变量（可能是 email/mobile 反查所得），而非 req 原始输入
 	var matchedUserID uint32
 	var err error
-	matchedUserID, err = s.userCredentialRepo.FindUserCredential(ctx, tenantID, authenticationV1.UserCredential_USERNAME, req.GetUsername(), req.GetPassword(), true)
+	matchedUserID, err = s.userCredentialRepo.FindUserCredential(ctx, tenantID, authenticationV1.UserCredential_USERNAME, username, req.GetPassword(), true)
 	if err != nil {
 		// 服务端日志保留真实原因（USER_NOT_FOUND / USER_FREEZE / INVALID_PASSWORD），便于运维排查
-		s.log.Errorf("verify user credential failed for username [%s]: %s", req.GetUsername(), err.Error())
+		s.log.Errorf("verify user credential failed for username [%s]: %s", username, err.Error())
 
 		// H5：登录失败时自增失败计数（按 IP + 用户名双维度）
 		if s.rateLimiter != nil {
