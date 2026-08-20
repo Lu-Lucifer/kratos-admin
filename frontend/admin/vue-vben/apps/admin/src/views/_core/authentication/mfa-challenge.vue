@@ -48,9 +48,11 @@ async function handleSubmit(values: Record<string, any>) {
   // 验证成功后回到进入登录流程前的原目标页（由 store 登录分支透传）
   const redirect = (route.query.redirect as string) || '';
   const safeRedirect = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '';
-  const result = await authStore.completeMfaChallenge(values.totpCode, async () => {
-    if (safeRedirect) await router.replace(safeRedirect);
-  });
+  // 有 redirect 才传 onSuccess（覆盖默认 homePath 跳转）；空时走默认跳转
+  const result = await authStore.completeMfaChallenge(
+    values.totpCode,
+    safeRedirect ? async () => { await router.replace(safeRedirect); } : undefined,
+  );
   if (!result?.userInfo) {
     // 验证失败：completeMfaChallenge 内部已通知错误并清理状态，回登录页重新走流程
     await router.push({ name: 'Login' });

@@ -72,9 +72,11 @@ const handleSubmit = async () => {
     // 验证成功后回到进入登录流程前的原目标页（由 store 登录分支透传）
     const redirect = (route.query.redirect as string) || "";
     const safeRedirect = redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "";
-    const result = await completeMfaChallenge(mfaForm.value.code, async () => {
-      if (safeRedirect) await router.replace(safeRedirect);
-    });
+    // 有 redirect 才传 onSuccess（覆盖默认 homePath 跳转）；空时走默认跳转
+    const result = await completeMfaChallenge(
+      mfaForm.value.code,
+      safeRedirect ? async () => { await router.replace(safeRedirect); } : undefined,
+    );
     if (!result?.userInfo) {
       ElNotification({
         title: t("core.authentication.loginFailed"),

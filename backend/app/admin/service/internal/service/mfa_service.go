@@ -239,8 +239,9 @@ func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authentication
 
 	// 审计贯通：本接口请求体无 username（中间件解析不到），无论成功失败
 	// 都通过响应头把挑战上下文中的用户名回传给登录审计中间件（兜底填充）。
+	// 非 ASCII 用户名会构成非法 HTTP 头值（kratos 会丢弃整个响应头），过滤之。
 	if tr, tok := ktransport.FromServerContext(ctx); tok {
-		if htr, hok := tr.(*khttp.Transport); hok && payload.GetUsername() != "" {
+		if htr, hok := tr.(*khttp.Transport); hok && isASCII(payload.GetUsername()) {
 			htr.ReplyHeader().Set("X-Audit-Username", payload.GetUsername())
 		}
 	}
@@ -278,8 +279,11 @@ func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authentication
 		return nil, authenticationV1.ErrorForbidden("invalid mfa code")
 	}
 
-	// 通过：消耗挑战、更新 last_used_at（best-effort）、清零限流，签发真 token
-	s.mfaChallengeCache.ConsumeLoginChallenge(ctx, req.GetOperationId())
+	// 通过：原子消耗挑战做最终裁决（并发同 opId 仅先抢到者发 token，防双花），
+	// 更新 last_used_at（best-effort）、清零限流，签发真 token
+	if !s.mfaChallengeCache.TakeLoginChallengeAtomic(ctx, req.GetOperationId()) {
+		return nil, authenticationV1.ErrorForbidden("mfa challenge already consumed")
+	}
 	_ = s.mfaFactorRepo.UpdateLastUsed(ctx, tid, uid, factorId, time.Now())
 
 	// 兑现登录 MFA 闸门的承诺："限流清零在 VerifyMFAChallenge 通过后"。
@@ -439,6 +443,16 @@ func methodToEntity(m authenticationV1.MFAMethod) (usermfafactor.Method, error) 
 		return usermfafactor.MethodTotp, nil
 	}
 	return "", fmt.Errorf("unsupported mfa method: %v", m)
+}
+
+// isASCII 判断字符串是否全为 ASCII（HTTP 头值合法性）。
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] > 0x7f {
+			return false
+		}
+	}
+	return s != ""
 }
 
 // parseFactorId 将 proto 返回的字符串形式 credential_id 解析为 uint32 主键。

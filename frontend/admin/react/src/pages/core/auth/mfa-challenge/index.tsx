@@ -32,11 +32,12 @@ const MfaChallenge: React.FC = () => {
         ? redirect
         : '';
     try {
-      await completeMfaChallenge(values.totpCode, () => {
-        if (safeRedirect) {
-          window.location.href = safeRedirect;
-        }
-      });
+      // 有 redirect 才传 onSuccess（覆盖默认 homePath 跳转）；
+      // 空时传 undefined，走 store 默认的 homePath 跳转
+      await completeMfaChallenge(
+        values.totpCode,
+        safeRedirect ? () => { window.location.href = safeRedirect; } : undefined,
+      );
     } catch (error: any) {
       message.error(error?.message || t('mfaVerifyFailed'));
     } finally {

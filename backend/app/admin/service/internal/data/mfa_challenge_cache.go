@@ -137,9 +137,39 @@ func (c *MfaChallengeCache) RecordLoginFailure(ctx context.Context, opId string)
 	return false
 }
 
-// ConsumeLoginChallenge 消耗登录挑战（验证通过或失败上限时调用，幂等）。
+// ConsumeLoginChallenge 消耗登录挑战（失败上限 / 因子缺失等无需裁决的场景）。
+// 注意：验证通过的发 token 路径不能用它——普通 DEL 幂等，无法裁决并发双花，
+// 必须走 TakeLoginChallengeAtomic。
 func (c *MfaChallengeCache) ConsumeLoginChallenge(ctx context.Context, opId string) {
 	c.rdb.Del(ctx, fmt.Sprintf(mfaLoginChallengeKeyFmt, opId), fmt.Sprintf(mfaLoginFailKeyFmt, opId))
+}
+
+// takeAndDelScript 原子 GET+DEL：返回键值或 nil（不存在/已被并发消耗）。
+var takeAndDelScript = redis.NewScript(`
+	local stored = redis.call('GET', KEYS[1])
+	if not stored then
+		return false
+	end
+	redis.call('DEL', KEYS[1])
+	return stored
+`)
+
+// TakeLoginChallengeAtomic 原子消耗登录挑战，返回是否抢到（裁决权）。
+// 验证通过后的发 token 路径用它做最终裁决：并发请求中仅先抢到者签发 token，
+// 后到者（值已被删）拒绝——防止 Peek+DEL 组合下同 opId 双花签发两组令牌。
+// 顺带清理失败计数 key。
+func (c *MfaChallengeCache) TakeLoginChallengeAtomic(ctx context.Context, opId string) bool {
+	key := fmt.Sprintf(mfaLoginChallengeKeyFmt, opId)
+	res, err := takeAndDelScript.Run(ctx, c.rdb, []string{key}).Result()
+	if err != nil {
+		c.log.Errorf("atomic take login challenge failed: %s", err.Error())
+		return false
+	}
+	if res == nil {
+		return false
+	}
+	c.rdb.Del(ctx, fmt.Sprintf(mfaLoginFailKeyFmt, opId))
+	return true
 }
 
 // TryAcquireEnrollCooldown 注册频控：同一用户冷却期内只允许发起一次 StartEnroll。
