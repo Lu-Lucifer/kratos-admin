@@ -59,6 +59,9 @@ func NewRestMiddleware(
 	// add white list for authentication.
 	rpc.AddWhiteList(
 		adminV1.OperationAuthenticationServiceLogin,
+		// 注册接口在 proto 中声明免鉴权（security:{}）且登录页注册流程无 token，
+		// 此前白名单遗漏导致注册接口 401（前端注册页从未可用）
+		adminV1.OperationAuthenticationServiceRegisterUser,
 		adminV1.OperationAuthenticationServiceGenerateCaptcha,
 		adminV1.OperationAuthenticationServiceVerifyCaptcha,
 		// MFA 登录挑战验证免鉴权：operation_id 由登录流程签发，见 doGrantTypePassword 的 MFA 闸门。

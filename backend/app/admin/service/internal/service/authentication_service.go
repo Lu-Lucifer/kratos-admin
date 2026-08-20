@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"strings"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/tx7do/go-crud/viewer"
 	"github.com/tx7do/go-utils/captcha"
+	"github.com/tx7do/go-utils/crypto"
 	"github.com/tx7do/go-utils/trans"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -483,6 +485,19 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 	}, nil
 }
 
+// decryptTransportSecret 解密前端 AES-CBC（base64）传输的秘密（注册/改密与登录同规）。
+func decryptTransportSecret(secret string) (string, error) {
+	bytesPass, err := base64.StdEncoding.DecodeString(secret)
+	if err != nil {
+		return "", err
+	}
+	decrypted, err := crypto.AesDecrypt(bytesPass, crypto.DefaultAESKey, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(decrypted), nil
+}
+
 // fillAdminFlags 按角色码填充 token 的平台/租户管理员标志。
 // 该标志此前从未被赋值（全仓库仅消费无生产），导致下游
 // GetIsPlatformAdmin 判定（MFA 重置、用户管理越权校验等）形同虚设。
@@ -627,22 +642,28 @@ func (s *AuthenticationService) ValidateToken(ctx context.Context, req *authenti
 
 // RegisterUser 注册前台用户
 func (s *AuthenticationService) RegisterUser(ctx context.Context, req *authenticationV1.RegisterUserRequest) (*authenticationV1.RegisterUserResponse, error) {
+	// 免鉴权接口（白名单），无 auth 中间件注入 viewer，ent 隐私层要求
+	// ViewerContext——与 doGrantTypePassword 同款处理
+	ctx = s.resetContextForLogin(ctx)
+
 	var err error
 
 	var tenantId *uint32
 	if constants.IsTenantModeEnabled {
+		// 租户模式：注册必须归属有效租户——无 tenant_code 时 user 落库会撞
+		// tenant 外键报 500，此处提前以明确错误拒绝（平台账号由种子/管理端创建）
+		if strings.TrimSpace(req.GetTenantCode()) == "" {
+			return nil, authenticationV1.ErrorBadRequest("tenant code required")
+		}
 		var tenant *identityV1.Tenant
 		tenant, err = s.tenantRepo.Get(ctx, &identityV1.GetTenantRequest{
 			QueryBy: &identityV1.GetTenantRequest_Code{Code: req.GetTenantCode()},
 		})
-		if err != nil {
-			s.log.Errorf("get tenant by code [%s] failed [%s]", req.GetTenantCode(), err.Error())
-			return nil, err
+		if err != nil || tenant == nil {
+			return nil, authenticationV1.ErrorBadRequest("invalid tenant")
 		}
 
-		if tenant != nil {
-			tenantId = tenant.Id
-		}
+		tenantId = tenant.Id
 	}
 
 	user, err := s.userRepo.Create(ctx, &identityV1.CreateUserRequest{
@@ -657,6 +678,14 @@ func (s *AuthenticationService) RegisterUser(ctx context.Context, req *authentic
 		return nil, err
 	}
 
+	// 前端注册密码与登录一致为 AES 加密传输（base64），落库哈希必须基于明文：
+	// 此前直接把 AES 密文传给 Create，存成 bcrypt(AES密文)，而登录校验是
+	// bcrypt(解密后明文)——哈希对象不一致，注册用户永远无法登录。
+	plainPassword, derr := decryptTransportSecret(req.GetPassword())
+	if derr != nil {
+		return nil, authenticationV1.ErrorBadRequest("invalid password format")
+	}
+
 	if err = s.userCredentialRepo.Create(ctx, &authenticationV1.CreateUserCredentialRequest{
 		Data: &authenticationV1.UserCredential{
 			UserId:   user.Id,
@@ -666,7 +695,7 @@ func (s *AuthenticationService) RegisterUser(ctx context.Context, req *authentic
 			Identifier:   trans.Ptr(req.GetUsername()),
 
 			CredentialType: authenticationV1.UserCredential_PASSWORD_HASH.Enum(),
-			Credential:     trans.Ptr(req.GetPassword()),
+			Credential:     trans.Ptr(plainPassword),
 
 			IsPrimary: trans.Ptr(true),
 			Status:    authenticationV1.UserCredential_ENABLED.Enum(),
