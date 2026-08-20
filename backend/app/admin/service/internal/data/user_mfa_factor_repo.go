@@ -181,6 +181,59 @@ func (r *UserMfaFactorRepo) DeleteForUser(ctx context.Context, tenantID, userID,
 	return n > 0, nil
 }
 
+// DeleteAllByUserMethod 清空某用户指定方法的全部因子（管理端救援重置用）。
+// 返回删除行数。
+func (r *UserMfaFactorRepo) DeleteAllByUserMethod(ctx context.Context, tenantID, userID uint32, method usermfafactor.Method) (int, error) {
+	n, err := r.entClient.Client().UserMfaFactor.Delete().
+		Where(
+			usermfafactor.TenantIDEQ(tenantID),
+			usermfafactor.UserIDEQ(userID),
+			usermfafactor.MethodEQ(method),
+		).
+		Exec(ctx)
+	if err != nil {
+		r.log.Errorf("delete mfa factors by method failed: %s", err.Error())
+		return 0, fmt.Errorf("delete mfa factors failed")
+	}
+	return n, nil
+}
+
+// GetFactorById 按 id 取因子归属（管理端定位目标用户用），不含 secret。
+func (r *UserMfaFactorRepo) GetFactorById(ctx context.Context, factorID uint32) (tenantID, userID uint32, found bool, err error) {
+	entity, qerr := r.entClient.Client().UserMfaFactor.Query().
+		Select(usermfafactor.FieldTenantID, usermfafactor.FieldUserID, usermfafactor.FieldMethod).
+		Where(usermfafactor.IDEQ(factorID)).
+		Only(ctx)
+	if qerr != nil {
+		if ent.IsNotFound(qerr) {
+			return 0, 0, false, nil
+		}
+		r.log.Errorf("get mfa factor failed: %s", qerr.Error())
+		return 0, 0, false, fmt.Errorf("get mfa factor failed")
+	}
+	return derefUint32(entity.TenantID), derefUint32(entity.UserID), true, nil
+}
+
+// FindFirstByUser 跨租户按用户+方法找首行因子归属（平台管理员救援重置定位 tenant 用）。
+// 调用前提：ctx 为平台管理员 viewer（IsPlatformContext 放行全量）或已注入 Allow。
+func (r *UserMfaFactorRepo) FindFirstByUser(ctx context.Context, userID uint32, method usermfafactor.Method) (tenantID, uid uint32, found bool, err error) {
+	entity, qerr := r.entClient.Client().UserMfaFactor.Query().
+		Select(usermfafactor.FieldTenantID, usermfafactor.FieldUserID).
+		Where(
+			usermfafactor.UserIDEQ(userID),
+			usermfafactor.MethodEQ(method),
+		).
+		First(ctx)
+	if qerr != nil {
+		if ent.IsNotFound(qerr) {
+			return 0, 0, false, nil
+		}
+		r.log.Errorf("find mfa factor by user failed: %s", qerr.Error())
+		return 0, 0, false, fmt.Errorf("find mfa factor failed")
+	}
+	return derefUint32(entity.TenantID), derefUint32(entity.UserID), true, nil
+}
+
 // UpdateLastUsed 更新因子最近使用时间。
 func (r *UserMfaFactorRepo) UpdateLastUsed(ctx context.Context, tenantID, userID, factorID uint32, at time.Time) error {
 	n, err := r.entClient.Client().UserMfaFactor.Update().

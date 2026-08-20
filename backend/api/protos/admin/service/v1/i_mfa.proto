@@ -44,10 +44,13 @@ service MfaService {
     };
   }
 
-  // 禁用/移除已注册 MFA 凭证
+  // 禁用/移除已注册 MFA 凭证。
+  // 注意：kratos http 生成器不支持 DELETE 请求体（handler 只 BindQuery），
+  // 而 TS 生成器默认把 message 序列化为 body——为两端一致改用 POST + body。
   rpc DisableMFA (authentication.service.v1.DisableMFARequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/admin/v1/mfa"
+      post: "/admin/v1/mfa/disable"
+      body: "*"
     };
   }
 

@@ -211,6 +211,7 @@ func (s *AuthenticationService) authorizeAndEnrichUserTokenPayloadUserTenantRela
 		return authenticationV1.ErrorForbidden("insufficient authority")
 	}
 	tokenPayload.Roles = roleCodes
+	fillAdminFlags(tokenPayload, roleCodes)
 
 	return nil
 }
@@ -288,6 +289,7 @@ func (s *AuthenticationService) authorizeAndEnrichUserTokenPayloadUserTenantRela
 		return authenticationV1.ErrorForbidden("insufficient authority")
 	}
 	tokenPayload.Roles = roleCodes
+fillAdminFlags(tokenPayload, roleCodes)
 
 	return nil
 }
@@ -479,6 +481,20 @@ func (s *AuthenticationService) doGrantTypePassword(ctx context.Context, req *au
 		ExpiresIn:        int64(s.authenticator.GetAccessTokenExpires(req.GetClientType()).Seconds()),
 		RefreshExpiresIn: trans.Ptr(int64(s.authenticator.GetRefreshTokenExpires(req.GetClientType()).Seconds())),
 	}, nil
+}
+
+// fillAdminFlags 按角色码填充 token 的平台/租户管理员标志。
+// 该标志此前从未被赋值（全仓库仅消费无生产），导致下游
+// GetIsPlatformAdmin 判定（MFA 重置、用户管理越权校验等）形同虚设。
+func fillAdminFlags(tokenPayload *authenticationV1.UserTokenPayload, roleCodes []string) {
+	for _, rc := range roleCodes {
+		if rc == constants.PlatformAdminRoleCode {
+			tokenPayload.IsPlatformAdmin = trans.Ptr(true)
+		}
+		if rc == constants.TenantAdminRoleCode {
+			tokenPayload.IsTenantAdmin = trans.Ptr(true)
+		}
+	}
 }
 
 // verifyLoginCaptcha 校验登录请求携带的验证码。

@@ -32,7 +32,9 @@ const OperationMfaServiceVerifyMFAChallenge = "/admin.service.v1.MfaService/Veri
 type MfaServiceHTTPServer interface {
 	// ConfirmEnrollMethod 确认注册 MFA 方法（提交首码完成绑定）
 	ConfirmEnrollMethod(context.Context, *v1.ConfirmEnrollMethodRequest) (*v1.ConfirmEnrollMethodResponse, error)
-	// DisableMFA 禁用/移除已注册 MFA 凭证
+	// DisableMFA 禁用/移除已注册 MFA 凭证。
+	// 注意：kratos http 生成器不支持 DELETE 请求体（handler 只 BindQuery），
+	// 而 TS 生成器默认把 message 序列化为 body——为两端一致改用 POST + body。
 	DisableMFA(context.Context, *v1.DisableMFARequest) (*emptypb.Empty, error)
 	// GetMFAStatus 查询当前登录用户 MFA 总览
 	GetMFAStatus(context.Context, *v1.GetMFAStatusRequest) (*v1.GetMFAStatusResponse, error)
@@ -53,7 +55,7 @@ func RegisterMfaServiceHTTPServer(s *http.Server, srv MfaServiceHTTPServer) {
 	r.GET("/admin/v1/mfa/methods", _MfaService_ListEnrolledMethods0_HTTP_Handler(srv))
 	r.POST("/admin/v1/mfa/enroll/start", _MfaService_StartEnrollMethod0_HTTP_Handler(srv))
 	r.POST("/admin/v1/mfa/enroll/confirm", _MfaService_ConfirmEnrollMethod0_HTTP_Handler(srv))
-	r.DELETE("/admin/v1/mfa", _MfaService_DisableMFA0_HTTP_Handler(srv))
+	r.POST("/admin/v1/mfa/disable", _MfaService_DisableMFA0_HTTP_Handler(srv))
 	r.DELETE("/admin/v1/mfa/{credential_id}", _MfaService_RevokeMFADevice0_HTTP_Handler(srv))
 	r.POST("/admin/v1/mfa/verify", _MfaService_VerifyMFAChallenge0_HTTP_Handler(srv))
 }
@@ -143,6 +145,9 @@ func _MfaService_ConfirmEnrollMethod0_HTTP_Handler(srv MfaServiceHTTPServer) fun
 func _MfaService_DisableMFA0_HTTP_Handler(srv MfaServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in v1.DisableMFARequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
@@ -206,7 +211,9 @@ func _MfaService_VerifyMFAChallenge0_HTTP_Handler(srv MfaServiceHTTPServer) func
 type MfaServiceHTTPClient interface {
 	// ConfirmEnrollMethod 确认注册 MFA 方法（提交首码完成绑定）
 	ConfirmEnrollMethod(ctx context.Context, req *v1.ConfirmEnrollMethodRequest, opts ...http.CallOption) (rsp *v1.ConfirmEnrollMethodResponse, err error)
-	// DisableMFA 禁用/移除已注册 MFA 凭证
+	// DisableMFA 禁用/移除已注册 MFA 凭证。
+	// 注意：kratos http 生成器不支持 DELETE 请求体（handler 只 BindQuery），
+	// 而 TS 生成器默认把 message 序列化为 body——为两端一致改用 POST + body。
 	DisableMFA(ctx context.Context, req *v1.DisableMFARequest, opts ...http.CallOption) (rsp *emptypb.Empty, err error)
 	// GetMFAStatus 查询当前登录用户 MFA 总览
 	GetMFAStatus(ctx context.Context, req *v1.GetMFAStatusRequest, opts ...http.CallOption) (rsp *v1.GetMFAStatusResponse, err error)
@@ -243,14 +250,16 @@ func (c *MfaServiceHTTPClientImpl) ConfirmEnrollMethod(ctx context.Context, in *
 	return &out, nil
 }
 
-// DisableMFA 禁用/移除已注册 MFA 凭证
+// DisableMFA 禁用/移除已注册 MFA 凭证。
+// 注意：kratos http 生成器不支持 DELETE 请求体（handler 只 BindQuery），
+// 而 TS 生成器默认把 message 序列化为 body——为两端一致改用 POST + body。
 func (c *MfaServiceHTTPClientImpl) DisableMFA(ctx context.Context, in *v1.DisableMFARequest, opts ...http.CallOption) (*emptypb.Empty, error) {
 	var out emptypb.Empty
-	pattern := "/admin/v1/mfa"
-	path := binding.EncodeURL(pattern, in, true)
+	pattern := "/admin/v1/mfa/disable"
+	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationMfaServiceDisableMFA))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "DELETE", path, nil, &out, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

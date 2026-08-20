@@ -1,5 +1,6 @@
 import { useMutation, useQuery, type UseMutationOptions } from '@tanstack/react-query';
 import {
+  type authenticationservicev1_DisableMFARequest,
   type authenticationservicev1_GetMFAStatusResponse,
   type authenticationservicev1_StartEnrollMethodRequest,
   type authenticationservicev1_StartEnrollMethodResponse,
@@ -62,6 +63,20 @@ export function useConfirmEnrollMfa(
  * 禁用/移除当前用户的 MFA 凭证。
  */
 export function useDisableMfa(
+  options?: UseMutationOptions<{}, Error, authenticationservicev1_DisableMFARequest>,
+) {
+  return useMutation({
+    mutationFn: (req: authenticationservicev1_DisableMFARequest) =>
+      apiClient.mfaService.DisableMFA(req),
+    ...options,
+  });
+}
+
+/**
+ * 管理端救援重置：清空目标用户指定方法（TOTP）的全部 MFA 因子。
+ * 仅平台管理员可调用（后端强制校验）。
+ */
+export function useAdminResetMfa(
   options?: UseMutationOptions<{}, Error, authenticationservicev1_DisableMFARequest>,
 ) {
   return useMutation({

@@ -73,13 +73,14 @@
 
 <script lang="ts" setup>
 import { ref, watch } from "vue";
-import { ElTag } from "element-plus";
+import { ElMessageBox, ElNotification, ElTag } from "element-plus";
 
 import ProPage from "@/components/Pro/ProPage/index.vue";
 import type { ProPageConfig } from "@/components/Pro/ProPage/types";
 import UserDrawer from "./user-drawer.vue";
 
 import {
+  disableMfa,
   fetchListPositions,
   fetchListRoles,
   userStatusList,
@@ -267,6 +268,7 @@ const pageConfig = computed<ProPageConfig>(() => ({
         buttons: [
           { name: "detail", label: $t("common.button.detail"), icon: "lucide:eye" },
           { name: "edit", label: $t("common.button.edit"), icon: "lucide:pen-line" },
+          { name: "resetMfa", label: $t("pages.user.resetMfa"), icon: "lucide:shield-off" },
           {
             name: "delete",
             label: $t("common.button.delete"),
@@ -290,6 +292,27 @@ function handleEdit(row: any) {
 function handleOperate(data: { name: string; row: any }) {
   if (data.name === "detail") {
     router.push(`/opm/users/detail/${data.row.id}`);
+  } else if (data.name === "resetMfa") {
+    handleResetMfa(data.row);
+  }
+}
+
+// 管理端救援重置：清空目标用户 TOTP 因子（认证器丢失解锁用，仅平台管理员生效）
+async function handleResetMfa(row: any) {
+  try {
+    await ElMessageBox.confirm($t("pages.user.resetMfaConfirmDesc"), $t("pages.user.resetMfaConfirmTitle"), {
+      confirmButtonText: $t("pages.user.resetMfa"),
+      cancelButtonText: $t("core.login.mfaCancel"),
+      type: "warning",
+    });
+  } catch {
+    return;
+  }
+  try {
+    await disableMfa({ userId: row.id, method: "TOTP" } as any);
+    ElNotification.success($t("pages.user.resetMfaSuccess"));
+  } catch (err: any) {
+    ElNotification.error(err?.message || $t("pages.user.resetMfaFailed"));
   }
 }
 

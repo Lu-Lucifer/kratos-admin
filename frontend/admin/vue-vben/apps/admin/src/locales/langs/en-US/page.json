@@ -122,7 +122,10 @@
         "lastLoginAt": "Last Login At",
         "lastLoginIp": "Last Login IP"
       }
-    }
+    },
+    "resetMfaConfirmTitle": "Reset MFA for this user?",
+    "resetMfaSuccess": "MFA reset successfully",
+    "resetMfaFailed": "Failed to reset MFA"
   },
   "role": {
     "moduleName": "Role",

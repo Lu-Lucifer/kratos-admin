@@ -17,6 +17,7 @@ import (
 
 	"go-wind-admin/app/admin/service/internal/data"
 	"go-wind-admin/app/admin/service/internal/data/ent/privacy"
+	"go-wind-admin/app/admin/service/internal/data/ent/usermfafactor"
 	"go-wind-admin/pkg/middleware/auth"
 
 	"github.com/tx7do/go-crud/viewer"
@@ -257,12 +258,61 @@ func (s *MfaService) VerifyMFAChallenge(ctx context.Context, req *authentication
 	}, nil
 }
 
-// DisableMFA 禁用/移除当前登录用户的 MFA 凭证。
+// DisableMFA 禁用/移除 MFA 凭证。
+//   - 不传 user_id：操作当前登录用户本人（解绑自己的因子）。
+//   - 传 user_id 指定他人：仅平台管理员允许，用于用户认证器丢失时的救援重置
+//     （按 method 清空该用户该方法全部因子），记告警日志留痕。
 func (s *MfaService) DisableMFA(ctx context.Context, req *authenticationV1.DisableMFARequest) (*emptypb.Empty, error) {
 	operator, err := auth.FromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// 管理端救援路径：目标用户由因子行定位（凭 credential_id），或按 user_id+method 清空
+	if target := req.GetUserId(); target != 0 && target != operator.GetUserId() {
+		if !operator.GetIsPlatformAdmin() {
+			return nil, authenticationV1.ErrorForbidden("only platform admin can reset mfa for others")
+		}
+
+		if req.GetCredentialId() != "" {
+			factorId, perr := parseFactorId(req.GetCredentialId())
+			if perr != nil {
+				return nil, authenticationV1.ErrorBadRequest("invalid credential id")
+			}
+			tid, uid, found, gerr := s.mfaFactorRepo.GetFactorById(ctx, factorId)
+			if gerr != nil {
+				return nil, authenticationV1.ErrorInternalServerError("disable mfa failed")
+			}
+			if !found || uid != target {
+				return nil, authenticationV1.ErrorNotFound("mfa credential not found")
+			}
+			ok, derr := s.mfaFactorRepo.DeleteForUser(ctx, tid, uid, factorId)
+			if derr != nil || !ok {
+				return nil, authenticationV1.ErrorInternalServerError("disable mfa failed")
+			}
+		} else {
+			method, merr := methodToEntity(req.GetMethod())
+			if merr != nil {
+				return nil, authenticationV1.ErrorBadRequest("method required when resetting by user")
+			}
+			// 目标用户可能在任意租户：以平台管理员视角全量查找其因子行定位 tenant
+			tid, uid, found, gerr := s.mfaFactorRepo.FindFirstByUser(ctx, target, method)
+			if gerr != nil {
+				return nil, authenticationV1.ErrorInternalServerError("disable mfa failed")
+			}
+			if !found {
+				return nil, authenticationV1.ErrorNotFound("mfa credential not found")
+			}
+			if _, derr := s.mfaFactorRepo.DeleteAllByUserMethod(ctx, tid, uid, method); derr != nil {
+				return nil, authenticationV1.ErrorInternalServerError("disable mfa failed")
+			}
+		}
+
+		s.log.Warnf("admin [%d] reset mfa for user [%d], reason=%s", operator.GetUserId(), target, req.GetReason())
+		return &emptypb.Empty{}, nil
+	}
+
+	// 本人路径
 	factorId, err := parseFactorId(req.GetCredentialId())
 	if err != nil {
 		return nil, authenticationV1.ErrorBadRequest("invalid credential id")
@@ -319,6 +369,15 @@ func buildEnrolledProto(infos []data.EnrolledFactorInfo) []*authenticationV1.Enr
 		out = append(out, em)
 	}
 	return out
+}
+
+// methodToEntity 将 proto MFAMethod 映射为 ent 因子方法枚举（仅 TOTP 本轮支持）。
+func methodToEntity(m authenticationV1.MFAMethod) (usermfafactor.Method, error) {
+	switch m {
+	case authenticationV1.MFAMethod_TOTP:
+		return usermfafactor.MethodTotp, nil
+	}
+	return "", fmt.Errorf("unsupported mfa method: %v", m)
 }
 
 // parseFactorId 将 proto 返回的字符串形式 credential_id 解析为 uint32 主键。

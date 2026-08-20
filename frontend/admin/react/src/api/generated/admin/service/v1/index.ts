@@ -4235,7 +4235,9 @@ export interface MfaService {
   ConfirmEnrollMethod(
     request: authenticationservicev1_ConfirmEnrollMethodRequest,
   ): Promise<authenticationservicev1_ConfirmEnrollMethodResponse>;
-  // 禁用/移除已注册 MFA 凭证
+  // 禁用/移除已注册 MFA 凭证。
+  // 注意：kratos http 生成器不支持 DELETE 请求体（handler 只 BindQuery），
+  // 而 TS 生成器默认把 message 序列化为 body——为两端一致改用 POST + body。
   DisableMFA(
     request: authenticationservicev1_DisableMFARequest,
   ): Promise<wellKnownEmpty>;
@@ -4307,74 +4309,9 @@ export function createMfaServiceClient(
       }) as Promise<authenticationservicev1_ConfirmEnrollMethodResponse>;
     },
     DisableMFA(request) {
-      const path = `admin/v1/mfa`;
-      const body = null;
-      const queryParams: string[] = [];
-      if (request.credentialId) {
-        queryParams.push(
-          `credentialId=${encodeURIComponent(request.credentialId.toString())}`,
-        );
-      }
-      if (request.method) {
-        queryParams.push(
-          `method=${encodeURIComponent(request.method.toString())}`,
-        );
-      }
-      if (request.password) {
-        queryParams.push(
-          `password=${encodeURIComponent(request.password.toString())}`,
-        );
-      }
-      if (request.totpCode) {
-        queryParams.push(
-          `totpCode=${encodeURIComponent(request.totpCode.toString())}`,
-        );
-      }
-      if (request.sms?.verificationId) {
-        queryParams.push(
-          `sms.verificationId=${encodeURIComponent(request.sms.verificationId.toString())}`,
-        );
-      }
-      if (request.sms?.code) {
-        queryParams.push(
-          `sms.code=${encodeURIComponent(request.sms.code.toString())}`,
-        );
-      }
-      if (request.webauthn?.id) {
-        queryParams.push(
-          `webauthn.id=${encodeURIComponent(request.webauthn.id.toString())}`,
-        );
-      }
-      if (request.webauthn?.clientDataJson) {
-        queryParams.push(
-          `webauthn.clientDataJson=${encodeURIComponent(request.webauthn.clientDataJson.toString())}`,
-        );
-      }
-      if (request.webauthn?.authenticatorData) {
-        queryParams.push(
-          `webauthn.authenticatorData=${encodeURIComponent(request.webauthn.authenticatorData.toString())}`,
-        );
-      }
-      if (request.webauthn?.signature) {
-        queryParams.push(
-          `webauthn.signature=${encodeURIComponent(request.webauthn.signature.toString())}`,
-        );
-      }
-      if (request.webauthn?.userHandle) {
-        queryParams.push(
-          `webauthn.userHandle=${encodeURIComponent(request.webauthn.userHandle.toString())}`,
-        );
-      }
-      if (request.reason) {
-        queryParams.push(
-          `reason=${encodeURIComponent(request.reason.toString())}`,
-        );
-      }
-      let uri = path;
-      if (queryParams.length > 0) {
-        uri += `?${queryParams.join('&')}`;
-      }
-      return transport.unary(uri, 'DELETE', body, {
+      const path = `admin/v1/mfa/disable`;
+      const body = JSON.stringify(request);
+      return transport.unary(path, 'POST', body, {
         service: 'MfaService',
         method: 'DisableMFA',
       }) as Promise<wellKnownEmpty>;
@@ -4518,6 +4455,9 @@ export type authenticationservicev1_DisableMFARequest = {
   reason?: string;
   sms?: authenticationservicev1_SMSVerification;
   totpCode?: string;
+  // 管理端重置：指定目标用户（不传=操作当前登录用户）。
+  // 仅平台管理员可指定他人，用于用户认证器丢失时的救援解绑（按 method 清空该用户全部因子）。
+  userId?: number;
   webauthn?: authenticationservicev1_WebAuthnAssertion;
 };
 

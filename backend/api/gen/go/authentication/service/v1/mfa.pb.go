@@ -983,8 +983,11 @@ type DisableMFARequest struct {
 	//	*DisableMFARequest_TotpCode
 	//	*DisableMFARequest_Sms
 	//	*DisableMFARequest_Webauthn
-	Verifier      isDisableMFARequest_Verifier `protobuf_oneof:"verifier"`
-	Reason        *string                      `protobuf:"bytes,20,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
+	Verifier isDisableMFARequest_Verifier `protobuf_oneof:"verifier"`
+	Reason   *string                      `protobuf:"bytes,20,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
+	// 管理端重置：指定目标用户（不传=操作当前登录用户）。
+	// 仅平台管理员可指定他人，用于用户认证器丢失时的救援解绑（按 method 清空该用户全部因子）。
+	UserId        *uint32 `protobuf:"varint,21,opt,name=user_id,json=userId,proto3,oneof" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1081,6 +1084,13 @@ func (x *DisableMFARequest) GetReason() string {
 		return *x.Reason
 	}
 	return ""
+}
+
+func (x *DisableMFARequest) GetUserId() uint32 {
+	if x != nil && x.UserId != nil {
+		return *x.UserId
+	}
+	return 0
 }
 
 type isDisableMFARequest_Verifier interface {
@@ -1882,7 +1892,7 @@ const file_authentication_service_v1_mfa_proto_rawDesc = "" +
 	"\b_display\"\\\n" +
 	"\x1bConfirmEnrollMethodResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
-	"\rcredential_id\x18\x02 \x01(\tR\fcredentialId\"\x9a\x03\n" +
+	"\rcredential_id\x18\x02 \x01(\tR\fcredentialId\"\xc4\x03\n" +
 	"\x11DisableMFARequest\x12(\n" +
 	"\rcredential_id\x18\x01 \x01(\tH\x01R\fcredentialId\x88\x01\x01\x12A\n" +
 	"\x06method\x18\x02 \x01(\x0e2$.authentication.service.v1.MFAMethodH\x02R\x06method\x88\x01\x01\x12\x1c\n" +
@@ -1891,12 +1901,15 @@ const file_authentication_service_v1_mfa_proto_rawDesc = "" +
 	"\ttotp_code\x18\v \x01(\tH\x00R\btotpCode\x12>\n" +
 	"\x03sms\x18\f \x01(\v2*.authentication.service.v1.SMSVerificationH\x00R\x03sms\x12J\n" +
 	"\bwebauthn\x18\r \x01(\v2,.authentication.service.v1.WebAuthnAssertionH\x00R\bwebauthn\x12\x1b\n" +
-	"\x06reason\x18\x14 \x01(\tH\x03R\x06reason\x88\x01\x01B\n" +
+	"\x06reason\x18\x14 \x01(\tH\x03R\x06reason\x88\x01\x01\x12\x1c\n" +
+	"\auser_id\x18\x15 \x01(\rH\x04R\x06userId\x88\x01\x01B\n" +
 	"\n" +
 	"\bverifierB\x10\n" +
 	"\x0e_credential_idB\t\n" +
 	"\a_methodB\t\n" +
-	"\a_reason\"\xbe\x01\n" +
+	"\a_reasonB\n" +
+	"\n" +
+	"\b_user_id\"\xbe\x01\n" +
 	"\x18StartMFAChallengeRequest\x12\x1c\n" +
 	"\auser_id\x18\x01 \x01(\tH\x00R\x06userId\x88\x01\x01\x12<\n" +
 	"\x06method\x18\x02 \x01(\x0e2$.authentication.service.v1.MFAMethodR\x06method\x12(\n" +

@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import type { ProColumns, ActionType } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { Button, Popconfirm, Tag, App } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, InfoCircleOutlined , SafetyOutlined } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,7 @@ import { PaginationQuery } from '@/core';
 import { TABLE } from '@/config/constants';
 import { useProTableScrollY } from '@/hooks/useProTableScrollY';
 import { fetchListUsers, useDeleteUser } from '@/api/hooks/user';
+import { useAdminResetMfa } from '@/api/hooks/mfa';
 import { getUserStatusMap, getUserStatusOptions } from '../constants';
 import UserDrawer from './UserDrawer';
 
@@ -55,6 +56,15 @@ const UserList: React.FC<UserListProps> = ({ tenantId, orgUnitId }) => {
   });
 
   // 列配置
+  // 管理端救援重置：清空目标用户 TOTP 因子（认证器丢失解锁用，仅平台管理员生效）
+  const adminResetMfa = useAdminResetMfa({
+    onSuccess: () => {
+      message.success(t('resetMfaSuccess'));
+      actionRef.current?.reload();
+    },
+    onError: (err: Error) => message.error(err.message || t('resetMfaFailed')),
+  });
+
   const columns: ProColumns<any>[] = [
     {
       title: t('username'),
@@ -65,7 +75,7 @@ const UserList: React.FC<UserListProps> = ({ tenantId, orgUnitId }) => {
     {
       title: t('realname'),
       dataIndex: 'realname',
-      width: 100,
+      width: 130,
     },
     {
       title: t('nickname'),
@@ -190,6 +200,20 @@ const UserList: React.FC<UserListProps> = ({ tenantId, orgUnitId }) => {
         >
           <EditOutlined />
         </a>,
+        <Popconfirm
+          key="reset-mfa"
+          title={t('resetMfaConfirmTitle')}
+          description={t('resetMfaConfirmDesc')}
+          onConfirm={() =>
+            record.id && adminResetMfa.mutate({ userId: record.id, method: 'TOTP' } as any)
+          }
+          okText={t('common:button.ok')}
+          cancelText={t('common:button.cancel')}
+        >
+          <a title={t('resetMfa')}>
+            <SafetyOutlined />
+          </a>
+        </Popconfirm>,
         <Popconfirm
           key="delete"
           title={t('deleteConfirmTitle')}

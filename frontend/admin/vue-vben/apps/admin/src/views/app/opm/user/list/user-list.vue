@@ -4,7 +4,7 @@ import type { VxeGridListeners, VxeGridProps } from '#/adapter/vxe-table';
 import { h, watch } from 'vue';
 
 import { useVbenDrawer, type VbenFormProps } from '@vben/common-ui';
-import { LucideFilePenLine, LucideInfo, LucideTrash2 } from '@vben/icons';
+import { LucideFilePenLine, LucideInfo, LucideShieldOff, LucideTrash2 } from '@vben/icons';
 import { isEqual } from '@vben/utils';
 
 import { notification } from 'ant-design-vue';
@@ -12,6 +12,7 @@ import { notification } from 'ant-design-vue';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { type identityservicev1_User as User } from '#/api';
 import {
+  disableMfa,
   fetchListPositions,
   fetchListRoles,
   genderToColor,
@@ -293,6 +294,16 @@ function handleEdit(row: any) {
 }
 
 /* 删除 */
+// 管理端救援重置：清空目标用户 TOTP 因子（仅平台管理员生效，后端强制校验）
+async function handleResetMfa(row: any) {
+  try {
+    await disableMfa({ userId: row.id, method: 'TOTP' } as any);
+    notification.success({ message: $t('page.user.resetMfaSuccess') });
+  } catch (err: any) {
+    notification.error({ message: err?.message || $t('page.user.resetMfaFailed') });
+  }
+}
+
 async function handleDelete(row: any) {
   console.log('删除', row);
 
@@ -393,6 +404,14 @@ watch(
         :icon="h(LucideFilePenLine)"
         @click.stop="handleEdit(row)"
       />
+      <a-popconfirm
+        :cancel-text="$t('ui.button.cancel')"
+        :ok-text="$t('ui.button.ok')"
+        :title="$t('page.user.resetMfaConfirmTitle')"
+        @confirm="handleResetMfa(row)"
+      >
+        <a-button type="link" :icon="h(LucideShieldOff)" />
+      </a-popconfirm>
       <a-popconfirm
         :cancel-text="$t('ui.button.cancel')"
         :ok-text="$t('ui.button.ok')"

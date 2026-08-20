@@ -47,7 +47,9 @@ type MfaServiceClient interface {
 	StartEnrollMethod(ctx context.Context, in *v1.StartEnrollMethodRequest, opts ...grpc.CallOption) (*v1.StartEnrollMethodResponse, error)
 	// 确认注册 MFA 方法（提交首码完成绑定）
 	ConfirmEnrollMethod(ctx context.Context, in *v1.ConfirmEnrollMethodRequest, opts ...grpc.CallOption) (*v1.ConfirmEnrollMethodResponse, error)
-	// 禁用/移除已注册 MFA 凭证
+	// 禁用/移除已注册 MFA 凭证。
+	// 注意：kratos http 生成器不支持 DELETE 请求体（handler 只 BindQuery），
+	// 而 TS 生成器默认把 message 序列化为 body——为两端一致改用 POST + body。
 	DisableMFA(ctx context.Context, in *v1.DisableMFARequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// 撤销指定 MFA 凭证（按 id）
 	RevokeMFADevice(ctx context.Context, in *v1.RevokeMFADeviceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -151,7 +153,9 @@ type MfaServiceServer interface {
 	StartEnrollMethod(context.Context, *v1.StartEnrollMethodRequest) (*v1.StartEnrollMethodResponse, error)
 	// 确认注册 MFA 方法（提交首码完成绑定）
 	ConfirmEnrollMethod(context.Context, *v1.ConfirmEnrollMethodRequest) (*v1.ConfirmEnrollMethodResponse, error)
-	// 禁用/移除已注册 MFA 凭证
+	// 禁用/移除已注册 MFA 凭证。
+	// 注意：kratos http 生成器不支持 DELETE 请求体（handler 只 BindQuery），
+	// 而 TS 生成器默认把 message 序列化为 body——为两端一致改用 POST + body。
 	DisableMFA(context.Context, *v1.DisableMFARequest) (*emptypb.Empty, error)
 	// 撤销指定 MFA 凭证（按 id）
 	RevokeMFADevice(context.Context, *v1.RevokeMFADeviceRequest) (*emptypb.Empty, error)
