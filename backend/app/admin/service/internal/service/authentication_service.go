@@ -148,69 +148,6 @@ func (s *AuthenticationService) Login(ctx context.Context, req *authenticationV1
 		return nil, authenticationV1.ErrorInvalidGrantType("invalid grant type")
 	}
 }
-
-var priorityDataScope = map[identityV1.DataScope]int{
-	identityV1.DataScope_SELF:           1,
-	identityV1.DataScope_UNIT_ONLY:      2,
-	identityV1.DataScope_UNIT_AND_CHILD: 3,
-	identityV1.DataScope_SELECTED_UNITS: 4,
-	identityV1.DataScope_ALL:            5,
-}
-
-// mergeDataScopes 合并角色数据权限
-func (s *AuthenticationService) mergeDataScopes(dataScopes []identityV1.DataScope) identityV1.DataScope {
-	if len(dataScopes) == 0 {
-		return identityV1.DataScope_SELF
-	}
-
-	final := identityV1.DataScope_SELF
-	bestPrio := 0
-
-	for _, ds := range dataScopes {
-		// 最优先短路
-		if ds == identityV1.DataScope_ALL {
-			return identityV1.DataScope_ALL
-		}
-
-		if p, ok := priorityDataScope[ds]; ok {
-			if p > bestPrio {
-				bestPrio = p
-				final = ds
-			}
-		}
-	}
-
-	return final
-}
-
-// pickMostSpecificOrgUnit 从多个组织单元中选择最具体的一个
-func (s *AuthenticationService) pickMostSpecificOrgUnit(units []*identityV1.OrgUnit) *identityV1.OrgUnit {
-	if len(units) == 0 {
-		return nil
-	}
-
-	var best *identityV1.OrgUnit
-	bestDepth := -1
-
-	for _, u := range units {
-		if u == nil {
-			continue
-		}
-		p := strings.Trim(u.GetPath(), "/")
-		depth := 0
-		if p != "" {
-			depth = len(strings.Split(p, "/"))
-		}
-
-		if depth > bestDepth {
-			bestDepth = depth
-			best = u
-		}
-	}
-
-	return best
-}
-
 // containsPermission 检查权限代码列表中是否包含指定权限代码
 func containsPermission(perms []string, target string) bool {
 	for _, p := range perms {
@@ -300,7 +237,6 @@ func (s *AuthenticationService) authorizeAndEnrichUserTokenPayloadUserTenantRela
 	}
 
 	hasBackendAccess := false
-	var validMemberships []*identityV1.Membership
 	var validRoleIDs []uint32
 	for _, m := range memberships {
 		if m.GetTenantId() > 0 {
@@ -335,7 +271,6 @@ func (s *AuthenticationService) authorizeAndEnrichUserTokenPayloadUserTenantRela
 		// 检查是否包含系统访问后台权限
 		if containsPermission(permissionCodes, constants.SystemAccessBackendPermissionCode) {
 			hasBackendAccess = true
-			validMemberships = append(validMemberships, m)
 			validRoleIDs = append(validRoleIDs, roleIDs...)
 		}
 	}

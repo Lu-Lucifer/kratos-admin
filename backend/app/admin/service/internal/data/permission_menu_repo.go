@@ -83,8 +83,9 @@ func (r *PermissionMenuRepo) AssignMenus(ctx context.Context, permissionID uint3
 		}
 	}()
 
-	if err = r.CleanNotExistMenus(ctx, tx, permissionID, menuIDs); err != nil {
-
+	// 清理失效关联失败不阻断分配（仅告警），理由同 CleanNotExistApis
+	if err := r.CleanNotExistMenus(ctx, tx, permissionID, menuIDs); err != nil {
+		r.log.Warnf("clean not exist menus for permission [%d] failed: %s", permissionID, err.Error())
 	}
 
 	return r.AssignMenusWithTx(ctx, tx, permissionID, menuIDs)

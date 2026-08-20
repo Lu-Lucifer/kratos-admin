@@ -280,7 +280,7 @@ func (s *FileTransferService) downloadFileFromURL(ctx context.Context, downloadU
 	transport := &http.Transport{
 		DialContext: func(dialCtx context.Context, network, addr string) (net.Conn, error) {
 			// 忽略 addr 中的解析结果，强制使用前面已校验过的 pinnedIP
-			host := pinnedIP
+			var host string
 			if pinnedPort != "" {
 				host = net.JoinHostPort(pinnedIP, pinnedPort)
 			} else {
@@ -323,7 +323,7 @@ func (s *FileTransferService) downloadFileFromURL(ctx context.Context, downloadU
 	if err != nil {
 		return nil, storageV1.ErrorDownloadFailed("%s", err.Error())
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 		return nil, storageV1.ErrorDownloadFailed("%s", "unexpected status: "+resp.Status)

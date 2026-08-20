@@ -18,8 +18,6 @@ import (
 	appViewer "go-wind-admin/pkg/entgo/viewer"
 )
 
-const defaultDomain = "*"
-
 // AuthorizerProvider 权限数据提供者
 type AuthorizerProvider struct {
 	log *log.Helper
@@ -54,8 +52,9 @@ func (p *AuthorizerProvider) ProvideModels(engineName string) authorizer.ModelDa
 }
 
 // ProvidePolicies 提供策略数据
-func (p *AuthorizerProvider) ProvidePolicies(ctx context.Context) (authorizer.PermissionDataMap, error) {
-	ctx = appViewer.NewSystemViewerContext(context.Background())
+func (p *AuthorizerProvider) ProvidePolicies(_ context.Context) (authorizer.PermissionDataMap, error) {
+	// 策略装载需要全量角色/权限数据，统一以 SystemViewer 跑，忽略调用方 ctx 的 viewer
+	ctx := appViewer.NewSystemViewerContext(context.Background())
 
 	roles, err := p.roleRepo.List(ctx, &paginationV1.PagingRequest{NoPaging: trans.Ptr(true)})
 	if err != nil {

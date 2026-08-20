@@ -40,18 +40,24 @@ func TestUserFieldMask(t *testing.T) {
 			//Avatar:   trans.String("Avatar1"),
 			Address: trans.String("Address1"),
 		},
+		// paths 必须与 proto 字段名一致：username/realname 是一词字段，
+		// Normalize 会把 userName/realName 转成 user_name/real_name 导致校验失败
 		UpdateMask: &field_mask.FieldMask{
-			Paths: []string{"userName", "realName", "avatar", "roleId"},
+			Paths: []string{"username", "realname", "avatar", "role_id"},
 		},
 	}
 	updateUserReq.UpdateMask.Normalize()
 	if !updateUserReq.UpdateMask.IsValid(u) {
-		// Return an error.
-		panic("invalid field mask")
+		t.Fatalf("invalid field mask: %v", updateUserReq.UpdateMask.GetPaths())
 	}
 
 	fieldmaskutil.Filter(updateUserReq.GetData(), updateUserReq.UpdateMask.GetPaths())
 	proto.Merge(u, updateUserReq.GetData())
+
+	// mask 内字段被更新，mask 外字段保持原值
+	assert.Equal(t, "UserName1", u.GetUsername())
+	assert.Equal(t, "RealName1", u.GetRealname())
+	assert.Equal(t, "Address", u.GetAddress(), "address not in mask, should keep origin")
 
 	fmt.Println(reSpaces.ReplaceAllString(u.String(), " "))
 }
@@ -97,15 +103,15 @@ func TestMessageNil(t *testing.T) {
 
 	pr := u.ProtoReflect()
 	md := pr.Descriptor()
-	fd := md.Fields().ByName("userName")
+	// proto 字段名是 username（一词），ByName("userName") 恒为 nil
+	fd := md.Fields().ByName("username")
 	if fd == nil {
-
-	} else {
-		fmt.Println(fd, fd.Name())
+		t.Fatalf("field descriptor not found for username")
 	}
 
 	v := pr.Get(fd)
 	fmt.Println(v)
+	assert.Equal(t, "name 2", v.Interface().(string))
 }
 
 func TestAuthEnum(t *testing.T) {
@@ -163,7 +169,8 @@ func TestCopier(t *testing.T) {
 		assert.Equal(t, protoMsg.GetNickname(), *entMsg.Nickname)
 		assert.Equal(t, protoMsg.GetRealname(), *entMsg.Realname)
 		assert.Equal(t, protoMsg.GetEmail(), *entMsg.Email)
-		assert.Equal(t, protoMsg.GetTenantId(), entMsg.TenantID)
+		// GetTenantId() 返回值类型，与指针比较恒不等，需解引用
+		assert.Equal(t, protoMsg.GetTenantId(), *entMsg.TenantID)
 		assert.Equal(t, protoMsg.GetId(), entMsg.ID)
 	}
 

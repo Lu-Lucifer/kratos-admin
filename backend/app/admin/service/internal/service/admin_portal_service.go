@@ -95,19 +95,6 @@ func (s *AdminPortalService) queryMultipleRolesMenusByRoleCodes(ctx context.Cont
 
 	return menuIDs, nil
 }
-
-// queryMultipleRolesMenusByRoleIds 使用RoleIDs查询菜单，即多个角色的菜单
-func (s *AdminPortalService) queryMultipleRolesMenusByRoleIds(ctx context.Context, roleIDs []uint32) ([]uint32, error) {
-	menus, err := s.roleRepo.GetRolesPermissionMenuIDs(ctx, roleIDs)
-	if err != nil {
-		return nil, adminV1.ErrorInternalServerError("query roles menus failed")
-	}
-
-	menus = sliceutil.Unique(menus)
-
-	return menus, nil
-}
-
 func (s *AdminPortalService) GetMyPermissionCode(ctx context.Context, _ *emptypb.Empty) (*adminV1.ListPermissionCodeResponse, error) {
 	// 获取操作人信息
 	operator, err := auth.FromContext(ctx)

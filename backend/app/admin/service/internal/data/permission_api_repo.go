@@ -87,8 +87,10 @@ func (r *PermissionApiRepo) AssignApis(
 		}
 	}()
 
-	if err = r.CleanNotExistApis(ctx, tx, permissionID, apiIDs); err != nil {
-
+	// 清理失效关联失败不阻断分配（仅告警）：CleanNotExist 出错时仍执行 Assign，
+	// 由 (tenant, permission, api) 唯一约束兜底重复数据
+	if err := r.CleanNotExistApis(ctx, tx, permissionID, apiIDs); err != nil {
+		r.log.Warnf("clean not exist apis for permission [%d] failed: %s", permissionID, err.Error())
 	}
 
 	return r.AssignApisWithTx(ctx, tx, permissionID, apiIDs)

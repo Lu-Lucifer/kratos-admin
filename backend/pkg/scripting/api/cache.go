@@ -213,11 +213,12 @@ func LoaderCache(rdb *redis.Client, logger *log.Helper) lua.LGFunction {
 				return 1
 			}
 
-			if duration == -1 {
+			switch duration {
+			case -1:
 				L.Push(lua.LNumber(-1)) // No expiration
-			} else if duration == -2 {
+			case -2:
 				L.Push(lua.LNumber(-2)) // Key doesn't exist
-			} else {
+			default:
 				L.Push(lua.LNumber(int64(duration.Seconds())))
 			}
 			return 1

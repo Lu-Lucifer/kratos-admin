@@ -239,8 +239,6 @@ func (c *MinIOClient) UploadFile(
 	if objectName == "" {
 		bucketName = ContentTypeToBucketName(mimeType)
 		objectName = GenerateObjectName("", fileContent, ext, GenerateFileNameTypeUUID)
-	} else {
-		ext = ExtractFileExtension(objectName)
 	}
 	if mimeType == "" {
 		mimeType = DefaultContentType

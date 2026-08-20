@@ -17,9 +17,9 @@ import (
 
 	identityV1 "go-wind-admin/api/gen/go/identity/service/v1"
 
+	adminV1 "go-wind-admin/api/gen/go/admin/service/v1"
 	appViewer "go-wind-admin/pkg/entgo/viewer"
 	"go-wind-admin/pkg/middleware/auth"
-	adminV1 "go-wind-admin/api/gen/go/admin/service/v1"
 )
 
 // TenantAccessCheckerImpl 是 TenantAccessChecker 接口的 data 层实现。
@@ -67,10 +67,7 @@ func (c *TenantAccessCheckerImpl) CheckTenantAccess(ctx context.Context, tenantI
 			planExpiryPolicy = *t.Edges.Plan.ExpiryPolicy
 		}
 	}
-	planExpired := false
-	if t.ExpiredAt != nil && !t.ExpiredAt.IsZero() && t.ExpiredAt.Before(time.Now()) {
-		planExpired = true
-	}
+	planExpired := t.ExpiredAt != nil && !t.ExpiredAt.IsZero() && t.ExpiredAt.Before(time.Now())
 
 	if planExpired && planExpiryPolicy == plan.ExpiryPolicyReadonly {
 		switch method {

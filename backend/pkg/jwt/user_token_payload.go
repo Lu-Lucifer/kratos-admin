@@ -224,7 +224,7 @@ func NewUserTokenPayloadWithJwtMapClaims(claims jwt.MapClaims) (*authenticationV
 		payload.OrgUnitId = trans.Ptr(uint32(orgUnitID))
 	}
 
-	roleCodes, _ := claims[ClaimFieldRoleCodes]
+	roleCodes := claims[ClaimFieldRoleCodes]
 	if roleCodes != nil {
 		switch itf := roleCodes.(type) {
 		case []interface{}:
@@ -275,5 +275,5 @@ func IsTokenNotValidYet(claims *authn.AuthClaims) bool {
 	}
 
 	now := time.Now().UTC()
-	return now.Add(defaultTokenLeeway).Before(nbf.Time.UTC())
+	return now.Add(defaultTokenLeeway).Before(nbf.UTC())
 }

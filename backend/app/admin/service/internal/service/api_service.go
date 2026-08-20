@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"sort"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/http"
@@ -17,13 +16,13 @@ import (
 	"go-wind-admin/app/admin/service/internal/data"
 
 	adminV1 "go-wind-admin/api/gen/go/admin/service/v1"
-	permissionV1 "go-wind-admin/api/gen/go/permission/service/v1"
 	identityV1 "go-wind-admin/api/gen/go/identity/service/v1"
+	permissionV1 "go-wind-admin/api/gen/go/permission/service/v1"
 
 	"go-wind-admin/pkg/authorizer"
+	"go-wind-admin/pkg/constants"
 	appViewer "go-wind-admin/pkg/entgo/viewer"
 	"go-wind-admin/pkg/middleware/auth"
-	"go-wind-admin/pkg/constants"
 )
 
 type RouteWalker interface {
@@ -199,7 +198,7 @@ func (s *ApiService) syncWithOpenAPI(ctx context.Context) error {
 				}
 			}
 
-			var businessModule identityV1.Module = identityV1.Module_MODULE_UNSPECIFIED
+			var businessModule = identityV1.Module_MODULE_UNSPECIFIED
 			if module != "" {
 				if bm, ok := constants.ServiceTagToBusinessModule[module]; ok {
 					businessModule = bm
@@ -231,51 +230,6 @@ func (s *ApiService) syncWithOpenAPI(ctx context.Context) error {
 
 	return nil
 }
-
-// syncWithWalkRoute 使用 WalkRoute 同步 API 资源
-func (s *ApiService) syncWithWalkRoute(ctx context.Context) error {
-	if s.routeWalker == nil {
-		return adminV1.ErrorInternalServerError("router walker is nil")
-	}
-
-	var count uint32 = 0
-
-	var apiList []*permissionV1.Api
-
-	if err := s.routeWalker.WalkRoute(func(info http.RouteInfo) error {
-		//log.Infof("Path[%s] Method[%s]", info.Path, info.Method)
-		count++
-
-		apiList = append(apiList, &permissionV1.Api{
-			Id:     trans.Ptr(count),
-			Path:   trans.Ptr(info.Path),
-			Method: trans.Ptr(info.Method),
-		})
-
-		return nil
-	}); err != nil {
-		s.log.Errorf("failed to walk route: %v", err)
-		return adminV1.ErrorInternalServerError("failed to walk route")
-	}
-
-	sort.SliceStable(apiList, func(i, j int) bool {
-		if apiList[i].GetPath() == apiList[j].GetPath() {
-			return apiList[i].GetMethod() < apiList[j].GetMethod()
-		}
-		return apiList[i].GetPath() < apiList[j].GetPath()
-	})
-
-	for i, res := range apiList {
-		res.Id = trans.Ptr(uint32(i + 1))
-		_ = s.repo.Update(ctx, &permissionV1.UpdateApiRequest{
-			AllowMissing: trans.Ptr(true),
-			Data:         res,
-		})
-	}
-
-	return nil
-}
-
 // GetWalkRouteData 获取通过 WalkRoute 获取的路由数据，用于调试
 func (s *ApiService) GetWalkRouteData(_ context.Context, _ *emptypb.Empty) (*permissionV1.ListApiResponse, error) {
 	if s.routeWalker == nil {

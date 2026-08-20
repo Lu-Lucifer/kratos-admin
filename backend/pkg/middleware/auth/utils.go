@@ -51,7 +51,7 @@ func setRequestOperationId(req interface{}, payload *authenticationV1.UserTokenP
 
 	v := reflect.ValueOf(req).Elem()
 	field := v.FieldByName("OperatorId")
-	if field.IsValid() && field.Kind() == reflect.Ptr {
+	if field.IsValid() && field.Kind() == reflect.Pointer {
 		field.Set(reflect.ValueOf(&payload.UserId))
 	}
 
@@ -67,7 +67,7 @@ func setRequestTenantId(req interface{}, payload *authenticationV1.UserTokenPayl
 	// 此前误用小写 "tenantId"：proto 生成的导出字段为 "TenantId"，小写名匹配不到
 	// 会导致 FieldByName 返回 invalid Value、注入被静默跳过。修正为正确的导出字段名。
 	field := v.FieldByName("TenantId")
-	if field.IsValid() && field.Kind() == reflect.Ptr && field.CanSet() {
+	if field.IsValid() && field.Kind() == reflect.Pointer && field.CanSet() {
 		field.Set(reflect.ValueOf(&payload.TenantId))
 	}
 

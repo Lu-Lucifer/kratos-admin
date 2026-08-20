@@ -165,7 +165,7 @@ func reflectToLua(L *lua.LState, val any) lua.LValue {
 	v := reflect.ValueOf(val)
 
 	// Dereference pointers
-	for v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return lua.LNil
 		}

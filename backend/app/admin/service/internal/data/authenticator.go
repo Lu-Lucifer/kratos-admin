@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -24,6 +25,39 @@ import (
 
 	"go-wind-admin/pkg/jwt"
 )
+
+// devSamplePrivateKeyFingerprint 是 configs/auth.yaml 内置开发示例 RSA 私钥的
+// PEM body 指纹（首行），用于检测示例密钥是否仍生效。替换 yaml 或用 env 注入
+// 生产密钥后即不再命中。
+const devSamplePrivateKeyFingerprint = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCL8EdeTLDTf8AY"
+
+// applyJwtKeyOverrides 环境变量密钥覆盖 + 开发示例密钥安全检查（见调用处注释）。
+func applyJwtKeyOverrides(logHelper *log.Helper, jwtCfg *conf.Authentication_Jwt) *conf.Authentication_Jwt {
+	if jwtCfg == nil {
+		return jwtCfg
+	}
+	if v := os.Getenv("GWA_AUTH_JWT_PRIVATE_KEY"); v != "" {
+		jwtCfg.PrivateKey = trans.Ptr(v)
+	}
+	if v := os.Getenv("GWA_AUTH_JWT_PUBLIC_KEY"); v != "" {
+		jwtCfg.PublicKey = trans.Ptr(v)
+	}
+	if v := os.Getenv("GWA_AUTH_JWT_KEY"); v != "" {
+		jwtCfg.Key = v
+	}
+
+	if strings.Contains(jwtCfg.GetPrivateKey(), devSamplePrivateKeyFingerprint) {
+		msg := "configs/auth.yaml 中的开发示例 JWT 私钥仍在生效，生产环境必须替换：" +
+			"通过环境变量 GWA_AUTH_JWT_PRIVATE_KEY / GWA_AUTH_JWT_PUBLIC_KEY 注入，" +
+			"或修改 yaml（生成命令见 auth.yaml 内注释）；" +
+			"部署入口可设置 GWA_AUTH_STRICT_KEYS=1 强制拒绝示例密钥启动"
+		if os.Getenv("GWA_AUTH_STRICT_KEYS") == "1" {
+			panic(msg)
+		}
+		logHelper.Warnf("⚠️ %s", msg)
+	}
+	return jwtCfg
+}
 
 const (
 	// DefaultAccessTokenExpires  默认访问令牌过期时间（配置未指定时使用）
@@ -55,8 +89,19 @@ func NewAuthenticator(
 
 	jwtCfg := cfg.Authn.GetJwt()
 
+	logHelper := ctx.NewLoggerHelper("authenticator/data/authentication-service")
+
+	// 密钥注入与安全检查：
+	// 1) 环境变量优先于 yaml——生产环境应通过 GWA_AUTH_JWT_PRIVATE_KEY /
+	//    GWA_AUTH_JWT_PUBLIC_KEY（非对称）或 GWA_AUTH_JWT_KEY（对称）注入密钥，
+	//    避免 yaml 中的开发示例密钥被带入生产。
+	// 2) 检测到开发示例私钥仍生效时打醒目告警。
+	// 3) 设置 GWA_AUTH_STRICT_KEYS=1 可启用硬校验：示例密钥生效即拒绝启动，
+	//    供部署方在启动脚本/入口中强制密钥合规。
+	jwtCfg = applyJwtKeyOverrides(logHelper, jwtCfg)
+
 	a := Authenticator{
-		log:            ctx.NewLoggerHelper("authenticator/data/authentication-service"),
+		log:            logHelper,
 		jwtCfg:         jwtCfg,
 		userTokenCache: userTokenCache,
 	}
@@ -275,8 +320,11 @@ func (a *Authenticator) Authenticate(ctx context.Context, req *authenticationV1.
 		}, nil
 
 	case authenticationV1.TokenCategory_REFRESH:
-		var exist bool
-		if exist, _, err = a.userTokenCache.IsExistRefreshToken(ctx, req.GetClientType(), req.GetUserId(), req.GetToken()); !exist {
+		exist, _, err := a.userTokenCache.IsExistRefreshToken(ctx, req.GetClientType(), req.GetUserId(), req.GetToken())
+		if err != nil {
+			a.log.Errorf("check refresh token exist failed: %s", err.Error())
+		}
+		if err != nil || !exist {
 			return &authenticationV1.ValidateTokenResponse{
 				IsValid: false,
 			}, authenticationV1.ErrorUnauthorized("refresh token not found for user")

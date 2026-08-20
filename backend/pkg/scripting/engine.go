@@ -240,7 +240,7 @@ func (e *Engine) AddScript(hookName string, script interface{}) error {
 // extractScriptFields 通过反射从兼容结构体提取脚本字段（避免循环依赖）。
 func extractScriptFields(script interface{}) (*hook.Script, bool) {
 	v := reflect.ValueOf(script)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {

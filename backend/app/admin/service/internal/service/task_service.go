@@ -51,11 +51,11 @@ type TaskService struct {
 
 	taskScheduler TaskScheduler
 
-	userRepo       data.UserRepo
-	taskRepo       *data.TaskRepo
-	backupRepo     *data.BackupRepo
+	userRepo        data.UserRepo
+	taskRepo        *data.TaskRepo
+	backupRepo      *data.BackupRepo
 	tenantUsageRepo *data.TenantUsageRepo
-	mc             *oss.MinIOClient
+	mc              *oss.MinIOClient
 }
 
 func NewTaskService(
@@ -366,7 +366,7 @@ func (s *TaskService) stopTask(t *taskV1.Task) error {
 		return errors.New("task is nil")
 	}
 
-	if t.GetEnable() == false {
+	if !t.GetEnable() {
 		return errors.New("task is not enable")
 	}
 
@@ -432,7 +432,7 @@ func (s *TaskService) startTask(t *taskV1.Task) error {
 		return errors.New("task is nil")
 	}
 
-	if t.GetEnable() == false {
+	if !t.GetEnable() {
 		return errors.New("task is not enable")
 	}
 
@@ -477,16 +477,17 @@ func (s *TaskService) startTask(t *taskV1.Task) error {
 // 纯 Go 实现，跨数据库驱动（MySQL/PostgreSQL/SQLite）。
 // 当前覆盖核心身份/权限/组织表；审计日志等大体量表暂不纳入（可按需扩展 BackupRepo.ExportCoreTables）。
 func (s *TaskService) AsyncBackup(taskType string, taskData *task.BackupTaskData) error {
-	s.log.Infof("AsyncBackup [%s] [%+v] [%s]", taskType, taskData, taskData.Name)
+	// taskData 可能为 nil（下方有判空分支），直接解引用 taskData.Name 会在 nil 时 panic
+	backupName := ""
+	if taskData != nil {
+		backupName = taskData.Name
+	}
+	s.log.Infof("AsyncBackup [%s] [%+v] [%s]", taskType, taskData, backupName)
 
 	// 用 SystemViewerContext 包裹：备份需要导出全部租户的核心表，
 	// 而 TenantPrivacy 在 viewer 缺失时会返回 error 导致带 tenant_id 的表全部查询失败。
 	// SystemViewer 的 IsSystemContext()==true，使 TenantPrivacy.EvalQuery 放行全量数据。
 	ctx := appViewer.NewSystemViewerContext(context.Background())
-	backupName := ""
-	if taskData != nil {
-		backupName = taskData.Name
-	}
 	if backupName == "" {
 		backupName = fmt.Sprintf("backup-%s", time.Now().UTC().Format("20060102-150405"))
 	}
