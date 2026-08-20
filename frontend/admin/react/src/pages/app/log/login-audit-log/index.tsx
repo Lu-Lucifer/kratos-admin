@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { ProColumns, ActionType } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { Tag, App } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { auditservicev1_LoginAuditLog as LoginAuditLog } from '@/api/generated/admin/service/v1';
 import { PaginationQuery } from '@/core';
@@ -17,6 +18,7 @@ import {
   getRiskLevelMap,
   getRiskLevelOptions,
 } from './constants';
+import LoginAuditLogDetailDrawer from './DetailDrawer';
 
 /**
  * 登录审计日志页面
@@ -32,6 +34,8 @@ const LoginAuditLogPage = () => {
   const statusMap = getStatusMap(t);
   const actionTypeMap = getActionTypeMap(t);
   const riskLevelMap = getRiskLevelMap(t);
+
+  const [detailRecord, setDetailRecord] = useState<LoginAuditLog | null>(null);
 
   const columns: ProColumns<LoginAuditLog>[] = [
     {
@@ -128,76 +132,98 @@ const LoginAuditLogPage = () => {
       dataIndex: 'ipAddress',
       width: 140,
     },
+    {
+      title: t('action'),
+      valueType: 'option',
+      width: 80,
+      render: (_, record) => [
+        <a
+          key="detail"
+          title={t('detail')}
+          onClick={() => setDetailRecord(record)}
+        >
+          <InfoCircleOutlined />
+        </a>,
+      ],
+    },
   ];
 
   return (
-    <ContentContainer heightMode="fixed" padding="16px" bottomMargin={0}>
-      <div ref={containerRef} className="page-container-content">
-        <ProTable<LoginAuditLog>
-          actionRef={actionRef}
-          columns={columns}
-          request={async (params, sorter) => {
-            try {
-              const query = new PaginationQuery({
-                paging: {
-                  page: params.current || 1,
-                  pageSize: params.pageSize || 20,
-                },
-                formValues: Object.fromEntries(
-                  Object.entries(params).filter(
-                    ([key]) => !['current', 'pageSize'].includes(key),
+    <>
+      <ContentContainer heightMode="fixed" padding="16px" bottomMargin={0}>
+        <div ref={containerRef} className="page-container-content">
+          <ProTable<LoginAuditLog>
+            actionRef={actionRef}
+            columns={columns}
+            request={async (params, sorter) => {
+              try {
+                const query = new PaginationQuery({
+                  paging: {
+                    page: params.current || 1,
+                    pageSize: params.pageSize || 20,
+                  },
+                  formValues: Object.fromEntries(
+                    Object.entries(params).filter(
+                      ([key]) => !['current', 'pageSize'].includes(key),
+                    ),
                   ),
-                ),
-                orderBy:
-                  sorter && Object.keys(sorter).length > 0
-                    ? Object.entries(sorter).map(([key, value]) =>
-                        value === 'ascend' ? key : `-${key}`,
-                      )
-                    : undefined,
-              });
+                  orderBy:
+                    sorter && Object.keys(sorter).length > 0
+                      ? Object.entries(sorter).map(([key, value]) =>
+                          value === 'ascend' ? key : `-${key}`,
+                        )
+                      : undefined,
+                });
 
-              const response = await fetchListLoginAuditLogs(query);
+                const response = await fetchListLoginAuditLogs(query);
 
-              return {
-                data: response.items || [],
-                total: response.total || 0,
-                success: true,
-              };
-            } catch (error: any) {
-              message.error(error.message || t('fetchFailed'));
-              return {
-                data: [],
-                total: 0,
-                success: false,
-              };
-            }
-          }}
-          rowKey="id"
-          search={{
-            labelWidth: 'auto',
-            defaultCollapsed: false,
-          }}
-          pagination={{
-            defaultPageSize: TABLE.DEFAULT_PAGE_SIZE,
-            showSizeChanger: true,
-            showQuickJumper: true,
-          }}
-          options={{
-            density: true,
-            fullScreen: true,
-            setting: true,
-            reload: true,
-          }}
-          size="middle"
-          bordered
-          cardBordered={false}
-          scroll={{
-            y: tableScrollY,
-            x: 1300,
-          }}
-        />
-      </div>
-    </ContentContainer>
+                return {
+                  data: response.items || [],
+                  total: response.total || 0,
+                  success: true,
+                };
+              } catch (error: any) {
+                message.error(error.message || t('fetchFailed'));
+                return {
+                  data: [],
+                  total: 0,
+                  success: false,
+                };
+              }
+            }}
+            rowKey="id"
+            search={{
+              labelWidth: 'auto',
+              defaultCollapsed: false,
+            }}
+            pagination={{
+              defaultPageSize: TABLE.DEFAULT_PAGE_SIZE,
+              showSizeChanger: true,
+              showQuickJumper: true,
+            }}
+            options={{
+              density: true,
+              fullScreen: true,
+              setting: true,
+              reload: true,
+            }}
+            size="middle"
+            bordered
+            cardBordered={false}
+            scroll={{
+              y: tableScrollY,
+              x: 1300,
+            }}
+          />
+        </div>
+      </ContentContainer>
+
+      <LoginAuditLogDetailDrawer
+        open={detailRecord !== null}
+        data={detailRecord}
+        onClose={() => setDetailRecord(null)}
+      />
+    </>
   );
 };
 

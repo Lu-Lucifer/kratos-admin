@@ -1,7 +1,10 @@
 ﻿<script lang="ts" setup>
 import type { VxeGridProps } from '#/adapter/vxe-table';
 
-import { Page, type VbenFormProps } from '@vben/common-ui';
+import { h } from 'vue';
+
+import { Page, useVbenDrawer, type VbenFormProps } from '@vben/common-ui';
+import { LucideEye } from '@vben/icons';
 
 import dayjs from 'dayjs';
 
@@ -21,6 +24,8 @@ import {
 } from '#/api';
 import { type auditservicev1_LoginAuditLog as LoginAuditLog } from '#/api';
 import { $t } from '#/locales';
+
+import LoginAuditLogDetailDrawer from './login-audit-log-detail-drawer.vue';
 
 const formOptions: VbenFormProps = {
   // 默认展开
@@ -228,10 +233,26 @@ const gridOptions: VxeGridProps<LoginAuditLog> = {
       field: 'ipAddress',
       width: 140,
     },
+    {
+      title: $t('ui.table.action'),
+      field: 'action',
+      fixed: 'right',
+      slots: { default: 'action' },
+      width: 80,
+    },
   ],
 };
 
 const [Grid] = useVbenVxeGrid({ gridOptions, formOptions });
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  connectedComponent: LoginAuditLogDetailDrawer,
+});
+
+function handleView(row: any) {
+  drawerApi.setData({ row });
+  drawerApi.open();
+}
 </script>
 
 <template>
@@ -258,6 +279,14 @@ const [Grid] = useVbenVxeGrid({ gridOptions, formOptions });
       <template #platform="{ row }">
         {{ row.deviceInfo.osName }} {{ row.deviceInfo.browserName }}
       </template>
+      <template #action="{ row }">
+        <a-button
+          type="link"
+          :icon="h(LucideEye)"
+          @click="handleView(row)"
+        />
+      </template>
     </Grid>
+    <Drawer />
   </Page>
 </template>
