@@ -4,11 +4,11 @@ import {QueryClient, defaultShouldDehydrateQuery} from '@tanstack/react-query'
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            // 数据新鲜度：5分钟内不重复请求
-            staleTime: 5 * 60 * 1000,
+            // 管理后台不缓存查询响应：每次组件挂载都向后端重新请求
+            staleTime: 0,
 
-            // 缓存时间：30分钟后清除
-            gcTime: 30 * 60 * 1000,
+            // 查询在无观察者（组件卸载）后立即回收，跨挂载不残留缓存
+            gcTime: 0,
 
             // 窗口聚焦时自动重新验证
             refetchOnWindowFocus: false,
